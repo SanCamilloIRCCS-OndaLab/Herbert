@@ -52,6 +52,13 @@ function [EEG] = SPMA_iclabel(EEG, opt)
     
     %% Run ICLabel
     log.info(sprintf("Starting ICLabel classification with versino %s", config.Version));
+
+    %% Check prerequisites
+    if isempty(EEG.icaweights)
+        msg = 'SPMA Error: EEG structure does not contain ICA weights. Run SPMA_runica first.';
+        log.error(msg);
+        error('SPMA:NoICA', msg);
+    end
     
     try
         EEG = pop_iclabel(EEG, char(config.Version));
