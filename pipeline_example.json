@@ -64,5 +64,15 @@
         "params": {
             "Version": "default"
         }
+    }, 
+    "step8": {
+        "function": "SPMA_icflag", 
+        "save": true, 
+        "name": "ICflag", 
+        "params": {
+            "Muscle": [0.2, 1], 
+            "Eye": [0.8, 1], 
+            "Heart" : [0.9, 1]
+        }
     }
 }
