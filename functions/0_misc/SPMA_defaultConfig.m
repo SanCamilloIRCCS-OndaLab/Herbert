@@ -114,6 +114,13 @@ preproc.runica.Save = true;
 preproc.runica.SaveName = "runica";
 preproc.runica.OutputFolder = "";
 
+% ICLabel
+preproc.iclabel.Version = "default";
+preproc.iclabel.Save = true;
+preproc.iclabel.SaveName = "iclabel";
+preproc.iclabel.OutputFolder = "";
+
+
 
 % Logging
 preproc.logging.LogEnabled = true;
