@@ -132,6 +132,14 @@ preproc.icflag.Save = true;
 preproc.icflag.SaveName = "icflag";
 preproc.icflag.OutputFolder = "";
 
+% SubComp
+preproc.subcomp.Components = [];
+preproc.subcomp.Keep = false;
+preproc.subcomp.Save = true;
+preproc.subcomp.SaveName = "subcomp";
+preproc.subcomp.OutputFolder = "";
+
+
 
 
 % Logging
