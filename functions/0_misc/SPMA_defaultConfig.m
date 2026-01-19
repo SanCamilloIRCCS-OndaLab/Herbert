@@ -139,6 +139,16 @@ preproc.subcomp.Save = true;
 preproc.subcomp.SaveName = "subcomp";
 preproc.subcomp.OutputFolder = "";
 
+% Epoching
+preproc.epoch.Mode = "Event";
+preproc.epoch.Events = [];
+preproc.epoch.Recurrence = 1;
+preproc.epoch.Limits = [-1 2];
+preproc.epoch.Baseline = [];
+preproc.epoch.Save = true;
+preproc.epoch.SaveName = "epoched";
+preproc.epoch.OutputFolder = "";
+
 
 
 
