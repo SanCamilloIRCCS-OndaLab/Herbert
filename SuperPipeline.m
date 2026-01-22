@@ -33,8 +33,8 @@ addpath(genpath(functions_folder));
 SPMA_loadDependencies();
 
 %% Variables
-data_path = '/mnt/raid/atonin/SuperPipelineMultiverseAnalysis/data/ses-20191120/EEG_ORIG/PATHS_101_Resting_20191120_022103.mff';
-pipeline = "pipeline.yaml";
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/ses-20191120/EEG_ORIG/PATHS_101_Resting_20191120_022103.mff';
+pipeline = "pipeline_example.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
@@ -42,7 +42,7 @@ EEG = pop_mffimport({data_path},'',0,0);
 data_test = '';
 
 %% Run pipeline
-data = SPMA_runPipeline(EEG, pipeline, "pipeline_test.json");
+data = SPMA_runPipeline(EEG, pipeline) %, "pipeline_example.json");
 % data = SPMA_runPipeline(pipeline, data_test);
 
 

@@ -114,6 +114,48 @@ preproc.runica.Save = true;
 preproc.runica.SaveName = "runica";
 preproc.runica.OutputFolder = "";
 
+% ICLabel
+preproc.iclabel.Version = "default";
+preproc.iclabel.Save = true;
+preproc.iclabel.SaveName = "iclabel";
+preproc.iclabel.OutputFolder = "";
+
+% ICFlag
+preproc.icflag.Brain = [NaN NaN];
+preproc.icflag.Muscle = [0.9 1];
+preproc.icflag.Eye = [0.9 1];
+preproc.icflag.Heart = [NaN NaN];
+preproc.icflag.LineNoise = [NaN NaN];
+preproc.icflag.ChannelNoise = [NaN NaN];
+preproc.icflag.Other = [NaN NaN];
+preproc.icflag.Save = true;
+preproc.icflag.SaveName = "icflag";
+preproc.icflag.OutputFolder = "";
+
+% SubComp
+preproc.subcomp.Components = [];
+preproc.subcomp.Keep = false;
+preproc.subcomp.Save = true;
+preproc.subcomp.SaveName = "subcomp";
+preproc.subcomp.OutputFolder = "";
+
+% Epoching
+preproc.epoch.Mode = "Event";
+preproc.epoch.Events = [];
+preproc.epoch.Recurrence = 1;
+preproc.epoch.Limits = [-1 2];
+preproc.epoch.Baseline = [];
+preproc.epoch.Save = true;
+preproc.epoch.SaveName = "epoched";
+preproc.epoch.OutputFolder = "";
+
+% Epoch Rejection
+preproc.rejepochs.Threshold = 100;
+preproc.rejepochs.Channels = [];
+preproc.rejepochs.TimeLimits = [];
+preproc.rejepochs.Save = true;
+preproc.rejepochs.SaveName = "epoch_rej";
+preproc.rejepochs.OutputFolder = "";
 
 % Logging
 preproc.logging.LogEnabled = true;
