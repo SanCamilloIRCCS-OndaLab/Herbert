@@ -153,6 +153,7 @@ preproc.epoch.OutputFolder = "";
 preproc.rejepochs.Threshold = 100;
 preproc.rejepochs.Channels = [];
 preproc.rejepochs.TimeLimits = [];
+preproc.rejepochs.ConfirmRej = false
 preproc.rejepochs.Save = true;
 preproc.rejepochs.SaveName = "epoch_rej";
 preproc.rejepochs.OutputFolder = "";
