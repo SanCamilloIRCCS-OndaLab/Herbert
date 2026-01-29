@@ -3,19 +3,23 @@ function [EEG] = SPMA_subcomp(EEG, opt)
 %
 % Usage:
 %   >>> EEG = SPMA_subcomp(EEG) %Removes flagged components
-%   >>> EEG = SPMA_subcomp(EEG, 'Components', [8 13 21]) %Removes specific
-%   components
+%   >>> EEG = SPMA_subcomp(EEG, 'Components', [8 13 21]) %Removes specific components
+%   >>> EEG = SPMA_subcomp(EEG, 'Visualize', true) % Plots diff before removing components
 %
 % Parameters:
 %   EEG (struct): EEG struct using EEGLAB struct system.
 %
 % Other Parameters:
 %   Components (1xN vector): Vector listing the components to be removed.
-%   If empty (default) it removes the flagged components
-%   (EEG.reject.gcompreject). 
+%       If empty (default) it removes the flagged components
+%       (EEG.reject.gcompreject). 
 %
 %   Keep (logical): If true, it keeps the listed components.Default is
-%   false. 
+%       false. 
+%
+%   Visualize (logical): If true, opens a GUI (pop_subcomp) to compare
+%       data before and after removal. You must click "Accept" to proceed.
+%       Default: false.
 %
 %   Save (logical): Whether to save the pruned datase
 %
@@ -28,6 +32,7 @@ function [EEG] = SPMA_subcomp(EEG, opt)
         % Optional
         opt.Components double {mustBeNumeric} = []
         opt.Keep logical = false
+        opt.Visualize logical = false
         % Save Options
         opt.Save logical
         opt.SaveName string
@@ -69,7 +74,7 @@ function [EEG] = SPMA_subcomp(EEG, opt)
         if isfield(EEG, 'reject') && isfield(EEG.reject, 'gcompreject') && any(EEG.reject.gcompreject)
            comps_to_remove = find(EEG.reject.gcompreject);
         else
-            log.warn("No flagged components found. No components will be removed")
+            log.warning("No flagged components found. No components will be removed")
         end
     end
 
@@ -106,8 +111,13 @@ function [EEG] = SPMA_subcomp(EEG, opt)
    log.info(sprintf("Removing %d components from data", length(comps_to_remove)));
 
    try
-       % plotag = 0 means no plotting
-       EEG = pop_subcomp(EEG, config.Components, 0, config.Keep );
+       plot_flag = double(config.Visualize);
+
+       if plot_flag
+           log.info("Visual comparison requested. Waiting for user input in GUI");
+       end
+
+       EEG = pop_subcomp(EEG, config.Components, plot_flag, config.Keep );
 
        log.info("Components removed successfully");
 
