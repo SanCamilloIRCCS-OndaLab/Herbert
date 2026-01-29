@@ -30,6 +30,8 @@ function [EEG] = SPMA_rejepochs(EEG, opt)
         opt.Threshold double = 100 % uV. Default +/-100uV
         opt.Channels double = [] % Empty = All channels
         opt.TimeLimits double = [] % Empty = Whole epoch
+        % Interactive Mode (Human in the Loop)
+        opt.ConfirmRej logical = false  
         % Save Options
         opt.Save logical
         opt.SaveName string
@@ -106,6 +108,68 @@ function [EEG] = SPMA_rejepochs(EEG, opt)
     catch ME
         log.error(sprintf("Error during artifact detection: %s", ME.message));
         rethrow(ME);
+    end
+
+    %% Human in the Loop Verification
+    if config.ConfirmRej
+        log.info("Opening interactive GUI. Please review rejections. CLICK 'UPDATE MARKS' BEFORE CLOSING to save changes.");
+        
+        % 1. Build rejection matrix for eegplot 
+        % FIXED: Format must be [start end R G B E1 E2 ... En] where E are channel flags
+        rej_matrix = [];
+        if ~isempty(bad_trials)
+            for i = 1:length(bad_trials)
+                t_idx = bad_trials(i);
+                % Convert epoch index to sample indices (continuous view)
+                start_pnt = (t_idx-1) * EEG.pnts; 
+                end_pnt   = t_idx * EEG.pnts; 
+                
+                % CORREZIONE CRITICA: Aggiunti zeros(1, EEG.nbchan) per matchare le dimensioni di eegplot
+                rej_matrix = [rej_matrix; start_pnt end_pnt 1 0.8 0.8 zeros(1, EEG.nbchan)]; 
+            end
+        end
+        
+        % 2. Clear temp variable to avoid ghost data
+        evalin('base', 'clear SPMA_TEMP_REJ'); 
+        
+        % 3. Define callback: eegplot puts 'TMPREJ' in workspace when you click update
+        command_str = 'assignin(''base'', ''SPMA_TEMP_REJ'', TMPREJ); disp(''SPMA: Rejections updated.'');';
+        
+        % 4. Open eegplot
+        eegplot(EEG.data, ...
+            'srate', EEG.srate, ...
+            'winrej', rej_matrix, ...       
+            'command', command_str, ...     
+            'eloc_file', EEG.chanlocs, ...  
+            'events', EEG.event, ...  
+            'butlabel', 'UPDATE MARKS', ... 
+            'title', 'Review Epochs: Click to Mark/Unmark -> Click UPDATE MARKS -> Close'); 
+        
+        % 5. Pause script until figure is closed
+        uiwait(gcf);
+        
+        % 6. Retrieve User modifications
+        if evalin('base', 'exist(''SPMA_TEMP_REJ'', ''var'')')
+            updated_rej_matrix = evalin('base', 'SPMA_TEMP_REJ');
+            evalin('base', 'clear SPMA_TEMP_REJ'); 
+            
+            if ~isempty(updated_rej_matrix)
+                % Convert samples back to epoch indices
+                % Using median point of the marked region to find which epoch it belongs to
+                center_pnts = (updated_rej_matrix(:,1) + updated_rej_matrix(:,2)) / 2;
+                bad_trials = floor(center_pnts / EEG.pnts) + 1;
+                bad_trials = unique(bad_trials)'; % Ensure row vector
+                
+                % Safety check for out of bounds
+                bad_trials(bad_trials > EEG.trials) = [];
+                bad_trials(bad_trials < 1) = []; % Safety for index 0
+            else
+                bad_trials = [];
+            end
+            log.info("User manual review applied.");
+        else
+            log.warning("Window closed without clicking 'UPDATE MARKS'. Using original auto-detections.");
+        end
     end
 
     %% Reject artifactual epochs (pop_rejepoch)
