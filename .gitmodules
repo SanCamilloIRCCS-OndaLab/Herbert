@@ -1,3 +1,6 @@
 [submodule "external/EEGLAB"]
 	path = external/EEGLAB
 	url = https://github.com/sccn/eeglab.git
+[submodule "brainstorm3"]
+	path = brainstorm3
+	url = https://github.com/brainstorm-tools/brainstorm3
