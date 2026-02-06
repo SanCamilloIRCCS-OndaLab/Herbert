@@ -1,6 +1,8 @@
 # Herbert: an EEG Reproducible Brain Exploration Research Toolbox
 
-This toolbox is still under development.
+> ⚠️ This toolbox is still under development.
+
+The full documentation is available at [https://sancamilloirccs-ondalab.github.io/Herbert/](https://sancamilloirccs-ondalab.github.io/Herbert/).
 
 ## What is Herbert?
 
