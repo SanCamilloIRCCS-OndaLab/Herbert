@@ -1,41 +1,51 @@
-name: Build and Deploy Sphinx Docs
+name: Deploy Sphinx documentation to Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-    # 1 Checkout repo
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          pip install sphinx sphinx_rtd_theme sphinxcontrib-matlabdomain myst-parser
+      
+      - name: Build documentation
+        run: |
+          cd docs
+          make html
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'docs/build/html'
 
-    # 2 Setup Python
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
-    # 3 Install dependecies
-    - name: Install Sphinx dependencies
-      run: |
-        pip install sphinx sphinx_rtd_theme sphinxcontrib-matlabdomain myst-parser
-
-    # 4 Build documentation
-    - name: Build Sphinx documentation
-      run: |
-        cd docs
-        make html
-
-    # 5 Deploy to GitHub Pages
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      with:
-        publish_branch: gh-pages
-        github_token: ${{ secrets.GH_PAT }}
-        publish_dir: _build/html
-        force_orphan: true
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3

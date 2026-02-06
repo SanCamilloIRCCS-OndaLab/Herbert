@@ -45,3 +45,5 @@ output/*
 *.log
 data/
 
+# Documentation
+docs/build
