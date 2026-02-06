@@ -22,7 +22,7 @@ jobs:
     # 3 Install dependecies
     - name: Install Sphinx dependencies
       run: |
-        pip install sphinx sphinx_rtd_theme sphinxcontrib.matlab myst-parser
+        pip install sphinx sphinx_rtd_theme sphinxcontrib-matlabdomain myst-parser
 
     # 4 Build documentation
     - name: Build Sphinx documentation
