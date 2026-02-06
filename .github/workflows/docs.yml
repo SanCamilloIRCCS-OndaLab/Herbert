@@ -3,39 +3,39 @@ name: Build and Deploy Sphinx Docs
 on:
   push:
     branches:
-      - main  # o il branch principale della tua repo
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout della repo
-    - uses: actions/checkout@v3
+    # 1 Checkout repo
+    - uses: actions/checkout@v4
 
-    # 2️⃣ Setup Python
+    # 2 Setup Python
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
-    # 3️⃣ Installa dipendenze Sphinx
+    # 3 Install dependecies
     - name: Install Sphinx dependencies
       run: |
         pip install sphinx sphinx_rtd_theme sphinxcontrib.matlab myst-parser
 
-    # 4️⃣ Build documentazione
+    # 4 Build documentation
     - name: Build Sphinx documentation
       run: |
         cd docs
         make html
 
-    # 5️⃣ Deploy su GitHub Pages
+    # 5 Deploy to GitHub Pages
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v6
+      uses: peaceiris/actions-gh-pages@v3
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       with:
+        publish_branch: gh-pages
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/_build/html
-        publish_branch: gh-pages  # branch di destinazione
-        user_name: 'github-actions[bot]'
-        user_email: 'github-actions[bot]@users.noreply.github.com'
+        publish_dir: _build/html
+        force_orphan: true
