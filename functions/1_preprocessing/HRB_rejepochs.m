@@ -1,9 +1,9 @@
-function [EEG] = SPMA_rejepochs(EEG, opt)
-% SPMA_rejepochs reject epochs based on amplitudes threshold
+function [EEG] = HRB_rejepochs(EEG, opt)
+% HRB_rejepochs reject epochs based on amplitudes threshold
 %
 % Usage:
-%   >>> EEG = SPMA_rejepochs(EEG, 'Threshold', 100, 'Channels', [1:32]) %Rejects >+100 and <-100 uV
-%   >>> EEG = SPMA_rejepochs(EEG, 'Threshold', [min max], 'Channels', [1:32])
+%   >>> EEG = HRB_rejepochs(EEG, 'Threshold', 100, 'Channels', [1:32]) %Rejects >+100 and <-100 uV
+%   >>> EEG = HRB_rejepochs(EEG, 'Threshold', [min max], 'Channels', [1:32])
 %
 % Parameters:
 %   EEG (struct): EEG struct using EEGLAB struct system.Epochs must have
@@ -46,15 +46,15 @@ function [EEG] = SPMA_rejepochs(EEG, opt)
     module = "preprocessing";
 
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "rejepochs", opt);
+    config = HRB_loadConfig(module, "rejepochs", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Check prerequisites
     if EEG.trials == 1
-        error("SPMA:Continuous data.", "Dataset seems continous (1 trial). Run SPMA_epoch first.");
+        error("HRB:Continuous data.", "Dataset seems continous (1 trial). Run HRB_epoch first.");
     end
 
     %% Set up Parameters
@@ -67,7 +67,7 @@ function [EEG] = SPMA_rejepochs(EEG, opt)
         lower_lim = config.Threshold(1);
         upper_lim = config.Threshold(2);
     else
-        error("SPMA: Bad Threshold", "Threshold must be a scalar (e.g., 100) or a 1x2 vector (e.g., [-100 100])");
+        error("HRB: Bad Threshold", "Threshold must be a scalar (e.g., 100) or a 1x2 vector (e.g., [-100 100])");
     end
 
     % 2. Channels
@@ -135,7 +135,7 @@ function [EEG] = SPMA_rejepochs(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

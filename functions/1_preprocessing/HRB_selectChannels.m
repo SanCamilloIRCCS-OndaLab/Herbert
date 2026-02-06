@@ -1,10 +1,10 @@
-function [EEG] = SPMA_removeChannels(EEG, opt)
-% SPMA_REMOVECHANNELS - Remove a list of channels from an EEG dataset.
+function [EEG] = HRB_selectChannels(EEG, opt)
+% HRB_SELECTCHANNELS - Select a list of channels from an EEG dataset.
 %
 % Examples:
-%     >>> [EEG] = SPMA_removeChannels(EEG)
-%     >>> [EEG] = SPMA_removeChannels(EEG, 'key', val) 
-%     >>> [EEG] = SPMA_removeChannels(EEG, key=val) 
+%     >>> [EEG] = HRB_selectChannels(EEG)
+%     >>> [EEG] = HRB_selectChannels(EEG, 'key', val) 
+%     >>> [EEG] = HRB_selectChannels(EEG, key=val) 
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -36,28 +36,28 @@ function [EEG] = SPMA_removeChannels(EEG, opt)
         opt.LogFileDir string
         opt.LogFileName string
     end
-
+    
     %% Constants
     module = "preprocessing";
-    
+
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "removeChannels", opt);
+    config = HRB_loadConfig(module, "selectChannels", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Removing channels
-    log.info("Removing channels")
+    log.info("Selecting channels")
 
-    log.info(sprintf("Removed channels %s", config.Channels))
+    log.info(sprintf("Selected channels %s", config.Channels))
 
-    EEG = pop_select(EEG, 'rmchannel', cellstr(config.Channels), config.EEGLAB{:});
+    EEG = pop_select(EEG, 'channel', cellstr(config.Channels), config.EEGLAB{:});
 
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end

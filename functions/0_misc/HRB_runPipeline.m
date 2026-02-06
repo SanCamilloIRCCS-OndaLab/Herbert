@@ -1,8 +1,8 @@
-% SPMA_RUNPIPELINE - Run a multiverse pipeline over a set of data.
+% HRB_RUNPIPELINE - Run a multiverse pipeline over a set of data.
 %
 % Usage:
-%     >> SPMA_runPipeline(pipelineJSON, data)
-%     >> SPMA_runPipeline(pipelineJSON, data, "OutputFolder", output)
+%     >> HRB_runPipeline(pipelineJSON, data)
+%     >> HRB_runPipeline(pipelineJSON, data, "OutputFolder", output)
 %
 % Inputs:
 %    data    = [struct] The name of the saved file (default: the name
@@ -16,7 +16,7 @@
 % 
 % See also: SAVE, POP_SAVESET
 
-function data = SPMA_runPipeline(data, pipelineFile, opt)
+function data = HRB_runPipeline(data, pipelineFile, opt)
     arguments (Input)
         data
     end
@@ -28,13 +28,13 @@ function data = SPMA_runPipeline(data, pipelineFile, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
+    config = HRB_loadConfig("general", "save", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder, ...
         "LogToFile", true);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
     %% START
     log.info(">>> START MULTIVERSE ANALYSIS <<<")
@@ -44,7 +44,7 @@ function data = SPMA_runPipeline(data, pipelineFile, opt)
     for n_pipeline = 1:length(pipelineFile)
         currPipelineFile = pipelineFile{n_pipeline};
         log.info(sprintf("Validate pipeline %s...", currPipelineFile))
-        pipeline = SPMA_validatePipeline(currPipelineFile);
+        pipeline = HRB_validatePipeline(currPipelineFile);
         log.info("...Pipeline is valid!")
         log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
         allPipelines{n_pipeline} = pipeline;
@@ -57,7 +57,7 @@ function data = SPMA_runPipeline(data, pipelineFile, opt)
     log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
 
     logParams = unpackStruct(logOptions);
-    SPMA_drawPipeline(pipeline, "OutputFolder", config.OutputFolder, logParams{:})
+    HRB_drawPipeline(pipeline, "OutputFolder", config.OutputFolder, logParams{:})
 
     % Save pipeline
     pipelineSaveName = 'pipeline.json';

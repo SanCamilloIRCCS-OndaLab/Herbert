@@ -1,11 +1,11 @@
-function SPMA_saveData(data, opt)
-% SPMA_SAVEDATA - Save a data object. The saved data can be in different
+function HRB_saveData(data, opt)
+% HRB_SAVEDATA - Save a data object. The saved data can be in different
 % format depending on the module where it is saved.
 %
 % Example:
-%     >>> SPMA_saveData(data)
-%     >>> SPMA_saveData(data, opt.Name)
-%     >>> SPMA_saveData(data, opt.Name, opt.Folder)
+%     >>> HRB_saveData(data)
+%     >>> HRB_saveData(data, opt.Name)
+%     >>> HRB_saveData(data, opt.Name, opt.Folder)
 %
 % Parameters:
 %    data (any): A set of data
@@ -38,11 +38,11 @@ function SPMA_saveData(data, opt)
     end
 
     %% Get module and callingFunction
-    [module, functionName] = SPMA_getModuleAndName(2);
+    [module, functionName] = HRB_getModuleAndName(2);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module,logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module,logConfig);
 
     %% Get folder and name automatically from the calling function
     if opt.Folder == "" || opt.Name == ""
@@ -76,7 +76,7 @@ function SPMA_saveData(data, opt)
     [~, opt.Name, ~] = fileparts(opt.Name);
 
     % Check data type
-    dataType = SPMA_checkDataType(data);
+    dataType = HRB_checkDataType(data);
 
     unknownType = false;
 

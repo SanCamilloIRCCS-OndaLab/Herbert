@@ -1,10 +1,10 @@
-function [EEG] = SPMA_cleanData(EEG, opt)
-% SPMA_CLEANDATA - Automatic data cleaning removing bad channels.
+function [EEG] = HRB_cleanData(EEG, opt)
+% HRB_CLEANDATA - Automatic data cleaning removing bad channels.
 %
 % Examples:
-%     >>> [EEG] = SPMA_cleanData(EEG)
-%     >>> [EEG] = SPMA_cleanData(EEG, 'key', val) 
-%     >>> [EEG] = SPMA_cleanData(EEG, key=val) 
+%     >>> [EEG] = HRB_cleanData(EEG)
+%     >>> [EEG] = HRB_cleanData(EEG, 'key', val) 
+%     >>> [EEG] = HRB_cleanData(EEG, key=val) 
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -46,11 +46,11 @@ function [EEG] = SPMA_cleanData(EEG, opt)
     module = "preprocessing";
     
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "cleanData", opt);
+    config = HRB_loadConfig(module, "cleanData", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Cleaning data
     log.info(sprintf("Cleaning data with %s parameters", config.Severity))
@@ -106,14 +106,14 @@ function [EEG] = SPMA_cleanData(EEG, opt)
 
         logParams = unpackStruct(logConfig);
 
-        SPMA_saveData(chans_excluded, "Name",nameChansExcluded, "Folder", module, "OutputFolder",config.OutputFolder, logParams{:});
+        HRB_saveData(chans_excluded, "Name",nameChansExcluded, "Folder", module, "OutputFolder",config.OutputFolder, logParams{:});
     end
 
 
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end

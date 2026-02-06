@@ -1,9 +1,9 @@
-function [EEG] = SPMA_subcomp(EEG, opt)
-% SPMA_subcomp removes independent components from EEG data. 
+function [EEG] = HRB_subcomp(EEG, opt)
+% HRB_subcomp removes independent components from EEG data. 
 %
 % Usage:
-%   >>> EEG = SPMA_subcomp(EEG) %Removes flagged components
-%   >>> EEG = SPMA_subcomp(EEG, 'Components', [8 13 21]) %Removes specific
+%   >>> EEG = HRB_subcomp(EEG) %Removes flagged components
+%   >>> EEG = HRB_subcomp(EEG, 'Components', [8 13 21]) %Removes specific
 %   components
 %
 % Parameters:
@@ -44,15 +44,15 @@ function [EEG] = SPMA_subcomp(EEG, opt)
     module = "preprocessing";
 
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "subcomp", opt);
+    config = HRB_loadConfig(module, "subcomp", opt);
     
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        error("SPMA: No ICA", "No ICs weight found for the current EEG structure. Cannot remove components.");
+        error("HRB: No ICA", "No ICs weight found for the current EEG structure. Cannot remove components.");
     end
 
     %% Find components to be removed
@@ -120,7 +120,7 @@ function [EEG] = SPMA_subcomp(EEG, opt)
     if config.Save
         logParams = unpackStruct(logConfig);
         % Important: We pass the 'config.OutputFolder' that we might have updated above
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

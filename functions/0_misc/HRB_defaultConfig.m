@@ -1,8 +1,8 @@
-% SPMA_DEFAULTCONFIG - The default configurations used by all the
+% HRB_DEFAULTCONFIG - The default configurations used by all the
 % functions.
 %
 % Usage:
-%     >> [config] = SPMA_defaultConfig;
+%     >> [config] = HRB_defaultConfig;
 %
 % Outputs:
 %    config = [struct] Nested structure with the default configurations
@@ -27,7 +27,7 @@
 % See also: EEGLAB, POP_RESAMPLE
 
 
-function config = SPMA_defaultConfig()
+function config = HRB_defaultConfig()
 
 config = struct();
 
@@ -36,7 +36,7 @@ general = struct();
 
 % All the configurations
 general.customConfig.FileDir = getCodeFolder();
-general.customConfig.FileName = "SPMA_config.json"; % Name of the custom configuration file to overwrite the values in this file
+general.customConfig.FileName = "HRB_config.json"; % Name of the custom configuration file to overwrite the values in this file
 
 % Saving
 nowstr = string(datetime("now", "Format", "yyyyMMdd_HHmmss"));
@@ -53,7 +53,7 @@ general.logging.LogEnabled = true;
 general.logging.LogLevel = 2;
 general.logging.LogToFile = false;
 general.logging.LogFileDir = getCodeFolder();
-general.logging.LogFileName = "SPMA.log";
+general.logging.LogFileName = "HRB.log";
 
 % Add to the main config struct
 config.general = general;
@@ -162,7 +162,7 @@ preproc.logging.LogEnabled = true;
 preproc.logging.LogLevel = 2;
 preproc.logging.LogToFile = false;
 preproc.logging.LogFileDir = getCodeFolder();
-preproc.logging.LogFileName = "SPMA_preprocessing.log";
+preproc.logging.LogFileName = "HRB_preprocessing.log";
 
 % Add to the main config struct
 config.preprocessing = preproc;
@@ -176,7 +176,7 @@ headModel.logging.LogEnabled = true;
 headModel.logging.LogLevel = 2;
 headModel.logging.LogToFile = false;
 headModel.logging.LogFileDir = getCodeFolder();
-headModel.logging.LogFileName = "SPMA_headModel.log";
+headModel.logging.LogFileName = "HRB_headModel.log";
 
 % Add to the main config struct
 config.headModel = headModel;
@@ -190,7 +190,7 @@ source.logging.LogEnabled = true;
 source.logging.LogLevel = 2;
 source.logging.LogToFile = false;
 source.logging.LogFileDir = getCodeFolder();
-source.logging.LogFileName = "SPMA_sourceEstimation.log";
+source.logging.LogFileName = "HRB_sourceEstimation.log";
 
 % Add to the main config struct
 config.sourceEstimation = source;
@@ -204,7 +204,7 @@ connectivity.logging.LogEnabled = true;
 connectivity.logging.LogLevel = 2;
 connectivity.logging.LogToFile = false;
 connectivity.logging.LogFileDir = getCodeFolder();
-connectivity.logging.LogFileName = "SPMA_connectivity.log";
+connectivity.logging.LogFileName = "HRB_connectivity.log";
 
 % Add to the main config struct
 config.connectivity = connectivity;
@@ -219,7 +219,7 @@ network.logging.LogEnabled = true;
 network.logging.LogLevel = 2;
 network.logging.LogToFile = false;
 network.logging.LogFileDir = getCodeFolder();
-network.logging.LogFileName = "SPMA_network.log";
+network.logging.LogFileName = "HRB_network.log";
 
 % Add to the main config struct
 config.network = network;
@@ -229,7 +229,7 @@ end
 function mainFolder = getCodeFolder()
 % retrieve the folder where lies the code
 functionFolder = mfilename("fullpath");
-mainFolderParent = extractBefore(functionFolder, "SuperPipelineMultiverseAnalysis");
-mainFolder = fullfile(mainFolderParent, "SuperPipelineMultiverseAnalysis");
+mainFolderParent = extractBefore(functionFolder, "Herbert");
+mainFolder = fullfile(mainFolderParent, "Herbert");
 
 end

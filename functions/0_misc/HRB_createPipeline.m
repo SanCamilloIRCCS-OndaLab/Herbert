@@ -1,10 +1,10 @@
-function pipeline = SPMA_createPipeline(pipelineHandlers, opt)
-% SPMA_CREATEPIPELINE - Create a pipeline from a cellarray of function
+function pipeline = HRB_createPipeline(pipelineHandlers, opt)
+% HRB_CREATEPIPELINE - Create a pipeline from a cellarray of function
 % handlers
 %
 % Examples:
-%     >>> SPMA_createPipeline(pipelineHandlers)
-%     >>> SPMA_createPipeline(pipelineHandlers, 'key', 'val')
+%     >>> HRB_createPipeline(pipelineHandlers)
+%     >>> HRB_createPipeline(pipelineHandlers, 'key', 'val')
 %
 % Parameters:
 %    pipelineHandlers (cell): A cell array of function handlers
@@ -33,12 +33,12 @@ function pipeline = SPMA_createPipeline(pipelineHandlers, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
+    config = HRB_loadConfig("general", "save", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
     %% Create the pipeline structure from the cellarray
     % Each cell of the cell array is one step, if there is a cellarray it

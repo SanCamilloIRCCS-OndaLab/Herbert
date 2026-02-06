@@ -1,10 +1,10 @@
-function [EEG] = SPMA_filter(EEG, opt)
-% SPMA_FILTER - Filter an EEG dataset. Based on EEGLAB functions.
+function [EEG] = HRB_filter(EEG, opt)
+% HRB_FILTER - Filter an EEG dataset. Based on EEGLAB functions.
 %
 % Examples:
-%    >>> [EEG] = SPMA_filter(EEG);
-%    >>> [EEG] = SPMA_filter(EEG, 'key', val);
-%    >>> [EEG] = SPMA_filter(EEG, key=val);
+%    >>> [EEG] = HRB_filter(EEG);
+%    >>> [EEG] = HRB_filter(EEG, 'key', val);
+%    >>> [EEG] = HRB_filter(EEG, key=val);
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -45,11 +45,11 @@ function [EEG] = SPMA_filter(EEG, opt)
     module = "preprocessing";
 
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "filter", opt);
+    config = HRB_loadConfig(module, "filter", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Filter
     log.info("Filtering")
@@ -85,7 +85,7 @@ function [EEG] = SPMA_filter(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

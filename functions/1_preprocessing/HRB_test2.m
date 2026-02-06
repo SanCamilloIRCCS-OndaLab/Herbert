@@ -1,4 +1,4 @@
-function [EEG] = SPMA_test2(EEG, opt)
+function [EEG] = HRB_test2(EEG, opt)
     arguments (Input)
         EEG struct
         % Options
@@ -18,17 +18,17 @@ function [EEG] = SPMA_test2(EEG, opt)
     module = "preprocessing";
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Test
     EEG.test2 = opt.foo;
 
-    log.info("SPMA_test1")
+    log.info("HRB_test1")
 
     if opt.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", opt.SaveName, "Folder", module, "OutputFolder", opt.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", opt.SaveName, "Folder", module, "OutputFolder", opt.OutputFolder, logParams{:});
     end
 
 

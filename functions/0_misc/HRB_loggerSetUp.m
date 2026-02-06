@@ -1,7 +1,7 @@
-% SPMA_LOGGERSETUP - Set up a logger for the pipeline
+% HRB_LOGGERSETUP - Set up a logger for the pipeline
 %
 % Usage:
-%     >> [log] = SPMA_loggerSetUp();
+%     >> [log] = HRB_loggerSetUp();
 %
 %
 % Optional inputs:
@@ -18,7 +18,7 @@
 % 
 % See also: LOGGER
 
-function log = SPMA_loggerSetUp(module, logOptions)
+function log = HRB_loggerSetUp(module, logOptions)
     arguments (Input)
         module (1,1) string {mustBeMember(module, ["general", "preprocessing", "headmodel", "source", "sourceestimation", "connectivity", "network"])}
         logOptions struct = struct()
@@ -28,9 +28,9 @@ function log = SPMA_loggerSetUp(module, logOptions)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "logging", logOptions);
+    config = HRB_loadConfig(module, "logging", logOptions);
     
-    loggerName = sprintf("SPMA_%s", module);
+    loggerName = sprintf("HRB_%s", module);
 
     log = logger(loggerName);
     log.enabled = config.LogEnabled;

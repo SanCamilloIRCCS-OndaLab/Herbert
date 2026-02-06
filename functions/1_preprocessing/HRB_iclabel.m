@@ -1,10 +1,10 @@
-function [EEG] = SPMA_iclabel(EEG, opt)
-% SPMA_iclabel labels independnt components using ICLabel
+function [EEG] = HRB_iclabel(EEG, opt)
+% HRB_iclabel labels independnt components using ICLabel
 %
 % Examples:
-%   >>> EEG = SPMA_iclabel(EEG)
-%   >>> EEG = SPMA_iclabel(EEG, 'key', val)
-%   >>> EEG = SPMA_iclabel(EEG, key = val)
+%   >>> EEG = HRB_iclabel(EEG)
+%   >>> EEG = HRB_iclabel(EEG, 'key', val)
+%   >>> EEG = HRB_iclabel(EEG, key = val)
 %
 % Parameters:
 %       EEG (struct): EEG struct using EEGLAB struct system. ICs weights must
@@ -39,15 +39,15 @@ function [EEG] = SPMA_iclabel(EEG, opt)
     module = "preprocessing";
     
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "iclabel", opt);
+    config = HRB_loadConfig(module, "iclabel", opt);
     
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        error('SPMA: No ICA', 'No ICs weights found for the current EEG structure.')
+        error('HRB: No ICA', 'No ICs weights found for the current EEG structure.')
     end
     
     %% Run ICLabel
@@ -55,9 +55,9 @@ function [EEG] = SPMA_iclabel(EEG, opt)
 
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        msg = 'SPMA Error: EEG structure does not contain ICA weights. Run SPMA_runica first.';
+        msg = 'HRB Error: EEG structure does not contain ICA weights. Run HRB_runica first.';
         log.error(msg);
-        error('SPMA:NoICA', msg);
+        error('HRB:NoICA', msg);
     end
     
     try
@@ -71,7 +71,7 @@ function [EEG] = SPMA_iclabel(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module,"OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module,"OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

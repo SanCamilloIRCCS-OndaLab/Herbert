@@ -1,18 +1,18 @@
-% SPMA_LOADDEPENDENCIES - Check if the dependencies required by Super Pipeline
+% HRB_LOADDEPENDENCIES - Check if the dependencies required by Super Pipeline
 % are already in the Matlab path. If not add to the path the missing ones.
 % The full list of dependencies is:
 %   EEGlab  v.2024.0
 %
 % Usage:
-%     >> SPMA_loadDependencies;
-%     >> [oldPath newPath] = SPMA_loadDependencies;
+%     >> HRB_loadDependencies;
+%     >> [oldPath newPath] = HRB_loadDependencies;
 %
 % Outputs:
 %    errors = [string] List of errors
 %
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 
-function errors = SPMA_loadDependencies()
+function errors = HRB_loadDependencies()
 
 errors = [];
 

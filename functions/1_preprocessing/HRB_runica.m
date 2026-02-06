@@ -1,10 +1,10 @@
-function [EEG] = SPMA_runica(EEG, opt)
-% SPMA_RUNICA - Perform ICA decomposition with Infomax ICA algorithm.
+function [EEG] = HRB_runica(EEG, opt)
+% HRB_RUNICA - Perform ICA decomposition with Infomax ICA algorithm.
 %
 % Examples:
-%     >>> [EEG] = SPMA_runica(EEG)
-%     >>> [EEG] = SPMA_runica(EEG, 'key', val) 
-%     >>> [EEG] = SPMA_runica(EEG, key=val) 
+%     >>> [EEG] = HRB_runica(EEG)
+%     >>> [EEG] = HRB_runica(EEG, 'key', val) 
+%     >>> [EEG] = HRB_runica(EEG, key=val) 
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -48,17 +48,17 @@ function [EEG] = SPMA_runica(EEG, opt)
     module = "preprocessing";
     
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "runica", opt);
+    config = HRB_loadConfig(module, "runica", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Save ICA
     if config.SaveBefore
         log.info("Saving data before ICA");
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveNameBefore, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:})
+        HRB_saveData(EEG, "Name", config.SaveNameBefore, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:})
     end
 
     %% Run ICA
@@ -69,7 +69,7 @@ function [EEG] = SPMA_runica(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end

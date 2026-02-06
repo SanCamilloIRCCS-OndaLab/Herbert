@@ -1,10 +1,10 @@
-function [EEG] = SPMA_epoch(EEG, opt)
-% SPMA_epoch performs epoching and baseline correction
+function [EEG] = HRB_epoch(EEG, opt)
+% HRB_epoch performs epoching and baseline correction
 % on either task-based or resting state EEG data
 %
 % Usage:
-%   >>> EEG = SPMA_epoch(EEG, 'Mode', 'Event', 'Events', {'S1'}, 'Limits',[-1 2])
-%   >>> EEG = SPMA_epoch(EEG, 'Mode', 'Time', 'Recurrence', 2, 'Limits', [0 2])
+%   >>> EEG = HRB_epoch(EEG, 'Mode', 'Event', 'Events', {'S1'}, 'Limits',[-1 2])
+%   >>> EEG = HRB_epoch(EEG, 'Mode', 'Time', 'Recurrence', 2, 'Limits', [0 2])
 %
 % Parameters:
 %   EEG (struct): EEG struct using EEGLAB struct system.
@@ -58,11 +58,11 @@ function [EEG] = SPMA_epoch(EEG, opt)
     module = "preprocessing";
 
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "epoch", opt);
+    config = HRB_loadConfig(module, "epoch", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Prepare SaveName
     if config.SaveName ~= ""
@@ -77,7 +77,7 @@ function [EEG] = SPMA_epoch(EEG, opt)
         log.info(sprintf("Epoching mode: EVENT LOCKED. Limits: [%.2f %.2f].", config.Limits(1), config.Limits(2)));
 
         if isempty(EEG.event)
-            error("SPMA:NoEvents, Dataset has no events. Cannot run Event-Mode epoching.");
+            error("HRB:NoEvents, Dataset has no events. Cannot run Event-Mode epoching.");
         end
 
         % Manage event format
@@ -157,7 +157,7 @@ function [EEG] = SPMA_epoch(EEG, opt)
     %% Save Dataset
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

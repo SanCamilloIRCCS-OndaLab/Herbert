@@ -1,7 +1,7 @@
-% SPMA_CHECKDATATYPE - Check the internal dataype of a data object
+% HRB_CHECKDATATYPE - Check the internal dataype of a data object
 %
 % Usage:
-%     >> [dataType] = SPMA_checkDataType(data)
+%     >> [dataType] = HRB_checkDataType(data)
 %
 % Inputs:
 %    data        = [any] A set of data
@@ -14,7 +14,7 @@
 % 
 % See also: EEGLAB
 
-function [dataType] = SPMA_checkDataType(data)
+function [dataType] = HRB_checkDataType(data)
     arguments (Input)
         data
     end

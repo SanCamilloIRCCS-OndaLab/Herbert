@@ -1,11 +1,11 @@
-function pipeline = SPMA_validatePipeline(pipelineFile, opt)
-% SPMA_VALIDATEPIPELINE - Validate a pipeline by checking that all the
+function pipeline = HRB_validatePipeline(pipelineFile, opt)
+% HRB_VALIDATEPIPELINE - Validate a pipeline by checking that all the
 % required fields are filled and that the overall structure is compatible
-% with SPMA.
+% with HRB.
 %
 % Examples:
-%     >>> SPMA_validatePipeline(pipelineFile)
-%     >>> SPMA_validatePipeline(pipelineFile, 'key', 'val')
+%     >>> HRB_validatePipeline(pipelineFile)
+%     >>> HRB_validatePipeline(pipelineFile, 'key', 'val')
 %
 % Parameters:
 %    pipelineFile (string): A file with the pipeline. Allowed formats are json or yaml.
@@ -34,12 +34,12 @@ function pipeline = SPMA_validatePipeline(pipelineFile, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
+    config = HRB_loadConfig("general", "save", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
     %% Load pipeline file
     if pipelineFile.endsWith('.json')

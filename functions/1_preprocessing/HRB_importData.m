@@ -1,9 +1,9 @@
-% SPMA_IMPORTDATA - EEG data import.
+% HRB_IMPORTDATA - EEG data import.
 %
 % Usage:
-%     >> [EEG] = SPMA_importData(eeg_file)
-%     >> [EEG] = SPMA_importData(eeg_file, 'key', val) 
-%     >> [EEG] = SPMA_importData(eeg_file, key=val) 
+%     >> [EEG] = HRB_importData(eeg_file)
+%     >> [EEG] = HRB_importData(eeg_file, 'key', val) 
+%     >> [EEG] = HRB_importData(eeg_file, key=val) 
 %
 % Inputs:
 %    eeg_file = [string] original EEG raw data file path
@@ -15,7 +15,7 @@
 % 
 % See also: EEGLAB, POP_FILEIO, POP_MFFIMPORT, POP_MUSEDIRECT, POP_IMPORTDATA
 
-function [EEG] = SPMA_importData(eeg_file, opt)
+function [EEG] = HRB_importData(eeg_file, opt)
     arguments (Input)
         eeg_file string
         % Optional
@@ -36,11 +36,11 @@ function [EEG] = SPMA_importData(eeg_file, opt)
     module = "preprocessing";
     
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "import", opt);
+    config = HRB_loadConfig(module, "import", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Importing data
     log.info(sprintf("Importing file %s", eeg_file))
@@ -73,7 +73,7 @@ function [EEG] = SPMA_importData(eeg_file, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end
