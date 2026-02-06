@@ -6,20 +6,20 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Functions &mdash; Super Pipeline Multiverse Analysis 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=7ab3649f" />
+  <title>Functions &mdash; Herbert 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=2709fde1"></script>
-      <script src="_static/doctools.js?v=9a2dae69"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Super Pipeline Multiverse Analysis documentation" href="index.html" /> 
+    <link rel="prev" title="README" href="readme.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -31,7 +31,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            Super Pipeline Multiverse Analysis
+            Herbert
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -42,17 +42,15 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">README</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Functions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#misc">Misc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#head-model">Head model</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#source-estimation">Source estimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#head-model">Head Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source-estimation">Source Estimation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#connectivity">Connectivity</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#network">Network</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#utils">Utils</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#utils">Utils</a></li>
 </ul>
 </li>
 </ul>
@@ -63,7 +61,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Super Pipeline Multiverse Analysis</a>
+          <a href="index.html">Herbert</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -86,14 +84,45 @@
 <section id="misc">
 <h2>Misc<a class="headerlink" href="#misc" title="Link to this heading"></a></h2>
 <dl class="mat function" id="module-0_misc">
-<dt class="sig sig-object mat" id="SPMA_saveData">
-<span class="sig-name descname"><span class="pre">SPMA_saveData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">data</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_saveData" title="Link to this definition"></a></dt>
-<dd><p>SPMA_SAVEDATA - Save a data object. The saved data can be in different
+<dt class="sig sig-object mat" id="HRB_createPipeline">
+<span class="sig-name descname"><span class="pre">HRB_createPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">pipelineHandlers</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_createPipeline" title="Link to this definition"></a></dt>
+<dd><p>HRB_CREATEPIPELINE - Create a pipeline from a cellarray of function
+handlers</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`HRB_createPipeline`(pipelineHandlers)
+&gt;&gt;&gt; :func:`HRB_createPipeline`(pipelineHandlers, &#39;key&#39;, &#39;val&#39;)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pipelineHandlers</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">cell</span></code></span>) – A cell array of function handlers</p></li>
+<li><p><strong>OutputFolder</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – The output folder where to save the logs</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pipeline converted to matlab struct</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pipeline (struct)</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="docutils literal notranslate"><span class="pre">JSONDECODE</span></code></p>
+</div>
+<p>Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024</p>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_saveData">
+<span class="sig-name descname"><span class="pre">HRB_saveData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">data</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_saveData" title="Link to this definition"></a></dt>
+<dd><p>HRB_SAVEDATA - Save a data object. The saved data can be in different
 format depending on the module where it is saved.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`SPMA_saveData`(data)
-&gt;&gt;&gt; :func:`SPMA_saveData`(data, opt.Name)
-&gt;&gt;&gt; :func:`SPMA_saveData`(data, opt.Name, opt.Folder)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`HRB_saveData`(data)
+&gt;&gt;&gt; :func:`HRB_saveData`(data, opt.Name)
+&gt;&gt;&gt; :func:`HRB_saveData`(data, opt.Name, opt.Folder)
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -115,20 +144,20 @@ name of the module of the calling function)</p></li>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_validatePipeline">
-<span class="sig-name descname"><span class="pre">SPMA_validatePipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">pipelineJSON</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_validatePipeline" title="Link to this definition"></a></dt>
-<dd><p>SPMA_VALIDATEPIPELINE - Validate a pipeline by checking that all the
+<dt class="sig sig-object mat" id="HRB_validatePipeline">
+<span class="sig-name descname"><span class="pre">HRB_validatePipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">pipelineFile</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_validatePipeline" title="Link to this definition"></a></dt>
+<dd><p>HRB_VALIDATEPIPELINE - Validate a pipeline by checking that all the
 required fields are filled and that the overall structure is compatible
-with SPMA.</p>
+with HRB.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`SPMA_validatePipeline`(pipelineJSON)
-&gt;&gt;&gt; :func:`SPMA_validatePipeline`(pipelineJSON, &#39;key&#39;, &#39;val&#39;)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`HRB_validatePipeline`(pipelineFile)
+&gt;&gt;&gt; :func:`HRB_validatePipeline`(pipelineFile, &#39;key&#39;, &#39;val&#39;)
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pipelineJSON</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – A json file with the pipeline</p></li>
+<li><p><strong>pipelineFile</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – A file with the pipeline. Allowed formats are json or yaml.</p></li>
 <li><p><strong>OutputFolder</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – The output folder where to save the logs</p></li>
 </ul>
 </dd>
@@ -146,17 +175,50 @@ with SPMA.</p>
 <p>Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024</p>
 </dd></dl>
 
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_loadPipeline">
+<span class="sig-name descname"><span class="pre">HRB_loadPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">pipelineFile</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_loadPipeline" title="Link to this definition"></a></dt>
+<dd><p>HRB_LOADPIPELINE - Load a pipeline from one or multiple files. Allowed
+formats are json and yaml.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; :func:`HRB_loadPipeline`(pipelineFile)
+&gt;&gt;&gt; :func:`HRB_loadPipeline`(pipelineFile1, pipelineFile2, pipelineFile3)
+&gt;&gt;&gt; :func:`HRB_loadPipeline`(pipelineFile, &#39;key&#39;, &#39;val&#39;)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pipelineFile</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – A file with the pipeline. Allowed formats are</p></li>
+<li><p><strong>times.</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">json</span> <span class="pre">or</span> <span class="pre">yaml.</span> <span class="pre">This</span> <span class="pre">parameter</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">repeated</span> <span class="pre">multiple</span></code></span>)</p></li>
+<li><p><strong>OutputFolder</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – The output folder where to save the logs</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pipeline converted to matlab struct</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pipeline (struct)</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="docutils literal notranslate"><span class="pre">JSONDECODE</span></code></p>
+</div>
+<p>Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024</p>
+</dd></dl>
+
 </section>
 <section id="preprocessing">
 <h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Link to this heading"></a></h2>
 <dl class="mat function" id="module-1_preprocessing">
-<dt class="sig sig-object mat" id="SPMA_removeChannels">
-<span class="sig-name descname"><span class="pre">SPMA_removeChannels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_removeChannels" title="Link to this definition"></a></dt>
-<dd><p>SPMA_REMOVECHANNELS - Remove a list of channels from an EEG dataset.</p>
+<dt class="sig sig-object mat" id="HRB_selectChannels">
+<span class="sig-name descname"><span class="pre">HRB_selectChannels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_selectChannels" title="Link to this definition"></a></dt>
+<dd><p>HRB_SELECTCHANNELS - Select a list of channels from an EEG dataset.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_removeChannels`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_removeChannels`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_removeChannels`(EEG, key=val)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_selectChannels`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_selectChannels`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_selectChannels`(EEG, key=val)
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -180,45 +242,13 @@ with SPMA.</p>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_filter">
-<span class="sig-name descname"><span class="pre">SPMA_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_filter" title="Link to this definition"></a></dt>
-<dd><p>SPMA_FILTER - Filter an EEG dataset. Based on EEGLAB functions.</p>
+<dt class="sig sig-object mat" id="HRB_cleanData">
+<span class="sig-name descname"><span class="pre">HRB_cleanData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_cleanData" title="Link to this definition"></a></dt>
+<dd><p>HRB_CLEANDATA - Automatic data cleaning removing bad channels.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_filter`(EEG);
-&gt;&gt;&gt; [EEG] = :func:`SPMA_filter`(EEG, &#39;key&#39;, val);
-&gt;&gt;&gt; [EEG] = :func:`SPMA_filter`(EEG, key=val);
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB structure system</p></li>
-<li><p><strong>Type</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – Type of the filter. Allowed values are: <cite>bandpass</cite>, <cite>lowpass</cite>, <cite>highpass</cite>, <cite>bandstop</cite></p></li>
-<li><p><strong>LowCutoff</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The low cutoff frequency</p></li>
-<li><p><strong>HighCutoff</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The high cutoff frequency</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>filtered EEG struct using EEGLAB structure system</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>EEG (struct)</p>
-</dd>
-</dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_EEGFILTNEW</span></code></p>
-</div>
-</dd></dl>
-
-<dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_cleanData">
-<span class="sig-name descname"><span class="pre">SPMA_cleanData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_cleanData" title="Link to this definition"></a></dt>
-<dd><p>SPMA_CLEANDATA - Automatic data cleaning removing bad channels.</p>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_cleanData`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_cleanData`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_cleanData`(EEG, key=val)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_cleanData`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_cleanData`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_cleanData`(EEG, key=val)
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -245,13 +275,207 @@ excluded channels.</p></li>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_selectTime">
-<span class="sig-name descname"><span class="pre">SPMA_selectTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_selectTime" title="Link to this definition"></a></dt>
-<dd><p>SPMA_SELECTTIME - Select a time window from an EEG dataset.</p>
+<dt class="sig sig-object mat" id="HRB_removeChannels">
+<span class="sig-name descname"><span class="pre">HRB_removeChannels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_removeChannels" title="Link to this definition"></a></dt>
+<dd><p>HRB_REMOVECHANNELS - Remove a list of channels from an EEG dataset.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_selectTime`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_selectTime`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_selectTime`(EEG, key=val)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_removeChannels`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_removeChannels`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_removeChannels`(EEG, key=val)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB structure system</p></li>
+<li><p><strong>Channels</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">{str}</span></code></span>) – Cell array with channel names</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>EEG struct using EEGLAB structure system</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>EEG (struct)</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_SELECT</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_epoch">
+<span class="sig-name descname"><span class="pre">HRB_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_epoch" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt><a class="reference internal" href="#HRB_epoch" title="HRB_epoch"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_epoch</span></code></a> performs epoching and baseline correction</dt><dd><p>on either task-based or resting state EEG data</p>
+<dl>
+<dt>Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; EEG = :func:`HRB_epoch`(EEG, &#39;Mode&#39;, &#39;Event&#39;, &#39;Events&#39;, {&#39;S1&#39;}, &#39;Limits&#39;,[-1 2])
+&gt;&gt;&gt; EEG = :func:`HRB_epoch`(EEG, &#39;Mode&#39;, &#39;Time&#39;, &#39;Recurrence&#39;, 2, &#39;Limits&#39;, [0 2])
+</pre></div>
+</div>
+</dd>
+<dt>Parameters:</dt><dd><p>EEG (struct): EEG struct using EEGLAB struct system.</p>
+</dd>
+<dt>Other Parameters:</dt><dd><dl class="simple">
+<dt>Mode (string): ‘Event’ (default) or ‘Time’</dt><dd><ul class="simple">
+<li><p>‘Event’: Extracts epochs locked to a specific Event (task)</p></li>
+<li><p>‘Time’: Cuts data into regular intervals (Resting state)</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt>— Mode ‘Event’ specific parameters —</dt><dd><p>Events (string / cell): Event types to time-lock to. If [] uses all Events</p>
+</dd>
+</dl>
+</dd>
+<dt>— Mode ‘Time’ specific parameters —</dt><dd><blockquote>
+<div><p>Recurrence (double): Interval in seconds between epochs (default 1)</p>
+</div></blockquote>
+<dl>
+<dt>— Common parameters —</dt><dd><dl class="simple">
+<dt>Limits (1x2 double): Epoch lantecy limits [start end] in seconds</dt><dd><ul class="simple">
+<li><p>For “Event”: relative to a marker (e.g. [-1 2])</p></li>
+<li><p>For “Time”: duration of the chunk (e.g. [0 2])</p></li>
+</ul>
+</dd>
+</dl>
+<p>Baseline (1x2 double): Baseline correction [start end] in seconds.
+If empty (e.g. []), no baseline correction is applied</p>
+<p>Save (logical): Save the epoched dataset</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_epoch</span></code>, <code class="docutils literal notranslate"><span class="pre">eeg_regepochs</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_rmbase</span></code></p>
+<blockquote>
+<div><p>Authors: Ettore Napoli, University of Bologna, 2026</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_resample">
+<span class="sig-name descname"><span class="pre">HRB_resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_resample" title="Link to this definition"></a></dt>
+<dd><p>HRB_RESAMPLE - Resample an EEG dataset. Based on EEGLAB functions.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_resample`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_resample`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_resample`(EEG, key=val)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB structure system</p></li>
+<li><p><strong>Frequency</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The new resampled frequency</p></li>
+<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – Whether to save or not the resampled EEG.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>resampled EEG struct using EEGLAB structure system</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>EEG (struct)</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_RESAMPLE</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_icflag">
+<span class="sig-name descname"><span class="pre">HRB_icflag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_icflag" title="Link to this definition"></a></dt>
+<dd><p><a class="reference internal" href="#HRB_icflag" title="HRB_icflag"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_icflag</span></code></a> flags artifactual components based on ICLabel</p>
+<dl>
+<dt>Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; EEG = :func:`HRB_icflag`(EEG, &#39;Muscle&#39;, [0.9, 1], &#39;Eye&#39;, [0.9, 1])
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB struct system. ICs weights must</p>
+</dd>
+</dl>
+<p>:param have been computed and labeled through <a class="reference internal" href="#HRB_iclabel" title="HRB_iclabel"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_iclabel</span></code></a>:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">Threshold</span></code></span>) – Each parameter accept a [min max]</p></li>
+<li><p><strong>vector</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">1x2</span> <span class="pre">double</span></code></span>)</p></li>
+<li><p><strong>NaN].</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">will</span> <span class="pre">be</span> <span class="pre">flagged.</span> <span class="pre">Default</span> <span class="pre">is</span> <span class="pre">[NaN</span></code></span>)</p></li>
+<li><p><strong>follow</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">The</span> <span class="pre">parameters</span> <span class="pre">are</span> <span class="pre">as</span></code></span>) – Brain, Muscle, Eye, Heart,</p></li>
+<li><p><strong>LineNoise</strong></p></li>
+<li><p><strong>ChannelNoise</strong></p></li>
+<li><p><strong>Other.</strong></p></li>
+<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – Whether to save the dataset with the flagged</p></li>
+<li><p><strong>components.</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_iclabel</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_icflag</span></code></p>
+<p>Authors: Ettore Napoli, University of Bologna, 2026</p>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_chanedit">
+<span class="sig-name descname"><span class="pre">HRB_chanedit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_chanedit" title="Link to this definition"></a></dt>
+<dd><p>HRB_CHANEDIT - edit channel file</p>
+<dl class="simple">
+<dt>Usage:</dt><dd><p>&gt;&gt; [EEG] = :func:<a href="#id1"><span class="problematic" id="id2">`</span></a>HRB_chanedit`(chan_file)
+&gt;&gt; [EEG] = :func:<a href="#id3"><span class="problematic" id="id4">`</span></a>HRB_chanedit`(chan_file, ‘key’, val)
+&gt;&gt; [EEG] = :func:<a href="#id5"><span class="problematic" id="id6">`</span></a>HRB_chanedit`(chan_file, key=val)</p>
+</dd>
+<dt>Inputs:</dt><dd><p>EEG = [struct] EEG struct using EEGLAB structure system
+chan_file = [string] channel file path OR template
+filetype =</p>
+</dd>
+<dt>Outputs:</dt><dd><p>EEG = [struct] EEG struct using EEGLAB structure system</p>
+</dd>
+</dl>
+<p>Authors: Sara Lago, IRCCS San Camillo Hospital, 2024</p>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_CHANEDIT</span></code></p>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_rejepochs">
+<span class="sig-name descname"><span class="pre">HRB_rejepochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_rejepochs" title="Link to this definition"></a></dt>
+<dd><p><a class="reference internal" href="#HRB_rejepochs" title="HRB_rejepochs"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_rejepochs</span></code></a> reject epochs based on amplitudes threshold</p>
+<dl>
+<dt>Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; EEG = :func:`HRB_rejepochs`(EEG, &#39;Threshold&#39;, 100, &#39;Channels&#39;, [1:32]) %Rejects &gt;+100 and &lt;-100 uV
+&gt;&gt;&gt; EEG = :func:`HRB_rejepochs`(EEG, &#39;Threshold&#39;, [min max], &#39;Channels&#39;, [1:32])
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB struct system.Epochs must have</p></li>
+<li><p><strong>extracted.</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">been</span></code></span>)</p></li>
+<li><p><strong>Threshold</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – Amplitude limit in uV.
+- If scalar (e.g., 100): Limits are set to [-100 100]
+- If vector (e.g. [-50 150]): Limits are specific</p></li>
+<li><p><strong>Channels</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">vector</span></code></span>) – List of channel indices to check. Default is [] = ALL</p></li>
+<li><p><strong>TimeLimits</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">1x2</span> <span class="pre">double</span></code></span>) – Time window to check in seconds [min max].Default is [] = whole epoch</p></li>
+<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – Save the cleaned dataset</p></li>
+</ul>
+</dd>
+</dl>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_eegthresh</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_rejepoch</span></code></p>
+<p>Authors: Ettore Napoli, University of Bologna, 2026</p>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_selectTime">
+<span class="sig-name descname"><span class="pre">HRB_selectTime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_selectTime" title="Link to this definition"></a></dt>
+<dd><p>HRB_SELECTTIME - Select a time window from an EEG dataset.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_selectTime`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_selectTime`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_selectTime`(EEG, key=val)
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -278,13 +502,13 @@ recording</p></li>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_runica">
-<span class="sig-name descname"><span class="pre">SPMA_runica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_runica" title="Link to this definition"></a></dt>
-<dd><p>SPMA_RUNICA - Perform ICA decomposition with Infomax ICA algorithm.</p>
+<dt class="sig sig-object mat" id="HRB_runica">
+<span class="sig-name descname"><span class="pre">HRB_runica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_runica" title="Link to this definition"></a></dt>
+<dd><p>HRB_RUNICA - Perform ICA decomposition with Infomax ICA algorithm.</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_runica`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_runica`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_runica`(EEG, key=val)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_runica`(EEG)
+&gt;&gt;&gt; [EEG] = :func:`HRB_runica`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; [EEG] = :func:`HRB_runica`(EEG, key=val)
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -312,55 +536,80 @@ N training blocks</p></li>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_resample">
-<span class="sig-name descname"><span class="pre">SPMA_resample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_resample" title="Link to this definition"></a></dt>
-<dd><p>SPMA_RESAMPLE - Resample an EEG dataset. Based on EEGLAB functions.</p>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_resample`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_resample`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_resample`(EEG, key=val)
+<dt class="sig sig-object mat" id="HRB_subcomp">
+<span class="sig-name descname"><span class="pre">HRB_subcomp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_subcomp" title="Link to this definition"></a></dt>
+<dd><p><a class="reference internal" href="#HRB_subcomp" title="HRB_subcomp"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_subcomp</span></code></a> removes independent components from EEG data.</p>
+<dl>
+<dt>Usage:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; EEG = :func:`HRB_subcomp`(EEG) %Removes flagged components
+&gt;&gt;&gt; EEG = :func:`HRB_subcomp`(EEG, &#39;Components&#39;, [8 13 21]) %Removes specific
+components
 </pre></div>
 </div>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB structure system</p></li>
-<li><p><strong>Frequency</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The new resampled frequency</p></li>
-<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – Whether to save or not the resampled EEG.</p></li>
+<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB struct system.</p></li>
+<li><p><strong>Components</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">1xN</span> <span class="pre">vector</span></code></span>) – Vector listing the components to be removed.</p></li>
+<li><p><strong>empty</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">If</span></code></span>)</p></li>
+<li><p><strong>(EEG.reject.gcompreject).</strong></p></li>
+<li><p><strong>Keep</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – If true, it keeps the listed components.Default is</p></li>
+<li><p><strong>false.</strong></p></li>
+<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – Whether to save the pruned datase</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>resampled EEG struct using EEGLAB structure system</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>EEG (struct)</p>
-</dd>
 </dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_RESAMPLE</span></code></p>
-</div>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_subcomp</span></code></p>
+<p>Authors: Ettore Napoli, University of Bologna, 2026</p>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="SPMA_selectChannels">
-<span class="sig-name descname"><span class="pre">SPMA_selectChannels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#SPMA_selectChannels" title="Link to this definition"></a></dt>
-<dd><p>SPMA_SELECTCHANNELS - Select a list of channels from an EEG dataset.</p>
+<dt class="sig sig-object mat" id="HRB_iclabel">
+<span class="sig-name descname"><span class="pre">HRB_iclabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_iclabel" title="Link to this definition"></a></dt>
+<dd><p><a class="reference internal" href="#HRB_iclabel" title="HRB_iclabel"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">HRB_iclabel</span></code></a> labels independnt components using ICLabel</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`SPMA_selectChannels`(EEG)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_selectChannels`(EEG, &#39;key&#39;, val)
-&gt;&gt;&gt; [EEG] = :func:`SPMA_selectChannels`(EEG, key=val)
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; EEG = :func:`HRB_iclabel`(EEG)
+&gt;&gt;&gt; EEG = :func:`HRB_iclabel`(EEG, &#39;key&#39;, val)
+&gt;&gt;&gt; EEG = :func:`HRB_iclabel`(EEG, key = val)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB struct system. ICs weights must</p></li>
+<li><p><strong>computed</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">have</span> <span class="pre">been</span></code></span>)</p></li>
+<li><p><strong>Version</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – ‘default’, ‘lite’, ‘beta’</p></li>
+<li><p><strong>Save</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">logical</span></code></span>) – whether to save or not the dataset with labeled</p></li>
+<li><p><strong>components</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>See also: <code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">pop_iclabel</span></code></p>
+<p>Authors: Ettore Napoli, University of Bologna, 2026</p>
+</dd></dl>
+
+<dl class="mat function">
+<dt class="sig sig-object mat" id="HRB_filter">
+<span class="sig-name descname"><span class="pre">HRB_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">EEG</span></em>, <em class="sig-param"><span class="pre">opt</span></em><span class="sig-paren">)</span><a class="headerlink" href="#HRB_filter" title="Link to this definition"></a></dt>
+<dd><p>HRB_FILTER - Filter an EEG dataset. Based on EEGLAB functions.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; [EEG] = :func:`HRB_filter`(EEG);
+&gt;&gt;&gt; [EEG] = :func:`HRB_filter`(EEG, &#39;key&#39;, val);
+&gt;&gt;&gt; [EEG] = :func:`HRB_filter`(EEG, key=val);
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>EEG</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">struct</span></code></span>) – EEG struct using EEGLAB structure system</p></li>
-<li><p><strong>Channels</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">{str}</span></code></span>) – Cell array with channel names</p></li>
+<li><p><strong>Type</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">string</span></code></span>) – Type of the filter. Allowed values are: <cite>bandpass</cite>, <cite>lowpass</cite>, <cite>highpass</cite>, <cite>bandstop</cite></p></li>
+<li><p><strong>LowCutoff</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The low cutoff frequency</p></li>
+<li><p><strong>HighCutoff</strong> (<span><code class="xref mat mat-obj docutils literal notranslate"><span class="pre">double</span></code></span>) – The high cutoff frequency</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>EEG struct using EEGLAB structure system</p>
+<dd class="field-even"><p>filtered EEG struct using EEGLAB structure system</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>EEG (struct)</p>
@@ -368,16 +617,16 @@ N training blocks</p></li>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_SELECT</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">EEGLAB</span></code>, <code class="docutils literal notranslate"><span class="pre">POP_EEGFILTNEW</span></code></p>
 </div>
 </dd></dl>
 
 </section>
 <section id="head-model">
-<h2>Head model<a class="headerlink" href="#head-model" title="Link to this heading"></a></h2>
+<h2>Head Model<a class="headerlink" href="#head-model" title="Link to this heading"></a></h2>
 </section>
 <section id="source-estimation">
-<span id="module-2_head_model"></span><h2>Source estimation<a class="headerlink" href="#source-estimation" title="Link to this heading"></a></h2>
+<span id="module-2_head_model"></span><h2>Source Estimation<a class="headerlink" href="#source-estimation" title="Link to this heading"></a></h2>
 </section>
 <section id="connectivity">
 <span id="module-3_source_estimation"></span><h2>Connectivity<a class="headerlink" href="#connectivity" title="Link to this heading"></a></h2>
@@ -388,389 +637,26 @@ N training blocks</p></li>
 <section id="utils">
 <span id="module-5_network"></span><h2>Utils<a class="headerlink" href="#utils" title="Link to this heading"></a></h2>
 <dl class="mat function" id="module-utils">
-<dt class="sig sig-object mat" id="cprintf">
-<span class="sig-name descname"><span class="pre">cprintf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">style</span></em>, <em class="sig-param"><span class="pre">format</span></em>, <em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#cprintf" title="Link to this definition"></a></dt>
-<dd><p>CPRINTF displays styled formatted text in the Command Window</p>
-<dl>
-<dt>Syntax:</dt><dd><p>count = :func:<a href="#id1"><span class="problematic" id="id2">`</span></a>cprintf`(style,format,…)</p>
-</dd>
-<dt>Description:</dt><dd><p>CPRINTF processes the specified text using the exact same FORMAT
-arguments accepted by the built-in SPRINTF and FPRINTF functions.</p>
-<p>CPRINTF then displays the text in the Command Window using the
-specified STYLE argument. The accepted styles are those used for
-Matlab’s syntax highlighting (see: File / Preferences / Colors /
-M-file Syntax Highlighting Colors), and also user-defined colors.</p>
-<p>The possible pre-defined STYLE names are:</p>
-<blockquote>
-<div><p>‘Text’                 - default: black
-‘Keywords’             - default: blue
-‘Comments’             - default: green
-‘Strings’              - default: purple
-‘UnterminatedStrings’  - default: dark red
-‘SystemCommands’       - default: orange
-‘Errors’               - default: light red
-‘Hyperlinks’           - default: underlined blue</p>
-<p>‘Black’,’Cyan’,’Magenta’,’Blue’,’Green’,’Red’,’Yellow’,’White’</p>
-</div></blockquote>
-<dl>
-<dt>STYLE beginning with ‘-’ or ‘_’ will be underlined. For example:</dt><dd><p>‘-Blue’ is underlined blue, like ‘Hyperlinks’;
-‘_Comments’ is underlined green etc.</p>
-</dd>
-<dt>STYLE beginning with ‘*’ will be bold (R2011b+ only). For example:</dt><dd><p>‘<a href="#id3"><span class="problematic" id="id4">*</span></a>Blue’ is bold blue;
-‘<a href="#id5"><span class="problematic" id="id6">*</span></a>Comments’ is bold green etc.</p>
-</dd>
-<dt>Note: Matlab does not currently support both bold and underline,</dt><dd><p>only one of them can be used in a single <a class="reference internal" href="#cprintf" title="cprintf"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">cprintf</span></code></a> command. But of
-course bold and underline can be mixed by using separate commands.</p>
-</dd>
-<dt>STYLE colors can be specified in 3 variants:</dt><dd><p>[0.1, 0.7, 0.3] - standard Matlab RGB color format in the range 0.0-1.0
-[26, 178, 76]   - numeric RGB values in the range 0-255
-‘#1ab34d’       - Hexadecimal format in the range ‘00’-‘FF’ (case insensitive)</p>
-<blockquote>
-<div><p>3-digit HTML RGB format also accepted: ‘a5f’=’aa55ff’</p>
-</div></blockquote>
-</dd>
-</dl>
-<p>STYLE can be underlined by prefixing - :  -[0,1,1]  or ‘-#0FF’ is underlined cyan
-STYLE can be made bold  by prefixing * : ‘<a href="#id7"><span class="problematic" id="id8">*</span></a>[1,0,0]’ or ‘<a href="#id9"><span class="problematic" id="id10">*</span></a>#F00’ is bold red</p>
-<p>STYLE is case-insensitive and accepts unique partial strings just
-like handle property names.</p>
-<p>CPRINTF by itself, without any input parameters, displays a demo</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<p><a class="reference internal" href="#cprintf" title="cprintf"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">cprintf</span></code></a>;   % displays the demo
-:func:<a href="#id11"><span class="problematic" id="id12">`</span></a>cprintf`(‘text’,   ‘regular black text’);
-:func:<a href="#id13"><span class="problematic" id="id14">`</span></a>cprintf`(‘hyper’,  ‘followed %s’,’by’);
-:func:<a href="#id15"><span class="problematic" id="id16">`</span></a>cprintf`(‘key’,    ‘%d colored’, 4);
-:func:<a href="#id17"><span class="problematic" id="id18">`</span></a>cprintf`(‘-comment’,’&amp; underlined’);
-:func:<a href="#id19"><span class="problematic" id="id20">`</span></a>cprintf`(‘err’,    ‘elementsn’);
-:func:<a href="#id21"><span class="problematic" id="id22">`</span></a>cprintf`(‘cyan’,   ‘cyan’);
-:func:<a href="#id23"><span class="problematic" id="id24">`</span></a>cprintf`(‘_green’, ‘underlined green’);
-:func:<a href="#id25"><span class="problematic" id="id26">`</span></a>cprintf`(-[1,0,1], ‘underlined magenta’);
-:func:<a href="#id27"><span class="problematic" id="id28">`</span></a>cprintf`([1,0.5,0],’and multi-nline orangen’);
-:func:<a href="#id29"><span class="problematic" id="id30">`</span></a>cprintf`(’<em>blue’,  ‘and *bold</em> (R2011b+ only)n’);
-:func:<a href="#id31"><span class="problematic" id="id32">`</span></a>cprintf`(‘string’);  % same as fprintf(‘string’) and :func:<a href="#id33"><span class="problematic" id="id34">`</span></a>cprintf`(‘text’,’string’)</p>
-<dl class="simple">
-<dt>Bugs and suggestions:</dt><dd><p>Please send to Yair Altman (altmany at gmail dot com)</p>
-</dd>
-</dl>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This code heavily relies on undocumented and unsupported Matlab
-functionality. It works on Matlab 7+, but use at your own risk!</p>
-<p>A technical description of the implementation can be found at:
-&lt;a href=”<a class="reference external" href="http://undocumentedmatlab.com/articles/">http://undocumentedmatlab.com/articles/</a><a class="reference internal" href="#cprintf" title="cprintf"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">cprintf</span></code></a>”&gt;http://UndocumentedMatlab.com/articles/:func:<a href="#id35"><span class="problematic" id="id36">`</span></a>cprintf`&lt;/a&gt;</p>
-</div>
-<dl>
-<dt>Limitations:</dt><dd><ol class="arabic">
-<li><p>In R2011a and earlier, a single space char is inserted at the
-beginning of each CPRINTF text segment (this is ok in R2011b+).</p></li>
-<li><p>In R2011a and earlier, consecutive differently-colored multi-line
-CPRINTFs sometimes display incorrectly on the bottom line.
-As far as I could tell this is due to a Matlab bug. Examples:</p>
-<blockquote>
-<div><p>&gt;&gt; :func:<a href="#id37"><span class="problematic" id="id38">`</span></a>cprintf`(‘-str’,’undernline’); :func:<a href="#id39"><span class="problematic" id="id40">`</span></a>cprintf`(‘err’,’redn’); % hidden ‘red’, unhidden ‘_’
-&gt;&gt; :func:<a href="#id41"><span class="problematic" id="id42">`</span></a>cprintf`(‘str’,’regunlar’); :func:<a href="#id43"><span class="problematic" id="id44">`</span></a>cprintf`(‘err’,’redn’); % underline red (not purple) ‘lar’</p>
-</div></blockquote>
-</li>
-<li><p>Sometimes, non newline (’n’)-terminated segments display unstyled
-(black) when the command prompt chevron (‘&gt;&gt;’) regains focus on the
-continuation of that line (I can’t pinpoint when this happens).
-To fix this, simply newline-terminate all command-prompt messages.</p></li>
-<li><p>In R2011b and later, the above errors appear to be fixed. However,
-the last character of an underlined segment is not underlined for
-some unknown reason (add an extra space character to make it look better)</p></li>
-<li><p>In old Matlab versions (e.g., Matlab 7.1 R14), multi-line styles
-only affect the first line. Single-line styles work as expected.
-R14 also appends a single space after underlined segments.</p></li>
-<li><p>Bold style is only supported on R2011b+, and cannot also be underlined.</p></li>
-</ol>
-</dd>
-<dt>Change log:</dt><dd><p>2009-05-13: First version posted on &lt;a href=”<a class="reference external" href="http://www.mathworks.com/matlabcentral/fileexchange/authors/27420">http://www.mathworks.com/matlabcentral/fileexchange/authors/27420</a>”&gt;MathWorks File Exchange&lt;/a&gt;
-2009-05-28: corrected nargout behavior suggested by Andreas Gäb
-2009-09-28: Fixed edge-case problem reported by Swagat K
-2010-06-27: Fix for R2010a/b; fixed edge case reported by Sharron; CPRINTF with no args runs the demo
-2011-03-04: Performance improvement
-2011-08-29: Fix by Danilo (FEX comment) for non-default text colors
-2011-11-27: Fixes for R2011b
-2012-08-06: Fixes for R2012b; added bold style; accept RGB string (non-numeric) style
-2012-08-09: Graceful degradation support for deployed (compiled) and non-desktop applications; minor bug fixes
-2015-03-20: Fix: if command window isn’t defined yet (startup) use standard fprintf as suggested by John Marozas
-2015-06-24: Fixed a few discoloration issues (some other issues still remain)
-2020-01-20: Fix by T. Hosman for embedded hyperlinks
-2021-04-07: Enabled specifying color as #RGB (hexa codes), [.1,.7,.3], [26,178,76]
-2022-01-04: Fixed cases of invalid colors (especially bad on R2021b onward)
-2022-03-26: Fixed cases of using string (not char) inputs</p>
-</dd>
-</dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><code class="docutils literal notranslate"><span class="pre">sprintf</span></code>, <code class="docutils literal notranslate"><span class="pre">fprintf</span></code></p>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">License</span> <span class="pre">to</span> <span class="pre">use</span> <span class="pre">and</span> <span class="pre">modify</span> <span class="pre">this</span> <span class="pre">code</span> <span class="pre">is</span> <span class="pre">granted</span> <span class="pre">freely</span> <span class="pre">to</span> <span class="pre">all</span> <span class="pre">interested</span></code>, <code class="docutils literal notranslate"><span class="pre">as</span> <span class="pre">long</span> <span class="pre">as</span> <span class="pre">the</span> <span class="pre">original</span> <span class="pre">author</span> <span class="pre">is</span></code>
-<code class="docutils literal notranslate"><span class="pre">referenced</span> <span class="pre">and</span> <span class="pre">attributed</span> <span class="pre">as</span> <span class="pre">such.</span> <span class="pre">The</span> <span class="pre">original</span> <span class="pre">author</span> <span class="pre">maintains</span> <span class="pre">the</span> <span class="pre">right</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">solely</span> <span class="pre">associated</span> <span class="pre">with</span> <span class="pre">this</span> <span class="pre">work</span></code>.
-<code class="docutils literal notranslate"><span class="pre">Programmed</span> <span class="pre">and</span> <span class="pre">Copyright</span> <span class="pre">by</span> <span class="pre">Yair</span> <span class="pre">M.</span> <span class="pre">Altman:</span> <span class="pre">altmany(at)gmail.com</span></code>
-<code class="docutils literal notranslate"><span class="pre">Revision:</span> <span class="pre">1.14</span> <span class="pre">$</span>&#160; <span class="pre">$Date:</span> <span class="pre">2022/03/26</span> <span class="pre">20:48:51</span></code> $</p>
+<dt class="sig sig-object mat" id="catStruct">
+<span class="sig-name descname"><span class="pre">catStruct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#catStruct" title="Link to this definition"></a></dt>
+<dd><p>The type of the None singleton.</p>
 </dd></dl>
 
-<dl class="mat class">
+<dl class="mat attribute">
 <dt class="sig sig-object mat" id="logger">
-<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#logger" title="Link to this definition"></a></dt>
-<dd><p>LOGGER  Logger object that handles any command window or file logging.</p>
-<blockquote>
-<div><p>Logger provides a lot of functionalities and flexibility which
-a regular “fprintf” or “disp” message cannot such as log message
-formatting, logging to file, or specifiying logging levels to be
-displayed.</p>
-<p>Keep on logging on!</p>
-<dl>
-<dt>CREATION</dt><dd><dl class="simple">
-<dt>log = LOGGER(logger_name, …             (string  - Optional - Default Value: “Default”)</dt><dd><p>show_date, …               (boolean - Optional - Default Value: false    )
-show_time, …               (boolean - Optional - Default Value: false    )
-show_logging_filename, …   (boolean - Optional - Default Value: false    )
-show_logging_function, …   (boolean - Optional - Default Value: false    )
-show_logging_linenumber, … (boolean - Optional - Default Value: false    )
-log_filename)                (string  - Optional - Default Value: false    )</p>
-</dd>
-</dl>
-<p>logger_name             - Name the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> (useful when using seperate loggers)
-show_date               - Show the date in a log message
-show_time               - Show the current time in the log message
-show_logging_filename   - Show the file where the log message was made
-show_logging_function   - Show the function where the log message was made
-show_logging_linenumber - Show the linenumber where the log message was made
-log_filename            - Use a specific log filename (.log)</p>
-</dd>
-<dt>METHODS</dt><dd><p>LOGGER.get_log_levels()     -  List the available logging levels
-LOGGER.time_the_logger(n)   -  Performance/Timing test for the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>, logging n number of logs</p>
-<p>LOGGER.debug()              -  Log a debug level message
-LOGGER.info()               -  Log a info level message
-LOGGER.warning()            -  Log a warning level message
-LOGGER.error()              -  Log a error level message
-LOGGER.critical()           -  Log a critical level message
-LOGGER.fatal()              -  Log a fatal level message</p>
-<p>LOGGER.log()                -  Log any log level using integers (ie. 3 instead of warning)</p>
-<p>LOGGER.clear_log_file()     -  Clears an existing log file
-LOGGER.delete_log_file()    -  Deletes an existing log file</p>
-</dd>
-<dt>PROPERTIES</dt><dd><p>LOGGER.description             - (string)  - Custom description of the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> object instance
-LOGGER.default_level           - (integer) - Lowest log level to be displayed</p>
-<p>LOGGER.show_logger_name        - (boolean) - Show the name of the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> in the log message
-LOGGER.show_date               - (boolean) - Show the date in a log message
-LOGGER.show_time               - (boolean) - Show the current time in the log message
-LOGGER.show_ms                 - (boolean) - Show milliseconds in log message
-LOGGER.show_logging_filename   - (boolean) - Show the file name where the log message was logged
-LOGGER.show_logging_function   - (boolean) - Show the function where the log message was logged
-LOGGER.show_logging_linenumber - (boolean) - Show the linenumber where the log message was made</p>
-<p>LOGGER.log_to_command_window   - (boolean) - Show the log messages command window
-LOGGER.log_to_file             - (boolean) - Save log messages to log file
-LOGGER.enabled                 - (boolean) - Enable or disable the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>
-LOGGER.log_directory           - (string)  - Directory where log file will be saved
-LOGGER.log_filename            - (string)  - Custom filename where log will be saved</p>
-</dd>
-<dt>DISTRIBUTED LOGGER USAGE</dt><dd><ul>
-<li><p>The same LOGGER can be used in many different scopes such as
-different functions or files.  The ways of doing that include:</p>
-<blockquote>
-<div><ol class="arabic">
-<li><p>Pass the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> object variable around just like any
-other variable.</p>
-<blockquote>
-<div><p>log = LOGGER()
-log.info(“Logging a message”)
-someFunction(log)</p>
-<dl class="simple">
-<dt>function someFunction(log)</dt><dd><p>log.info(“Logging a message inside this function”)</p>
-</dd>
-</dl>
-<p>end</p>
-</div></blockquote>
-</li>
-<li><p>Make the LOGGER a global variable that is available to
-the funcitons within a file. Remember to “global” the <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>
-again at any new function you are using it.</p>
-<blockquote>
-<div><p>global log
-log = LOGGER()</p>
-<dl class="simple">
-<dt>function someFunction()</dt><dd><p>global log
-log.info(“This is some log message”)</p>
-</dd>
-</dl>
-<p>end</p>
-</div></blockquote>
-</li>
-<li><p>Simply create another LOGGER with the same name or
-default name.  The <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> manager will sync all loggers
-with the same name, acting as one big distributed
-<a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>.</p>
-<blockquote>
-<div><dl class="simple">
-<dt>File 1:</dt><dd><p>log = LOGGER(“Cool Logger”)
-log.info(“Logging some message”)</p>
-</dd>
-<dt>File 2:</dt><dd><p>log = LOGGER(“Cool Logger”)
-log.info(“This is another message using the same <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>”)</p>
-</dd>
-</dl>
-</div></blockquote>
-</li>
-</ol>
-</div></blockquote>
-</li>
-</ul>
-</dd>
-<dt>NOTES</dt><dd><ul>
-<li><p>Please do not name your LOGGER object “<a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>”. That will make
-lots of wasted time scratching your head and pulling your hair :)</p></li>
-<li><p>As of now, you must use a different log variable when using the
-same LOGGER accross different files and functions with “global”.
-Example:</p>
-<blockquote>
-<div><dl>
-<dt>File 1:</dt><dd><p>log = LOGGER(“Cool Logger”)
-log.info(“Logging some message”)</p>
-</dd>
-<dt>File 2:</dt><dd><p>global log2                      &lt;– NOTE “log2” not “log”
-log2 = LOGGER(“Cool Logger”)
-log2.info(“This is another message using the same <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>”)</p>
-<dl class="simple">
-<dt>function someFunction()</dt><dd><p>global log2
-log2.info(“Another message using the same <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>”)</p>
-</dd>
-</dl>
-<p>end</p>
-</dd>
-</dl>
-</div></blockquote>
-</li>
-<li><p>Simultanously logging messages to both command window and file is
-slower than just logging to command window. To measure yourself, use
-“log.time_the_logger(n)” method.</p></li>
-<li><p>Using simple “disp()” and “fprintf()” is faster than using LOGGER.
-However LOGGER gives you lots of ability and flexibility in
-return.</p></li>
-<li><p>You can create multiple LOGGER for multiple functions and events.</p>
-<blockquote>
-<div><p>main_log = LOGGER(“Main”)
-cool_log = LOGGER(“Cool”)</p>
-</div></blockquote>
-<p>EXAMPLES</p>
-</li>
-</ul>
-<p>Creating a <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a>:                  log = LOGGER()</p>
-<p>Show the time in log:               log.show_time = true
-Show milliseconds:                  log.show_ms = true</p>
-<p>Output all logging levels:          log.get_log_levels
-Change default level to debug:      log.default_level = 1</p>
-<p>Logging a message:                  log.info(“Cool stuff!”)
-Logging an error:                   log.error(“Trouble!”)
-Log a warning with integer:         log.log(3, “Watch out!”)</p>
-<p>Time <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> performance:            log.time_the_logger(10000)</p>
-</dd>
-</dl>
-</div></blockquote>
-<p>This function was originally developed by <a class="reference external" href="https://github.com/ismet55555/Logging-For-MATLAB">https://github.com/ismet55555/Logging-For-MATLAB</a></p>
-<div class="members docutils container">
-<dl>
-<dt>Constructor Summary</dt><dd><dl class="mat method">
-<dt class="sig sig-object mat" id="logger.logger">
-<span class="sig-name descname"><span class="pre">logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">logger_name</span></em>, <em class="sig-param"><span class="pre">show_date</span></em>, <em class="sig-param"><span class="pre">show_time</span></em>, <em class="sig-param"><span class="pre">show_logging_filename</span></em>, <em class="sig-param"><span class="pre">show_logging_function</span></em>, <em class="sig-param"><span class="pre">show_logging_linenumber</span></em>, <em class="sig-param"><span class="pre">log_filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#logger.logger" title="Link to this definition"></a></dt>
-<dd><p>Object constructor for <a class="reference internal" href="#logger.logger" title="logger.logger"><code class="xref mat mat-meth docutils literal notranslate"><span class="pre">logger()</span></code></a> object
-This method runs when the object is being created into memory</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
-</dd>
-<dt>Method Summary</dt><dd><dl class="mat method">
-<dt class="sig sig-object mat" id="logger.delete">
-<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">print_out</span></em><span class="sig-paren">)</span><a class="headerlink" href="#logger.delete" title="Link to this definition"></a></dt>
-<dd><p>Object destructor for <a class="reference internal" href="#logger" title="logger"><code class="xref mat mat-class docutils literal notranslate"><span class="pre">logger</span></code></a> object
-This method runs when the object is being deleted from memory</p>
-</dd></dl>
-
-</dd>
-</dl>
-</div>
+<dl class="mat function">
+<dt class="sig sig-object mat" id="RenameField">
+<span class="sig-name descname"><span class="pre">RenameField</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RenameField" title="Link to this definition"></a></dt>
+<dd><p>The type of the None singleton.</p>
 </dd></dl>
 
 <dl class="mat function">
-<dt class="sig sig-object mat" id="catStruct">
-<span class="sig-name descname"><span class="pre">catStruct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">varargin</span></em><span class="sig-paren">)</span><a class="headerlink" href="#catStruct" title="Link to this definition"></a></dt>
-<dd><dl>
-<dt><a class="reference internal" href="#catStruct" title="catStruct"><code class="xref mat mat-func docutils literal notranslate"><span class="pre">catStruct</span></code></a>   Concatenate or merge structures with different fieldnames</dt><dd><p>X = :func:<a href="#id45"><span class="problematic" id="id46">`</span></a>catStruct`(S1,S2,S3,…) merges the structures S1, S2, S3 …
-into one new structure X. X contains all fields present in the various
-structures. An example:</p>
-<blockquote>
-<div><p>A.name = ‘Me’ ;
-B.income = 99999 ;
-X = :func:<a href="#id47"><span class="problematic" id="id48">`</span></a>catStruct`(A,B)
-% -&gt; X.name = ‘Me’ ;
-%    X.income = 99999 ;</p>
-</div></blockquote>
-<p>If a fieldname is not unique among structures (i.e., a fieldname is
-present in more than one structure), only the value from the last
-structure with this field is used. In this case, the fields are
-alphabetically sorted. A warning is issued as well. An axample:</p>
-<blockquote>
-<div><p>S1.name = ‘Me’ ;
-S2.age  = 20 ; S3.age  = 30 ; S4.age  = 40 ;
-S5.honest = false ;
-Y = :func:<a href="#id49"><span class="problematic" id="id50">`</span></a>catStruct`(S1,S2,S3,S4,S5) % use value from S4</p>
-</div></blockquote>
-<p>The inputs can be array of structures. All structures should have the
-same size. An example:</p>
-<blockquote>
-<div><p>C(1).bb = 1 ; C(2).bb = 2 ;
-D(1).aa = 3 ; D(2).aa = 4 ;
-CD = :func:<a href="#id51"><span class="problematic" id="id52">`</span></a>catStruct`(C,D) % CD is a 1x2 structure array with fields bb and aa</p>
-</div></blockquote>
-<p>The last input can be the string ‘sorted’. In this case,
-:func:<a href="#id53"><span class="problematic" id="id54">`</span></a>catStruct`(S1,S2, …, ‘sorted’) will sort the fieldnames alphabetically.
-To sort the fieldnames of a structure A, you could use
-:func:<a href="#id55"><span class="problematic" id="id56">`</span></a>catStruct`(A,’sorted’) but I recommend ORDERFIELDS for doing that.</p>
-<p>When there is nothing to concatenate, the result will be an empty
-struct (0x0 struct array with no fields).</p>
-<p>NOTE: To concatenate similar arrays of structs, you can use simple
-concatenation:</p>
-<blockquote>
-<div><p>A = dir(’<em>.mat’) ; B = dir(’</em>.m’) ; C = [A ; B] ;</p>
-</div></blockquote>
-<p>NOTE: This function relies on unique. Matlab changed the behavior of
-its set functions since 2013a, so this might cause some backward
-compatibility issues when dulpicated fieldnames are found.</p>
-</dd>
-</dl>
-<p>See also <code class="docutils literal notranslate"><span class="pre">CAT</span></code>, <code class="docutils literal notranslate"><span class="pre">STRUCT</span></code>, <code class="docutils literal notranslate"><span class="pre">FIELDNAMES</span></code>, <code class="docutils literal notranslate"><span class="pre">STRUCT2CELL</span></code>, <code class="docutils literal notranslate"><span class="pre">ORDERFIELDS</span></code>
-<code class="docutils literal notranslate"><span class="pre">version</span> <span class="pre">4.1</span> <span class="pre">(feb</span> <span class="pre">2015)</span></code>, <code class="docutils literal notranslate"><span class="pre">tested</span> <span class="pre">in</span> <span class="pre">R2014a</span></code>
-<code class="docutils literal notranslate"><span class="pre">c)</span> <span class="pre">Jos</span> <span class="pre">van</span> <span class="pre">der</span> <span class="pre">Geest</span></code>
-<code class="docutils literal notranslate"><span class="pre">email:</span> <span class="pre">jos&#64;jasen.nl</span></code>
-<code class="docutils literal notranslate"><span class="pre">History</span></code>
-<code class="docutils literal notranslate"><span class="pre">Created</span> <span class="pre">in</span> <span class="pre">2005</span></code>
-<code class="docutils literal notranslate"><span class="pre">Revisions</span></code></p>
-<blockquote>
-<div><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">2.0</span> <span class="pre">(sep</span> <span class="pre">2007)</span> <span class="pre">removed</span> <span class="pre">bug</span> <span class="pre">when</span> <span class="pre">dealing</span> <span class="pre">with</span> <span class="pre">fields</span> <span class="pre">containing</span> <span class="pre">cell</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">arrays</span> <span class="pre">(Thanks</span> <span class="pre">to</span> <span class="pre">Rene</span> <span class="pre">Willemink</span></code>)</p>
-</dd>
-</dl>
-<p><code class="docutils literal notranslate"><span class="pre">2.1</span> <span class="pre">(sep</span> <span class="pre">2008)</span> <span class="pre">added</span> <span class="pre">warning</span> <span class="pre">and</span> <span class="pre">error</span> <span class="pre">identifiers</span></code>
-<code class="docutils literal notranslate"><span class="pre">2.2</span> <span class="pre">(oct</span> <span class="pre">2008)</span> <span class="pre">fixed</span> <span class="pre">error</span> <span class="pre">when</span> <span class="pre">dealing</span> <span class="pre">with</span> <span class="pre">empty</span> <span class="pre">structs</span> <span class="pre">(thanks</span> <span class="pre">to</span></code></p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">Lars</span> <span class="pre">Barring</span></code>)</p>
-</div></blockquote>
-<p><code class="docutils literal notranslate"><span class="pre">3.0</span> <span class="pre">(mar</span> <span class="pre">2013)</span> <span class="pre">fixed</span> <span class="pre">problem</span> <span class="pre">when</span> <span class="pre">the</span> <span class="pre">inputs</span> <span class="pre">were</span> <span class="pre">array</span> <span class="pre">of</span> <span class="pre">structures</span></code></p>
-</div></blockquote>
-<dl>
-<dt><code class="docutils literal notranslate"><span class="pre">thanks</span> <span class="pre">to</span> <span class="pre">Tor</span> <span class="pre">Inge</span> <span class="pre">Birkenes</span></code>).</dt><dd><blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">Rephrased</span> <span class="pre">the</span> <span class="pre">help</span> <span class="pre">section</span> <span class="pre">as</span> <span class="pre">well</span></code>.</p>
-</div></blockquote>
-<dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">4.0</span> <span class="pre">(dec</span> <span class="pre">2013)</span> <span class="pre">fixed</span> <span class="pre">problem</span> <span class="pre">with</span> <span class="pre">unique</span> <span class="pre">due</span> <span class="pre">to</span> <span class="pre">version</span> <span class="pre">differences</span> <span class="pre">in</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">ML.</span> <span class="pre">Unique(...</span></code>, <code class="docutils literal notranslate"><span class="pre">'last')</span> <span class="pre">is</span> <span class="pre">no</span> <span class="pre">longer</span> <span class="pre">the</span> <span class="pre">deafult</span></code>.</p>
-</dd>
-</dl>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">thanks</span> <span class="pre">to</span> <span class="pre">Isabel</span> <span class="pre">P</span></code>)</dt><dd><p><code class="docutils literal notranslate"><span class="pre">4.1</span> <span class="pre">(feb</span> <span class="pre">2015)</span> <span class="pre">fixed</span> <span class="pre">warning</span> <span class="pre">with</span> <span class="pre">narginchk</span></code></p>
-</dd>
-</dl>
+<dt class="sig sig-object mat" id="cprintf">
+<span class="sig-name descname"><span class="pre">cprintf</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cprintf" title="Link to this definition"></a></dt>
+<dd><p>The type of the None singleton.</p>
 </dd></dl>
 
 </section>
@@ -780,13 +666,13 @@ compatibility issues when dulpicated fieldnames are found.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Super Pipeline Multiverse Analysis documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="readme.html" class="btn btn-neutral float-left" title="README" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, IRCCS San Camillo | Neurophysiology Lab.</p>
+    <p>&#169; Copyright 2024, IRCCS San Camillo | ONDA Lab.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

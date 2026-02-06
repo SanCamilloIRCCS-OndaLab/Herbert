@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Herbert: an EEG Reproducible Brain Exploration Research Toolbox &mdash; Herbert 0.1 documentation</title>
+  <title>README &mdash; Herbert 0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -18,7 +18,9 @@
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Functions" href="functions.html" />
+    <link rel="prev" title="Herbert documentation" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -40,7 +42,27 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">README</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#herbert-an-eeg-reproducible-brain-exploration-research-toolbox">Herbert: an EEG Reproducible Brain Exploration Research Toolbox</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-herbert">What is Herbert?</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#why-herbert">Why <em>Herbert</em>?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#install">Install</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-structure">Pipeline structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code-structure">Code structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pipeline-json">Pipeline JSON</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pipeline-yaml">Pipeline YAML</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#roadmap">Roadmap</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a></li>
 </ul>
 
@@ -58,9 +80,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Herbert: an EEG Reproducible Brain Exploration Research Toolbox</li>
+      <li class="breadcrumb-item active">README</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/readme_link.md.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/readme.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -68,17 +90,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="herbert-an-eeg-reproducible-brain-exploration-research-toolbox">
-<h1>Herbert: an EEG Reproducible Brain Exploration Research Toolbox<a class="headerlink" href="#herbert-an-eeg-reproducible-brain-exploration-research-toolbox" title="Link to this heading"></a></h1>
+  <section id="readme">
+<h1>README<a class="headerlink" href="#readme" title="Link to this heading"></a></h1>
+<section id="herbert-an-eeg-reproducible-brain-exploration-research-toolbox">
+<h2>Herbert: an EEG Reproducible Brain Exploration Research Toolbox<a class="headerlink" href="#herbert-an-eeg-reproducible-brain-exploration-research-toolbox" title="Link to this heading"></a></h2>
 <p>This toolbox is still under development.</p>
 <section id="what-is-herbert">
-<h2>What is Herbert?<a class="headerlink" href="#what-is-herbert" title="Link to this heading"></a></h2>
+<h3>What is Herbert?<a class="headerlink" href="#what-is-herbert" title="Link to this heading"></a></h3>
 <p>Herbert is an open-source toolbox for building modular pipelines for connectivity and network analysis of resting-state M/EEG data.</p>
 <p>The design allows (and encourages) the development of multiverse pipelines, where each branch can explore the effects of different parameters or algorithms within the same pipeline.</p>
 <p>The pipeline steps are built as wrapper of state-of-the-art libraries, ensuring the reliability of the outcomes.</p>
 <p>Currently, Herbert is implemented as a Matlab toolbox. However, future plans include a Python implementation.</p>
 <section id="why-herbert">
-<h3>Why <em>Herbert</em>?<a class="headerlink" href="#why-herbert" title="Link to this heading"></a></h3>
+<h4>Why <em>Herbert</em>?<a class="headerlink" href="#why-herbert" title="Link to this heading"></a></h4>
 <p>Following open source tradition, the name is a recursive acronym: Herbert: an EEG Reproducible Brain Exploration Research Toolbox.</p>
 <p>Moreover, Herbert is a homage to the fictional writer Herbert Quain, from Jorge Luis Borges. Quain is the author of a “regressive, ramified novel” in which the first chapter branches into three parallel chapters, each of which then branches again into three further chapters, resulting in a total of nine distinct stories.</p>
 <p>In <em>Examination of the Work of Herbert Quain</em>, Borges closes with the following passage:</p>
@@ -89,7 +113,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 </section>
 </section>
 <section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
+<h3>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h3>
 <p>To install the software, you need git (downloadable releases will be provided in the future).</p>
 <p>If you don’t have git on your computer, you can follow for example <a class="reference external" href="https://github.com/git-guides/install-git">this tutorial</a>.</p>
 <p>Once git is installed, go to the folder where you want to install the toolbox and run:</p>
@@ -99,7 +123,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 <p>It is very important to add <code class="docutils literal notranslate"><span class="pre">--recurse-submodules</span></code> to the command, since all the external dependencies are included as submodules!</p>
 </section>
 <section id="pipeline-structure">
-<h2>Pipeline structure<a class="headerlink" href="#pipeline-structure" title="Link to this heading"></a></h2>
+<h3>Pipeline structure<a class="headerlink" href="#pipeline-structure" title="Link to this heading"></a></h3>
 <p>The pipeline is structured in 5 main modules:</p>
 <ol class="arabic simple">
 <li><p>Preprocessing</p></li>
@@ -112,7 +136,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 <p>The goal is to have a pipeline with default steps to run coherent analysis over different sets of data. This toolbox is intended to support analysis workflows: it automates many steps while keeping critical points under human supervision.</p>
 </section>
 <section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h3>
 <p>The pipeline is developed with <code class="docutils literal notranslate"><span class="pre">Matlab</span> <span class="pre">2022b</span></code>.</p>
 <p>It also builds upon several open-source packages:</p>
 <table class="docutils align-default">
@@ -130,12 +154,12 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 <p>The external dependencies are included as submodules in the folder <code class="docutils literal notranslate"><span class="pre">external</span></code></p>
 </section>
 <section id="code-structure">
-<h2>Code structure<a class="headerlink" href="#code-structure" title="Link to this heading"></a></h2>
+<h3>Code structure<a class="headerlink" href="#code-structure" title="Link to this heading"></a></h3>
 <p>The code is structured in a modular way, where each function can be used as it is, or combined with other functions to build up a complete pipeline.</p>
 <p>The file <code class="docutils literal notranslate"><span class="pre">Herbert.m</span></code> is just a template to build a pipeline.</p>
 <p>The pipeline is defined using a JSON or YAML file, structured as follows:</p>
 <section id="pipeline-json">
-<h3>Pipeline JSON<a class="headerlink" href="#pipeline-json" title="Link to this heading"></a></h3>
+<h4>Pipeline JSON<a class="headerlink" href="#pipeline-json" title="Link to this heading"></a></h4>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">	</span><span class="nt">&quot;step1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">        </span><span class="nt">&quot;function&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HRB_resample&quot;</span><span class="p">,</span>
@@ -190,7 +214,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 </div>
 </section>
 <section id="pipeline-yaml">
-<h3>Pipeline YAML<a class="headerlink" href="#pipeline-yaml" title="Link to this heading"></a></h3>
+<h4>Pipeline YAML<a class="headerlink" href="#pipeline-yaml" title="Link to this heading"></a></h4>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">step1</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HRB_resample</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">downsampling</span>
@@ -235,7 +259,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 </section>
 </section>
 <section id="settings">
-<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h2>
+<h3>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h3>
 <p>The toolbox works out of the box with default parameters. No parameter is hardcoded; all defaults are stored in <code class="docutils literal notranslate"><span class="pre">functions/0_misc/HRB_defaultConfig</span></code>.</p>
 <p>The internal structure of the parameters is a Matlab nested struct where the first level is the name of the module, the second the name of the function , and finally the name of the parameter. The full list of default configurations is listed in the following table:</p>
 <table class="docutils align-default">
@@ -286,7 +310,7 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 </table>
 </section>
 <section id="roadmap">
-<h2>Roadmap<a class="headerlink" href="#roadmap" title="Link to this heading"></a></h2>
+<h3>Roadmap<a class="headerlink" href="#roadmap" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>[x] Core multiverse functions</p></li>
 <li><p>[x] Plot diagram</p></li>
@@ -299,11 +323,17 @@ And that demiurges and gods would choose an infinite scheme: infinite stories, i
 </ul>
 </section>
 </section>
+<div class="toctree-wrapper compound">
+</div>
+</section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Herbert documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="functions.html" class="btn btn-neutral float-right" title="Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
