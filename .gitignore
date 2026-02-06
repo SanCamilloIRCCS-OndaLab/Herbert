@@ -46,4 +46,4 @@ output/*
 data/
 
 # Documentation
-docs/build
+docs/build/
