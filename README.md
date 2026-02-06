@@ -1,4 +1,4 @@
-# Herbert: Herbert is an EEG Reproducible Brain Exploration Research Toolbox
+# Herbert: an EEG Reproducible Brain Exploration Research Toolbox
 
 This toolbox is still under development.
 
@@ -14,7 +14,7 @@ Currently, Herbert is implemented as a Matlab toolbox. However, future plans inc
 
 ### Why *Herbert*?
 
-Following open source tradition, the name is a recursive acronym: Herbert is an EEG Reproducible Brain Exploration Research Toolbox.
+Following open source tradition, the name is a recursive acronym: Herbert: an EEG Reproducible Brain Exploration Research Toolbox.
 
 Moreover, Herbert is a homage to the fictional writer Herbert Quain, from Jorge Luis Borges. Quain is the author of a “regressive, ramified novel” in which the first chapter branches into three parallel chapters, each of which then branches again into three further chapters, resulting in a total of nine distinct stories.
 
