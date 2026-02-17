@@ -1,11 +1,11 @@
-function pipeline = SPMA_loadPipeline(pipelineFile, opt)
-% SPMA_LOADPIPELINE - Load a pipeline from one or multiple files. Allowed
+function pipeline = HRB_loadPipeline(pipelineFile, opt)
+% HRB_LOADPIPELINE - Load a pipeline from one or multiple files. Allowed
 % formats are json and yaml.
 %
 % Examples:
-%     >>> SPMA_loadPipeline(pipelineFile)
-%     >>> SPMA_loadPipeline(pipelineFile1, pipelineFile2, pipelineFile3)
-%     >>> SPMA_loadPipeline(pipelineFile, 'key', 'val')
+%     >>> HRB_loadPipeline(pipelineFile)
+%     >>> HRB_loadPipeline(pipelineFile1, pipelineFile2, pipelineFile3)
+%     >>> HRB_loadPipeline(pipelineFile, 'key', 'val')
 %
 % Parameters:
 %    pipelineFile (string): A file with the pipeline. Allowed formats are
@@ -35,12 +35,12 @@ function pipeline = SPMA_loadPipeline(pipelineFile, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
+    config = HRB_loadConfig("general", "save", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
     %% Load pipeline file
     if pipelineFile.endsWith('.json')

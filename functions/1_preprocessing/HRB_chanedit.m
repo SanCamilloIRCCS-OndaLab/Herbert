@@ -1,10 +1,10 @@
-function [EEG] = SPMA_chanedit(EEG, opt)
-% SPMA_CHANEDIT - edit channel file
+function [EEG] = HRB_chanedit(EEG, opt)
+% HRB_CHANEDIT - edit channel file
 %
 % Usage:
-%     >> [EEG] = SPMA_chanedit(chan_file)
-%     >> [EEG] = SPMA_chanedit(chan_file, 'key', val) 
-%     >> [EEG] = SPMA_chanedit(chan_file, key=val) 
+%     >> [EEG] = HRB_chanedit(chan_file)
+%     >> [EEG] = HRB_chanedit(chan_file, 'key', val) 
+%     >> [EEG] = HRB_chanedit(chan_file, key=val) 
 %
 % Inputs:
 %    EEG = [struct] EEG struct using EEGLAB structure system
@@ -59,11 +59,11 @@ function [EEG] = SPMA_chanedit(EEG, opt)
     module = "preprocessing";
 
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "chanedit", opt);
+    config = HRB_loadConfig(module, "chanedit", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Editing channel file
     log.info(sprintf("Editing channel file: %s", opt.chan_file))
@@ -88,7 +88,7 @@ function [EEG] = SPMA_chanedit(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end

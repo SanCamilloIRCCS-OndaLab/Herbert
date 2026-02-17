@@ -1,20 +1,19 @@
-function pipeline = SPMA_validatePipeline(pipelineFile, opt)
-% SPMA_VALIDATEPIPELINE - Validate a pipeline by checking that all the
-% required fields are filled and that the overall structure is compatible
-% with SPMA.
+function pipeline = HRB_createPipeline(pipelineHandlers, opt)
+% HRB_CREATEPIPELINE - Create a pipeline from a cellarray of function
+% handlers
 %
 % Examples:
-%     >>> SPMA_validatePipeline(pipelineFile)
-%     >>> SPMA_validatePipeline(pipelineFile, 'key', 'val')
+%     >>> HRB_createPipeline(pipelineHandlers)
+%     >>> HRB_createPipeline(pipelineHandlers, 'key', 'val')
 %
 % Parameters:
-%    pipelineFile (string): A file with the pipeline. Allowed formats are json or yaml.
+%    pipelineHandlers (cell): A cell array of function handlers
 %
 % Other Parameters:
 %    OutputFolder (string): The output folder where to save the logs
 %
 % Returns:
-%   pipeline (string): The validated pipeline converted to matlab string
+%   pipeline (struct): The pipeline converted to matlab struct
 %
 % See also: 
 %   JSONDECODE
@@ -22,7 +21,7 @@ function pipeline = SPMA_validatePipeline(pipelineFile, opt)
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 
     arguments (Input)
-        pipelineFile string {mustBeFile}
+        pipelineHandlers (1,:) cell {mustBeHandle}
         % Save options
         opt.OutputFolder string
         % Log options
@@ -34,26 +33,32 @@ function pipeline = SPMA_validatePipeline(pipelineFile, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
+    config = HRB_loadConfig("general", "save", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
-    %% Load pipeline file
-    if pipelineFile.endsWith('.json')
-        % it's json format, let's use jsondecode
-        pipeline_str = fileread(pipelineFile);
-        pipeline = jsondecode(pipeline_str);
-    elseif pipelineFile.endsWith('.yaml')
-        % it's yaml format, let's use yaml utils from https://github.com/MartinKoch123/yaml
-        pipeline = yaml.loadFile(pipelineFile);
-        pipeline = replaceFieldxFunction(pipeline);
-    else
-        errmsg = sprintf("Pipeline error - The pipeline file %s must be .json or .yaml", pipelineFile);
-        log.error(errmsg);
-        error(errmsg);
+    %% Create the pipeline structure from the cellarray
+    % Each cell of the cell array is one step, if there is a cellarray it
+    % is a multiverse
+    % Let's create a structure like the one created from the json file
+    pipeline = struct();
+    for n_steps = 1:length(pipelineHandlers)
+        stepHandler = pipelineHandlers{n_steps};
+        step_name = sprintf("step%d", n_steps);
+        if isa(stepHandler,"function_handle")
+            pipeline.(step_name) = handler2struct(stepHandler);
+        else
+            step_array = {};
+            for n_universe = 1:length(stepHandler)
+                step_universe = stepHandler{n_universe};
+                step_array{n_universe} = handler2struct(step_universe);
+                
+            end
+            pipeline.(step_name) = step_array;
+        end
     end
 
     
@@ -126,21 +131,59 @@ function pipeline = SPMA_validatePipeline(pipelineFile, opt)
 
     end
 
-end
-
-
-function s = replaceFieldxFunction(s)
-% loop all steps
-steps = fieldnames(s);
-for sn = 1:length(steps)
-    step = s.(steps{sn});
-    if isstruct(step)
-        step = RenameField(step,'xFunction','function');
-    else % it's multiuniverse
-        for l = 1:length(step)
-            step{l} = RenameField(step{l},'xFunction','function');
-        end
     end
-    s.(steps{sn}) = step;
 end
+
+
+function mustBeHandle(c)
+for idx_1 = 1:length(c)
+    c_i = c{idx_1};
+    if iscell(c_i)
+        isfhandle = cellfun(@(x) isa(x,'function_handle'),c_i);
+        isfhandle = all(isfhandle);
+    elseif isa(c_i,'function_handle')
+        isfhandle = 1;
+    else
+        isfhandle = 0;
+    end
+    if ~isfhandle
+        eidType = 'mustBeHandle:notFunctionHandle';
+        msgType = 'Input must be a cell array of function handles';
+        error(eidType,msgType)
+    end
+end
+end
+
+function s  = handler2struct(fh)
+s = struct();
+% Extract name of the function and parameters from the handler
+fstr = func2str(fh);
+% Regular expression of a handler @(x)func(x,parm=val)
+pattern_handle = '^@\(\w+\)(?<func>\w+)\(\w+(?<param>.)*\)$';
+r = regexp(fstr, pattern_handle, 'names');
+s.function = r.func;
+param = r.param;
+% Now we have to extract key-val from param
+pattern_key = "['"+'"]?'+"\w+"+'["'+"']?";
+pattern_val = "\w+";
+pattern_val_array = "[\[{].*[\]}]";
+pattern_param = sprintf("(?<key>%s) ?[=,] ?(?<val>%s|%s)",pattern_key, pattern_val, pattern_val_array);
+keyvals = regexp(param, pattern_param,'match');
+s.params = struct();
+for ii = 1:length(keyvals)
+    keyval = regexp(keyvals{ii}, pattern_param,'names');
+    key = cleanCharString(keyval.key);
+    val = cleanCharString(keyval.val);
+    s.params.(key) = eval(val);
+end
+
+end
+
+
+function c = cleanCharString(c)
+    if startsWith(c,'"') && endsWith(c,'"')
+        c = c(2:end-1);
+    elseif startsWith(c,"'") && endsWith(c,"'")
+        c = c(2:end-1);
+    end
 end

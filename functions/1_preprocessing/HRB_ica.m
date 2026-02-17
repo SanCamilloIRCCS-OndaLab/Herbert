@@ -1,23 +1,23 @@
-function [EEG] = SPMA_ica(EEG, opt)
-% SPMA_ica runs the full ica pipeline:
+function [EEG] = HRB_ica(EEG, opt)
+% HRB_ica runs the full ica pipeline:
 % 1. Decomposition (RunICA)
 % 2. Classification (ICLabel)
 % 3. Flagging (ICFlag)
 % 4. Removal (SubComp) with optional Visual Check
 %
 % Usage:
-%   >>> EEG = SPMA_ica(EEG, 'Visualize', true);
-%   >>> EEG = SPMA_ica(EEG, 'Extended', 1, 'Muscle', [0.8 1]);
+%   >>> EEG = HRB_ica(EEG, 'Visualize', true);
+%   >>> EEG = HRB_ica(EEG, 'Extended', 1, 'Muscle', [0.8 1]);
 %
 % Authors: Ettore Napoli, University of Bologna, 2026
 
     arguments(Input)
         EEG struct
-        % Optional parameter for SPMA_runica
+        % Optional parameter for HRB_runica
         opt.Extended double = 1
-        % Optional parameter for SPMA_iclabel
+        % Optional parameter for HRB_iclabel
         opt.Version string {mustBeMember(opt.Version, ["default", "lite", "beta"])} = "default"
-        % Optional parameters for SPMA_icflag
+        % Optional parameters for HRB_icflag
         opt.Brain           (1, 2) double = [0 0]
         opt.Muscle          (1, 2) double = [0 0]
         opt.Eye             (1, 2) double = [0 0]
@@ -28,7 +28,7 @@ function [EEG] = SPMA_ica(EEG, opt)
         % Optional intermediate save option
         opt.SaveWeights logical = false      % Save dataset with ICA weights BEFORE removal
         opt.SaveWeightsName string = ""      % Name for the intermediate file
-        % Optional parameter for SPMA_subcomp
+        % Optional parameter for HRB_subcomp
         opt.Visualize logical = false
         % Save Options
         opt.Save logical
@@ -46,11 +46,11 @@ function [EEG] = SPMA_ica(EEG, opt)
     module = "preprocessing";
 
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "ica", opt);
+    config = HRB_loadConfig(module, "ica", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Consistency check for output folder
     if config.OutputFolder == ""
@@ -68,14 +68,14 @@ function [EEG] = SPMA_ica(EEG, opt)
     %% 1. Run ICA
     log.info("Initiating ICA pipeline")
     log.info("Step 1/4: Running ICA decomposition");
-    EEG = SPMA_runica(EEG, ...
+    EEG = HRB_runica(EEG, ...
         'Extended', config.Extended, ...
         'Save', false, ... 
         'LogEnabled', logConfig.LogEnabled, 'LogLevel', logConfig.LogLevel);
 
     %% 2. ICLabel
     log.info("Step 2/4: Labeling Components")
-    EEG = SPMA_iclabel(EEG, ...
+    EEG = HRB_iclabel(EEG, ...
         'Version', config.Version, ...
         'Save', false, ...
         'LogEnabled', logConfig.LogEnabled, ...
@@ -83,7 +83,7 @@ function [EEG] = SPMA_ica(EEG, opt)
 
     %% 3. ICFlag
     log.info("Step 3/4: Flagging Components")
-    EEG = SPMA_icflag(EEG, ...
+    EEG = HRB_icflag(EEG, ...
         'Brain', config.Brain, ...
         'Muscle', config.Muscle, ...
         'Eye', config.Eye, ...
@@ -107,7 +107,7 @@ function [EEG] = SPMA_ica(EEG, opt)
 
         % Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", mid_name, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", mid_name, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
     %% 4. Components Subtraction
@@ -120,8 +120,8 @@ function [EEG] = SPMA_ica(EEG, opt)
         final_name = config.SaveName;
     end
     
-    % Run SPMA_subcomp
-    EEG = SPMA_subcomp(EEG, ...
+    % Run HRB_subcomp
+    EEG = HRB_subcomp(EEG, ...
         'Visualize', config.Visualize, ...
         'Components', [], ... 
         'Save', config.Save, ... 

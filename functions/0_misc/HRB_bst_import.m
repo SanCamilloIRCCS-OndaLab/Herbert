@@ -1,5 +1,5 @@
-function [EEG] = SPMA_bst_import(EEG, opt)
-% SPMA_bst_import initializes Brainstorm and creating a Protocol and importing
+function [EEG] = HRB_bst_import(EEG, opt)
+% HRB_bst_import initializes Brainstorm and creating a Protocol and importing
 % the EEGLAB dataset.
 % This function acts as a bridge between EEGLAB and Brainstorm.
 % It ensures Brainstorm is running, sets the database directory to a 
@@ -7,7 +7,7 @@ function [EEG] = SPMA_bst_import(EEG, opt)
 % the protocol, and imports the current EEG data.
 %
 % Usage:
-%   >>> EEG = SPMA_bst_import(EEG, 'ProtocolName', 'MyStudy'
+%   >>> EEG = HRB_bst_import(EEG, 'ProtocolName', 'MyStudy'
 % 
 % Parameters:
 %   EEG (struct): EEGLAB-derived dataset
@@ -27,7 +27,7 @@ function [EEG] = SPMA_bst_import(EEG, opt)
     arguments(Input)
         EEG struct
         % Optional Parameters
-        opt.ProtocolName string = "SPMA_Protocol"
+        opt.ProtocolName string = "HRB_Protocol"
         opt.SubjectName string = ""
         opt.UseDefaultAnat logical = true
         opt.BrainstormDbDir = ""
@@ -47,11 +47,11 @@ function [EEG] = SPMA_bst_import(EEG, opt)
     module = "head_model";
     
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "bst_import", opt);
+    config = HRB_loadConfig(module, "bst_import", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% 1. Handle output folder for the .set results
     if config.OutputFolder == ""
@@ -79,7 +79,7 @@ function [EEG] = SPMA_bst_import(EEG, opt)
 
     %% 3. Start Brainstorm
     if ~exist('brainstorm', 'file')
-        error("SPMA:BrainstormNotFound", "Brainstorm is not in MATLAB path. Check external folder.");
+        error("HRB:BrainstormNotFound", "Brainstorm is not in MATLAB path. Check external folder.");
     end
     
     if ~brainstorm('status')

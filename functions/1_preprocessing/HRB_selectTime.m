@@ -1,10 +1,10 @@
-function [EEG] = SPMA_selectTime(EEG, opt)
-% SPMA_SELECTTIME - Select a time window from an EEG dataset.
+function [EEG] = HRB_selectTime(EEG, opt)
+% HRB_SELECTTIME - Select a time window from an EEG dataset.
 %
 % Examples:
-%     >>> [EEG] = SPMA_selectTime(EEG)
-%     >>> [EEG] = SPMA_selectTime(EEG, 'key', val) 
-%     >>> [EEG] = SPMA_selectTime(EEG, key=val) 
+%     >>> [EEG] = HRB_selectTime(EEG)
+%     >>> [EEG] = HRB_selectTime(EEG, 'key', val) 
+%     >>> [EEG] = HRB_selectTime(EEG, key=val) 
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -45,11 +45,11 @@ function [EEG] = SPMA_selectTime(EEG, opt)
     module = "preprocessing";
     
     %% Parsing arguments
-    config = SPMA_loadConfig(module, "selectTime", opt);
+    config = HRB_loadConfig(module, "selectTime", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Removing channels
     log.info("Select time")
@@ -73,7 +73,7 @@ function [EEG] = SPMA_selectTime(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 
 end

@@ -1,10 +1,10 @@
-% SPMA_MERGEPIPELINE - Merge one or more pipelines and reorder the fields.
+% HRB_MERGEPIPELINE - Merge one or more pipelines and reorder the fields.
 % Fields are reordered if they end with a number, otherwise the order is
 % not changed.
 %
 % Usage:
-%     >> SPMA_mergePipeline(pipeline)
-%     >> SPMA_mergePipeline(pipeline1,pipeline2,...)
+%     >> HRB_mergePipeline(pipeline)
+%     >> HRB_mergePipeline(pipeline1,pipeline2,...)
 %
 % Inputs:
 %    pipelineJSON = [struct] A struct with the pipeline. If all field names
@@ -15,7 +15,7 @@
 % 
 % See also: MERGESTRUCT
 
-function pipeline = SPMA_mergePipeline(pipelines)
+function pipeline = HRB_mergePipeline(pipelines)
     arguments (Repeating)
         pipelines struct
     end

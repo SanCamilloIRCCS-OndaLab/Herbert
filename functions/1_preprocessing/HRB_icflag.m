@@ -1,12 +1,12 @@
-function [EEG] = SPMA_icflag(EEG, opt)
-% SPMA_icflag flags artifactual components based on ICLabel
+function [EEG] = HRB_icflag(EEG, opt)
+% HRB_icflag flags artifactual components based on ICLabel
 %
 % Usage:
-%   >>> EEG = SPMA_icflag(EEG, 'Muscle', [0.9, 1], 'Eye', [0.9, 1])
+%   >>> EEG = HRB_icflag(EEG, 'Muscle', [0.9, 1], 'Eye', [0.9, 1])
 %
 % Parameters:
 %   EEG (struct): EEG struct using EEGLAB struct system. ICs weights must
-%   have been computed and labeled through SPMA_iclabel
+%   have been computed and labeled through HRB_iclabel
 %
 % Other Parameters:
 %   Threshold parameters (Name-value): Each parameter accept a [min max]
@@ -48,19 +48,19 @@ function [EEG] = SPMA_icflag(EEG, opt)
     module = "preprocessing";
 
     %% Parsing Arguments
-    config = SPMA_loadConfig(module, "icflag", opt);
+    config = HRB_loadConfig(module, "icflag", opt);
 
     %% Logger
-    logConfig = SPMA_loadConfig(module, "logging", opt);
-    log = SPMA_loggerSetUp(module, logConfig);
+    logConfig = HRB_loadConfig(module, "logging", opt);
+    log = HRB_loggerSetUp(module, logConfig);
 
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        error("SPMA: No ICA" , "No ICs weights found for the current EEG structure.")
+        error("HRB: No ICA" , "No ICs weights found for the current EEG structure.")
     end
 
     if isempty(EEG.etc.ic_classification.ICLabel)
-        error("SPMA: No Classification", "No ICLabel classification found")
+        error("HRB: No Classification", "No ICLabel classification found")
     end
 
     %% Build Threshold Matrix
@@ -95,7 +95,7 @@ function [EEG] = SPMA_icflag(EEG, opt)
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
-        SPMA_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
     end
 end
 

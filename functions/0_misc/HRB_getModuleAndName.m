@@ -1,9 +1,9 @@
-% SPMA_GETMODULEANDNAME - Retrieve the name of a function and the module to
+% HRB_GETMODULEANDNAME - Retrieve the name of a function and the module to
 % which the function belongs. This function is intended to be called
-% directly from a SPMA function.
+% directly from a HRB function.
 %
 % Usage:
-%     >> [module, name] = SPMA_getModuleAndName()
+%     >> [module, name] = HRB_getModuleAndName()
 %
 % Inputs:
 %    module  = [string] The module of the function
@@ -14,11 +14,11 @@
 % 
 % See also: DBSTACK
 
-function [module,name] = SPMA_getModuleAndName(stackFrame)
+function [module,name] = HRB_getModuleAndName(stackFrame)
     arguments (Input)
         stackFrame int8 = 1
     end
-    FUNC_PREFIX = "SPMA_";
+    FUNC_PREFIX = "HRB_";
 
     % check who is the calling function from the stack
     st = dbstack(1,"-completenames");

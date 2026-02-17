@@ -1,11 +1,11 @@
-% SPMA_DRAWPIPELINE - Draw the pipeline in a block diagram using graphviz
+% HRB_DRAWPIPELINE - Draw the pipeline in a block diagram using graphviz
 % library. Library must be installed in the system, or it will use the
 % online service https://quickchart.io.
 %
 % Usage:
-%     >> SPMA_drawPipeline(pipeline);
-%     >> SPMA_drawPipeline(pipeline, saveName);
-%     >> SPMA_drawPipeline(pipeline, saveName, 'key', val);
+%     >> HRB_drawPipeline(pipeline);
+%     >> HRB_drawPipeline(pipeline, saveName);
+%     >> HRB_drawPipeline(pipeline, saveName, 'key', val);
 %
 % Inputs:
 %    pipeline = [struct] The pipeline already loaded as struct
@@ -23,7 +23,7 @@
 % 
 % See also:
 
-function SPMA_drawPipeline(pipeline, saveName, opt)
+function HRB_drawPipeline(pipeline, saveName, opt)
     arguments
         pipeline struct
         saveName string = "pipeline"
@@ -43,13 +43,13 @@ function SPMA_drawPipeline(pipeline, saveName, opt)
     end
 
     %% Parsing arguments
-    config = SPMA_loadConfig("general", "save", opt);
-    imgOptions = SPMA_loadConfig("general", "image", opt);
+    config = HRB_loadConfig("general", "save", opt);
+    imgOptions = HRB_loadConfig("general", "image", opt);
 
     %% Logger
     logOptions = struct( ...
         "LogFileDir", config.OutputFolder);
-    log = SPMA_loggerSetUp("general", logOptions);
+    log = HRB_loggerSetUp("general", logOptions);
 
     %% Generate graph
     log.info("Generating diagram of pipeline using graphviz language")
@@ -66,9 +66,9 @@ function SPMA_drawPipeline(pipeline, saveName, opt)
         curr_universes = {};
         for n_universe = 1:length(step)
             if isstruct(step)
-                universe = getName(step(n_universe), "SPMA_");
+                universe = getName(step(n_universe), "HRB_");
             else %is a cell array
-                universe = getName(step{n_universe}, "SPMA_");
+                universe = getName(step{n_universe}, "HRB_");
             end
             curr_universes{n_universe} = universe;
             node = sprintf('%s [label="%s"];\n', universe, universe);

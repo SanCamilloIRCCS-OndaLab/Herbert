@@ -1,10 +1,10 @@
-% SPMA_LOADCONFIG - Load the configurations for a specific function. It
+% HRB_LOADCONFIG - Load the configurations for a specific function. It
 % merges the default configurations with the custom. This function is
 % called at the beginning of every function of the toolbox.
 %
 % Usage:
-%     >> [config] = SPMA_loadConfig(module, func);
-%     >> [config] = SPMA_loadConfig(module, func, customConfig);
+%     >> [config] = HRB_loadConfig(module, func);
+%     >> [config] = HRB_loadConfig(module, func, customConfig);
 %
 % Inputs:
 %   module = [struct] The module of the function you want to load
@@ -23,10 +23,10 @@
 %
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 % 
-% See also: SPMA_DEFAULTCONFIG, MERGESTRUCT
+% See also: HRB_DEFAULTCONFIG, MERGESTRUCT
 
 
-function config = SPMA_loadConfig(module, func, customConfig)
+function config = HRB_loadConfig(module, func, customConfig)
     arguments
         module (1,1) string {mustBeMember(module, ["general", "preprocessing", "headmodel", "source", "sourceestimation", "connectivity", "network"])}
         func (1,1) string = ""
@@ -34,7 +34,7 @@ function config = SPMA_loadConfig(module, func, customConfig)
     end
 
     % Load all default config
-    config = SPMA_defaultConfig;
+    config = HRB_defaultConfig;
 
     % Extract only the desired module
     switch module
