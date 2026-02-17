@@ -44,6 +44,10 @@ EEGLAB_folder = fullfile('external', 'EEGLAB');
 addpath(EEGLAB_folder);
 eeglab('nogui');
 
+%% Brainstorm
+bst_folder = fullfile('external', 'brainstorm3');
+addpath(bst_folder);
+
 end
 
 
