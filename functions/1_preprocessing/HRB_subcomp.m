@@ -5,7 +5,8 @@ function [EEG] = HRB_subcomp(EEG, opt)
 %   >>> EEG = HRB_subcomp(EEG) %Removes flagged components
 %   >>> EEG = HRB_subcomp(EEG, 'Components', [8 13 21]) %Removes specific components
 %   >>> EEG = HRB_subcomp(EEG, 'Visualize', true) % Plots diff before removing components
-%
+%   >>> EEG = HRB_subcomp(EEG, 'Components', [8 13 21]) %Removes specific
+%   components
 % Parameters:
 %   EEG (struct): EEG struct using EEGLAB struct system.
 %

@@ -252,7 +252,7 @@ end
 function mainFolder = getCodeFolder()
 % retrieve the folder where lies the code
 functionFolder = mfilename("fullpath");
-mainFolderParent = extractBefore(functionFolder, "SuperPipelineMultiverseAnalysis");
-mainFolder = fullfile(mainFolderParent, "SuperPipelineMultiverseAnalysis");
+mainFolderParent = extractBefore(functionFolder, "Herbert");
+mainFolder = fullfile(mainFolderParent, "Herbert");
 
 end

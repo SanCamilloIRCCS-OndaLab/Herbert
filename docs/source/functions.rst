@@ -1,7 +1,7 @@
 Functions
 =========
 
-.. currentmodule:: .
+.. currentmodule:: HRB
 
 Misc
 ----
@@ -14,15 +14,14 @@ Preprocessing
 
 .. automodule:: 1_preprocessing
     :members:
-    :show-inheritance:
 
-Head model
+Head Model
 ----------
 
 .. automodule:: 2_head_model
     :members:
 
-Source estimation
+Source Estimation
 -----------------
 
 .. automodule:: 3_source_estimation

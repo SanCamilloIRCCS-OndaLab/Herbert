@@ -15,9 +15,9 @@ sys.path.insert(0, src_path.as_posix())
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Super Pipeline Multiverse Analysis'
-copyright = '2024, IRCCS San Camillo | Neurophysiology Lab'
-author = 'IRCCS San Camillo | Neurophysiology Lab'
+project = 'Herbert'
+copyright = '2024, IRCCS San Camillo | ONDA Lab'
+author = 'IRCCS San Camillo | ONDA Lab'
 release = '0.1'
 
 # -- General configuration ---------------------------------------------------
