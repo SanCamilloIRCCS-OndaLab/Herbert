@@ -1,0 +1,29 @@
+{
+  "general": {
+    "logging": {
+      "Enabled": true,
+      "Level": 2,
+      "FileName": "Herbert.log"
+    },
+    "verbosity": 1
+  },
+  "preprocessing": {
+    "resample": {
+      "Frequency": 250,
+      "Save": false
+    },
+    "filter": {
+      "Type": "bandpass",
+      "LowCutoff": 0.5,
+      "HighCutoff": 48,
+      "Save": false
+    },
+    "ica": {
+      "Save": true
+    }
+  },
+  "headModel": {},
+  "sourceEstimation": {},
+  "connectivity": {},
+  "network": {}
+}
