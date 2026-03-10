@@ -190,19 +190,32 @@ preproc.logging.LogFileName = "HRB_preprocessing.log";
 % Add to the main config struct
 config.preprocessing = preproc;
 %% HEAD MODEL
-headModel = struct();
+headmodel = struct();
 
 % All the configurations
 
+% bst_import
+headmodel.bst_import.ProtocolName    = "HRB_Protocol";
+headmodel.bst_import.SubjectName     = "";    
+headmodel.bst_import.UseDefaultAnat  = true;  % template ICBM152
+headmodel.bst_import.BrainstormDbDir = "";    % empty = 'brainstorm_db'
+headmodel.bst_import.OutputFolder    = "";    
+headmodel.bst_import.Save            = false; 
+headmodel.bst_import.SaveName        = "";    
+
 % Logging
-headModel.logging.LogEnabled = true;
-headModel.logging.LogLevel = 2;
-headModel.logging.LogToFile = false;
-headModel.logging.LogFileDir = getCodeFolder();
-headModel.logging.LogFileName = "HRB_headModel.log";
+headmodel.logging.LogEnabled = true;
+headmodel.logging.LogLevel = 2;
+headmodel.logging.LogToFile = false;
+headmodel.logging.LogFileDir = getCodeFolder();
+headmodel.logging.LogFileName = "HRB_headmodel.log";
 
 % Add to the main config struct
-config.headModel = headModel;
+config.headmodel = headmodel;
+
+% bst_import
+
+
 %% SOURCE ESTIMATION
 source = struct();
 
