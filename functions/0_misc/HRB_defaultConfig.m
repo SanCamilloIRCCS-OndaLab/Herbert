@@ -265,7 +265,7 @@ end
 function mainFolder = getCodeFolder()
 % retrieve the folder where lies the code
 functionFolder = mfilename("fullpath");
-mainFolderParent = extractBefore(functionFolder, "Herbert");
-mainFolder = fullfile(mainFolderParent, "Herbert");
-
+% mainFolderParent = extractBefore(functionFolder, "Herbert");
+% mainFolder = fullfile(mainFolderParent, "Herbert");
+mainFolder = fileparts(fileparts(fileparts(functionFolder)));
 end
