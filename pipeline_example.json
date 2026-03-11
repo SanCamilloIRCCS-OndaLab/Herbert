@@ -14,7 +14,7 @@
         "save": true,
 		"params": {
             "Type": "bandpass",
-            "LowCutoff": 0.5,
+            "LowCutoff": 0.1,
             "HighCutoff": 48
             }        
 	    },
@@ -71,7 +71,7 @@
         "name": "ICflag", 
         "params": {
             "Muscle": [0.2, 1], 
-            "Eye": [0.8, 1], 
+            "Eye": [0.7, 1], 
             "Heart" : [0.9, 1]
         }
     },
@@ -88,7 +88,7 @@
             "Mode": "Time",
             "Recurrence": 4,
             "Limits": [0, 4],
-            "Baseline": [0, 4]
+            "Baseline": []
         }
     },
     "step11": {
@@ -101,5 +101,16 @@
             "TimeLimits": [],
             "ConfirmRej": true
         }
+    },
+    "step12": {
+    "function": "HRB_bst_import",
+    "name": "bst_import",
+    "save": true,
+    "params": {
+        "DataType": "rs",
+        "WindowLength": 4,
+        "ProtocolName": "HRB_Protocol_Prova",
+        "BrainstormDbDir": ""
     }
+}
 }
