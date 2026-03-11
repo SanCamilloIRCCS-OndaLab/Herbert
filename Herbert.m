@@ -32,14 +32,17 @@ addpath(genpath(functions_folder));
 %% Add external dependencies to path
 HRB_loadDependencies();
 
+
 %% Variables
-data_path = 'data/ses-20191120/EEG_ORIG/PATHS_101_Resting_20191120_022103.mff';
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/PATHS_101_Resting_20191120_022103.mff';
 pipeline = "pipeline_example.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
-EEG = pop_mffimport({data_path},'',0,0);
-data_test = '';
+EEG = pop_mffimport(data_path,'',0,0);
+% data_test = '';
+
+
 
 %% Run pipeline
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
