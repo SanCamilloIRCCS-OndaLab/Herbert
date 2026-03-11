@@ -195,13 +195,18 @@ headmodel = struct();
 % All the configurations
 
 % bst_import
+headmodel.bst_import.DataType        = "rs";   % "rs" | "task"
+headmodel.bst_import.WindowLength    = 4;      % [s] RS only: fixed segment length
 headmodel.bst_import.ProtocolName    = "HRB_Protocol";
 headmodel.bst_import.SubjectName     = "";    
-headmodel.bst_import.UseDefaultAnat  = true;  % template ICBM152
-headmodel.bst_import.BrainstormDbDir = "";    % empty = 'brainstorm_db'
+headmodel.bst_import.UseDefaultAnat  = true;
+headmodel.bst_import.MRIFile = "";
+headmodel.bst_import.FreeSurferDir = "";
+headmode.bst_import.BrainstormDbDir = "";
+headmodel.bst_import.BrainstormDbDir = "";
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
-headmodel.bst_import.SaveName        = "";    
+headmodel.bst_import.SaveName        = ""; 
 
 % Logging
 headmodel.logging.LogEnabled = true;
