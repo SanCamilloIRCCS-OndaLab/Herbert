@@ -174,6 +174,12 @@ function dataOut = run_step(dataIn, step, output, prevName)
     dataOut = fun(dataIn, cellParams{:});
 %     dataOut = sprintf("%s_%s", dataIn, params.SaveName);
 
+    % DEBUG TEMPORANEO
+    if isstruct(dataOut) && isfield(dataOut, 'trials')
+        fprintf('>>> %s | IN: %d trials | OUT: %d trials\n', ...
+        step.function, dataIn.trials, dataOut.trials);
+    end
+
 end
 
 function name = getStepName(step)
