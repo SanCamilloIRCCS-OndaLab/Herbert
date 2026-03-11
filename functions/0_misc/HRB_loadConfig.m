@@ -43,7 +43,7 @@ function config = HRB_loadConfig(module, func, customConfig)
         case "preprocessing"
             config = config.preprocessing;
         case "headmodel"
-            config = config.headModel;
+            config = config.headmodel;
         case {"source", "sourceestimation"}
             config = config.sourceEstimation;
         case "connectivity"
