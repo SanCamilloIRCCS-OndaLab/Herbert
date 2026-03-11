@@ -173,6 +173,10 @@ function [EEG] = HRB_rejepochs(EEG, opt)
     end
 
     %% Reject artifactual epochs (pop_rejepoch)
+
+    % Update n_bad after manual review
+    n_bad = length(bad_trials);
+
     if n_bad >0
         log.info("Removing marked trials...");
 
