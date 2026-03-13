@@ -202,11 +202,34 @@ headmodel.bst_import.SubjectName     = "";
 headmodel.bst_import.UseDefaultAnat  = true;
 headmodel.bst_import.MRIFile = "";
 headmodel.bst_import.FreeSurferDir = "";
-headmode.bst_import.BrainstormDbDir = "";
+headmodel.bst_import.BrainstormDbDir = "";
 headmodel.bst_import.BrainstormDbDir = "";
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 
+
+% bst_headmodel
+headmodel.bst_headmodel.Method              = "OpenMEEG";
+headmodel.bst_headmodel.SourceSpace         = "cortex";
+headmodel.bst_headmodel.ChanLocs            = "";
+headmodel.bst_headmodel.ChanLocsTemplate    = "";
+headmodel.bst_headmodel.SelectTemplate      = false;
+headmodel.bst_headmodel.NoiseCovBaseline    = [];
+headmodel.bst_headmodel.NoiseCovSensorTypes = "EEG";
+headmodel.bst_headmodel.ProtocolName        = "HRB_Protocol";
+headmodel.bst_headmodel.BrainstormDbDir     = "";
+headmodel.bst_headmodel.BemConductivities   = [1, 0.0125, 1];
+headmodel.bst_headmodel.DUNeuroFemType      = "fitted";
+headmodel.bst_headmodel.DUNeuroSolverType   = "cg";
+headmodel.bst_headmodel.DUNeuroSrcModel     = "venant";
+headmodel.bst_headmodel.DUNeuroIsotropic    = true;
+headmodel.bst_headmodel.Save                = false;
+headmodel.bst_headmodel.SaveName            = "";
+headmodel.bst_headmodel.OutputFolder        = "";
+% Save
+headmodel.bst_headmodel.Save                 = false;
+headmodel.bst_headmodel.SaveName             = "";
+headmodel.bst_headmodel.OutputFolder         = "";
 
 % Logging
 headmodel.logging.LogEnabled = true;
@@ -218,7 +241,7 @@ headmodel.logging.LogFileName = "HRB_headmodel.log";
 % Add to the main config struct
 config.headmodel = headmodel;
 
-% bst_import
+
 
 
 %% SOURCE ESTIMATION
