@@ -1,4 +1,97 @@
 function EEG = HRB_bst_headmodel(InputData, opt)
+% HRB_bst_headmodel - Computes the head model and noise covariance matrix
+% in Brainstorm for a given subject. This function acts as a bridge between
+% the Herbert pipeline and Brainstorm's forward modeling tools.
+% It supports multiple head model methods (OpenMEEG BEM, 3-Shell Sphere,
+% DUNeuro FEM) and both cortex surface and volume source spaces.
+%
+% Usage:
+%   >>> EEG = HRB_bst_headmodel(EEG);
+%   >>> EEG = HRB_bst_headmodel(EEG, 'Method', 'OpenMEEG');
+%   >>> EEG = HRB_bst_headmodel('Sub01', 'ProtocolName', 'HRB_Protocol');
+%
+% Parameters:
+%   InputData: EEGLAB struct (RAM) with EEG.etc.brainstorm populated by
+%              HRB_bst_import, or string with the subject name in Brainstorm.
+%
+% Other Parameters:
+%   Method (string): Head model computation method. Default: "OpenMEEG"
+%       - "OpenMEEG"     : OpenMEEG BEM (3-layer Boundary Element Model).
+%                          Most accurate. Requires OpenMEEG installed.
+%       - "3-ShellSphere": 3-shell sphere approximation. No dependencies.
+%       - "DUNeuro"      : DUNeuro Finite Element Model. Most accurate for
+%                          complex geometries. Requires DUNeuro installed.
+%
+%   SourceSpace (string): Source space for dipole placement. Default: "cortex"
+%       - "cortex" : Sources on the cortical surface (recommended for EEG).
+%       - "volume" : Sources in a regular 3D grid inside the brain volume.
+%
+%   ChanLocs (string): Path to a custom channel location file (.sfp, .els,
+%                      .xyz). Use when the cap is not in the BST templates.
+%
+%   ChanLocsTemplate (string): Full path to a BST channel template file
+%                              (.mat). Use when the cap template is known.
+%                              Example: ".../ICBM152/channel_GSN_HydroCel_256_E001.mat"
+%
+%   SelectTemplate (logical): If true, opens an interactive GUI to select
+%                             the channel template from the BST database.
+%                             The list is automatically filtered based on
+%                             the anatomy used for the subject. Default: false.
+%
+%   NoiseCovBaseline (double): Time window [t1, t2] in seconds for noise
+%                              covariance computation. Default: [] (whole
+%                              epoch window).
+%
+%   NoiseCovSensorTypes (string): Sensor types for noise covariance.
+%                                 Default: "EEG".
+%
+%   ProtocolName (string): Name of the Brainstorm protocol. Used in
+%                          standalone mode (InputData is a string).
+%                          Default: "HRB_Protocol".
+%
+%   BrainstormDbDir (string): Path to the Brainstorm database directory.
+%                             Default: '<pwd>/brainstorm_db'.
+%
+%   BemConductivities (double): [OpenMEEG only] Conductivity values for
+%                               the 3 BEM layers [scalp, skull, brain].
+%                               Default: [1, 0.0125, 1].
+%
+%   DUNeuroFemType (string): [DUNeuro only] FEM mesh type.
+%                            "fitted" | "hexahedral". Default: "fitted".
+%
+%   DUNeuroSolverType (string): [DUNeuro only] Linear solver type.
+%                               "cg" | "dg". Default: "cg".
+%
+%   DUNeuroSrcModel (string): [DUNeuro only] Source model type.
+%                             "venant" | "subtraction" | "partial_integration".
+%                             Default: "venant".
+%
+%   DUNeuroIsotropic (logical): [DUNeuro only] Use isotropic conductivity.
+%                               Default: true.
+%
+%   OutputFolder (string): Folder for output files. Default: 'output/<timestamp>'.
+%
+% Outputs:
+%   EEG: EEGLAB struct with Brainstorm metadata injected in EEG.etc.brainstorm:
+%       - headmodel_method : method used for head model computation
+%       - headmodel_space  : source space used
+%       - protocol         : Brainstorm protocol name
+%       - subject          : subject name in Brainstorm
+%       - db_path          : path to the Brainstorm database
+%
+% Notes:
+%   - Brainstorm must be installed and accessible in the MATLAB path.
+%   - The protocol must already exist in the Brainstorm database.
+%     Run HRB_bst_import before this function.
+%   - Channel locations must be provided via ChanLocs, ChanLocsTemplate,
+%     or SelectTemplate=true. The head model cannot be computed without
+%     valid electrode positions.
+%   - OpenMEEG and DUNeuro require external software installations.
+%     Use 3-ShellSphere for a dependency-free alternative.
+%
+% Authors: Ettore Napoli, University of Bologna, 2026
+%
+% See also: HRB_BST_IMPORT, HRB_BST_INVERSE
 
 arguments(Input)
     InputData % struct (RAM) or string/char (filepath)
