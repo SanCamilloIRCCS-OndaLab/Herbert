@@ -247,6 +247,43 @@ config.headmodel = headmodel;
 %% SOURCE ESTIMATION
 source = struct();
 
+% bst_inverse
+source.bst_inverse.Method           = "mne";         % "mne" | "lcmv" | "dipole"
+source.bst_inverse.ProcessOption    = "kernel_shared"; % "kernel_shared" | "kernel_perfile" | "full"
+source.bst_inverse.DipolOrientation = "constrained";  % "constrained" | "loose" | "unconstrained"
+source.bst_inverse.SourceSpace      = "cortex";       % "cortex" | "volume"
+source.bst_inverse.ProtocolName     = "HRB_Protocol";
+source.bst_inverse.BrainstormDbDir  = "";
+
+% MNE specific
+source.bst_inverse.MNEMeasure        = "dspm";   % "current" | "dspm" | "sloreta"
+source.bst_inverse.MNEDepthWeighting = true;
+source.bst_inverse.MNEDepthOrder     = 0.5;
+source.bst_inverse.MNEDepthMax       = 10;
+source.bst_inverse.MNENoiseCovReg    = "auto";   % "regularize"|"median"|"diagonal"|"none"|"auto"
+source.bst_inverse.MNESnr            = 3;
+
+% LCMV specific
+source.bst_inverse.LCMVDataCovReg   = "auto";   % "regularize"|"median"|"diagonal"|"none"|"auto"
+
+% Dipole specific
+source.bst_inverse.DipoleNoiseCovReg = "auto";  % "regularize"|"median"|"diagonal"|"none"|"auto"
+
+% Save
+source.bst_inverse.Save         = false;
+source.bst_inverse.SaveName     = "";
+source.bst_inverse.OutputFolder = "";
+
+% Logging
+source.logging.LogEnabled  = true;
+source.logging.LogLevel    = 2;
+source.logging.LogToFile   = false;
+source.logging.LogFileDir  = getCodeFolder();
+source.logging.LogFileName = "HRB_sourceEstimation.log";
+
+% Add to the main config struct
+config.sourceEstimation = source;
+
 % All the configurations
 
 % Logging
