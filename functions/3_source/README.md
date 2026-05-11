@@ -1,0 +1,1 @@
+This folder contains all the functions related to the source estimation step.
