@@ -23,6 +23,7 @@
 %% Add internal functions to path
 %%% Uncomment this if you run the whole file
 % folder = fileparts(which(mfilename));
+
 % functions_folder = fullfile(folder, "functions");
 %%% uncomment this if you run the code line by line
 functions_folder = "functions";
@@ -34,12 +35,13 @@ HRB_loadDependencies();
 
 
 %% Variables
-data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/PATHS_101_Resting_20191120_022103.mff';
-pipeline = "pipeline_example.json";
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
+file_name = 'MMCI_01_RESTING.vhdr'
+pipeline = "pipeline_new.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
-EEG = pop_mffimport(data_path,'',0,0);
+EEG = pop_loadbv(data_path, file_name);
 % data_test = '';
 
 
