@@ -258,7 +258,7 @@ try
     % Interactive Template Selection
     % a. Find subj anatomy
     if config.SelectTemplate
-        [sSubject, ~] = bst_get('Subject', subjName);
+        [sSubject, ~] = bst_get('Subject', char(subjName));
         anatFile = sSubject.Anatomy(sSubject.iAnatomy).FileName;
 
         if contains(anatFile, '@default_subject')
