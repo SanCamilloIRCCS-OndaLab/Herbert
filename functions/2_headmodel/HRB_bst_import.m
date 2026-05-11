@@ -141,7 +141,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     if ~brainstorm('status')
         log.info("Starting Brainstorm (nogui)...");
         brainstorm nogui;
-        timeout = 60;
+        timeout = 120;
         t = tic;
         while toc(t) < timeout
             try
@@ -170,18 +170,32 @@ function [EEG] = HRB_bst_import(InputData, opt)
     % =========================================================================
     %% 6. Manage Protocol
     % =========================================================================
-    iProtocol = bst_get('Protocol', char(config.ProtocolName));
+    protocolName = char(config.ProtocolName)
+    iProtocol = bst_get('Protocol', protocolName);
+
     if isempty(iProtocol)
-        log.info(sprintf("Creating new protocol: %s", config.ProtocolName));
-        gui_brainstorm('CreateProtocol', char(config.ProtocolName), double(config.UseDefaultAnat), 0);
+        
+        protocolDir = fullfile(dbDir, protocolName);
+        
+        if exist(protocolDir, 'dir')
+            log.info(sprintf("Protocol '%s' found on disk. Reloading DB", protocolName));
+            db_reload_database('current');
+            iProtocol = bst_get('Protocol', protocolName);
+        end
+    end
+
+    if isempty(iProtocol)
+
+        log.info(sprintf("Creating new protocol: %s", protocolName));
+        gui_brainstorm('CreateProtocol', protocolName, double(config.UseDefaultAnat), 0);
     else
-        log.info(sprintf("Using existing protocol: %s", config.ProtocolName));
+        log.info(sprintf("Using Existing Protocol: %s", protocolName));
         gui_brainstorm('SetCurrentProtocol', iProtocol);
     end
 
-    % =========================================================================
+    
     %% 7. Subject name
-    % =========================================================================
+    
     if config.SubjectName == ""
         if isFilePath
             [~, fname, ~] = fileparts(filePath);
@@ -189,9 +203,21 @@ function [EEG] = HRB_bst_import(InputData, opt)
         else
             if isfield(InputData, 'subject') && ~isempty(InputData.subject)
                 subjName = InputData.subject;
+            elseif ~isempty(InputData.setname)
+                [~, subjName, ~] = fileparts(InputData.setname);
+            elseif isfield(InputData, 'filename') && ~isempty(InputData.filename)
+                [~, subjName, ~] = fileparts(InputData.filename);
+
             else
-                subjName = regexprep(InputData.setname, '\s+', '_');
+                subjName = sprintf("sub_%s", string(datetime("now", "Format", "yyyyMMddHHmmss")));
+                log.warning(sprintf("Could not infer subject name. Using: %s", subjName));
             end
+
+            % Sanitize — Remove problematic characters
+            subjName = regexprep(subjName, '[-\s\.]+', '_');
+            subjName = regexprep(subjName, '[^a-zA-Z0-9_]', '');
+
+
         end
     else
         subjName = char(config.SubjectName);
