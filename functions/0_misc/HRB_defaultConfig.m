@@ -299,6 +299,52 @@ config.sourceEstimation = source;
 connectivity = struct();
 
 % All the configurations
+connectivity.bst_connectivity.Metric        = "coh";
+connectivity.bst_connectivity.Topology      = "NxN";
+connectivity.bst_connectivity.TimeWindow    = [];
+connectivity.bst_connectivity.SelectScouts  = true;
+connectivity.bst_connectivity.Atlas         = "";
+connectivity.bst_connectivity.Scouts        = "";
+connectivity.bst_connectivity.FlattenPCA    = false;
+connectivity.bst_connectivity.ScoutFunction = "mean";
+connectivity.bst_connectivity.ScoutTime     = "after";
+connectivity.bst_connectivity.FreqBands     = {};
+connectivity.bst_connectivity.SaveMode      = "separately";
+connectivity.bst_connectivity.AvgWinLength  = 1;
+connectivity.bst_connectivity.AvgWinOverlap = 50;
+connectivity.bst_connectivity.ProtocolName  = "HRB_Protocol";
+connectivity.bst_connectivity.BrainstormDbDir = "";
+
+% Coherence specific
+connectivity.bst_connectivity.CohMetric  = "mscohere";
+connectivity.bst_connectivity.TFMethod   = "hilbert";
+connectivity.bst_connectivity.TimeRes    = "full";
+
+% Correlation specific
+connectivity.bst_connectivity.ScalarProduct = false;
+
+% Granger Causality specific
+connectivity.bst_connectivity.GCMethod    = "bst";
+connectivity.bst_connectivity.GCDirection = "both";
+connectivity.bst_connectivity.GCOrder     = 10;
+
+% Spectral GC specific
+connectivity.bst_connectivity.MaxFreqRes  = 2;
+connectivity.bst_connectivity.MaxFreq     = 100;
+
+% PLV specific
+connectivity.bst_connectivity.PLVMetric   = "wpli";
+
+% Envelope specific
+connectivity.bst_connectivity.EnvMetric   = "penv";
+
+% PTE specific
+connectivity.bst_connectivity.PTENormalized = true;
+
+% Save
+connectivity.bst_connectivity.Save        = false;
+connectivity.bst_connectivity.SaveName    = "";
+connectivity.bst_connectivity.OutputFolder = "";
 
 % Logging
 connectivity.logging.LogEnabled = true;
