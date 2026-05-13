@@ -84,39 +84,55 @@ function data = HRB_runPipeline(data, pipelineFile, opt)
 
         l_data = length(data);
 
-        % Loop over the data
-        for n_data = 1:l_data
+        % The plain loop would be
+        % for n_data = 1:l_data
+        %   for n_universe = 1:l_multiverse
+        %   end
+        % end
+        % However it is better to flatten the loops in order to get full
+        % parallelization
 
-            % Extract current data
+        new_data  = cell(l_data * l_multiverse, 1);
+        new_names = cell(l_data * l_multiverse, 1);
+
+        parfor idx = 1:(l_data * l_multiverse)
+            n_data     = mod(idx-1, l_data) + 1;
+            n_universe = floor((idx-1) / l_data) + 1;
+
+            % log.info(sprintf(">> Universe: %d", n_universe))
+        
             current_data = data{n_data};
             current_name = names{n_data};
+        
+            if isstruct(step)
+                universe = step(n_universe);
+            else %iscell
+                universe = step{n_universe};
+            end
+        
+            % Run the step
+            out = run_step(current_data, universe, config.OutputFolder, current_name);
 
-            % Loop over the universes
-            for n_universe = 1:l_multiverse
-                if isstruct(step)
-                    universe = step(n_universe);
-                else %iscell
-                    universe = step{n_universe};
+            % Save the output in our data array
+            new_data{idx} = out;
+
+            % If multiverse add name to identify dataset
+            if l_multiverse > 1
+                if isempty(current_name)
+                    new_names{idx} = getStepName(universe);
+                else
+                    new_names{idx} = sprintf("%s_%s", current_name, getStepName(universe));
                 end
-                log.info(sprintf(">> Universe: %d", n_universe))
+            else % Otherwise keep the same name
+                new_names{idx} = current_name;
+            end
+            % log.warning(sprintf("****** %s", getStepName(universe)))
+        end % n_data & n_universe
+        
+        % Update data and names
+        data  = new_data;
+        names = new_names;
     
-                % Run the step
-                out = run_step(current_data, universe, config.OutputFolder, current_name);
-    
-                % Save the output in our data array
-                idx = n_data + (n_universe-1)*l_data;
-                data{idx} = out;
-                % If multiverse add name to identify dataset
-                if l_multiverse > 1
-                    if isempty(current_name)
-                        names{idx} = getStepName(universe);
-                    else
-                        names{idx} = sprintf("%s_%s", current_name, getStepName(universe));
-                    end
-                end
-                log.warning(sprintf("****** %s", getStepName(universe)))
-            end % n_universe
-        end % n_data
     end % n_steps
 
     %% END
