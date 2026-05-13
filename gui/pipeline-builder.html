@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Pipeline SPMA</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Layout */
+        .editor-container {
+            flex: 2;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .preview-container {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        h1, h2, h3 { color: var(--primary); margin-top: 0; }
+        
+        /* Step Card */
+        .step-card {
+            background: var(--card-bg);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .step-id { font-weight: bold; color: var(--secondary); }
+
+        /* Funzioni Parallele */
+        .functions-list {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .function-item {
+            background: white;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .function-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        /* Form Elements */
+        input, select, button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        button {
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            color: white;
+            font-weight: 500;
+        }
+
+        button.primary { background-color: var(--secondary); }
+        button.primary:hover { background-color: #2980b9; }
+        
+        button.danger { background-color: var(--accent); }
+        button.danger:hover { background-color: #c0392b; }
+        
+        button.add { background-color: #27ae60; }
+        button.add:hover { background-color: #219a52; }
+
+        .param-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Preview Area */
+        #json-preview {
+            flex-grow: 1;
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: auto;
+            white-space: pre;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-step-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px dashed #ccc;
+            margin-bottom: 20px;
+        }
+
+        /* Utility */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Editor Section -->
+    <div class="editor-container">
+        <h1>Configuratore Pipeline SPMA</h1>
+        <p>Definisci gli step e le funzioni parallele per generare il tuo JSON.</p>
+
+        <div id="steps-container">
+            <!-- Gli step verranno inseriti qui via JS -->
+        </div>
+
+        <div class="add-step-container">
+            <button class="add" onclick="addStep()">+ Aggiungi Nuovo Step</button>
+        </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-container">
+        <h2>Anteprima JSON</h2>
+        <div id="json-preview">{}</div>
+        
+        <div class="btn-group">
+            <button class="primary" onclick="downloadJSON()">Scarica JSON</button>
+            <button class="secondary" onclick="resetForm()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configurazione delle Funzioni (Universi) ---
+        // Questa mappa definisce quali parametri sono richiesti per ogni funzione.
+        // In un'app reale, questi dati potrebbero venire da un server o un file di configurazione.
+        const functionDefinitions = {
+            "SPMA_resample": {
+                params: [
+                    { key: "Frequency", type: "number", label: "Frequenza (Hz)", default: 250 }
+                ]
+            },
+            "SPMA_filter": {
+                params: [
+                    { key: "Type", type: "select", label: "Tipo", options: ["bandpass", "lowpass", "highpass", "bandstop"], default: "bandpass" },
+                    { key: "LowCutoff", type: "number", label: "Frequenza Bassa (Hz)", default: 0.5 },
+                    { key: "HighCutoff", type: "number", label: "Frequenza Alta (Hz)", default: 48 }
+                ]
+            },
+            "SPMA_removeChannels": {
+                params: [
+                    { key: "Channels", type: "textarea", label: "Lista Canali (separati da virgola)", placeholder: "E67, E73, E82..." }
+                ]
+            },
+            "SPMA_selectTime": {
+                params: [
+                    { key: "AfterStart", type: "number", label: "Dopo inizio (s)", default: 5 },
+                    { key: "BeforeEnd", type: "number", label: "Prima fine (s)", default: 5 }
+                ]
+            },
+            "SPMA_cleanData": {
+                params: [
+                    { key: "Severity", type: "select", label: "Severità", options: ["loose", "strict", "aggressive"], default: "loose" }
+                ]
+            }
+        };
+
+        let stepCounter = 0;
+
+        // --- Funzioni di Gestione UI ---
+
+        function addStep() {
+            stepCounter++;
+            const stepId = stepCounter === 1 ? "step1" : `step${stepCounter}`;
+            
+            const container = document.getElementById('steps-container');
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'step-card';
+            stepDiv.id = `step-${stepCounter}`;
+            
+            stepDiv.innerHTML = `
+                <div class="step-header">
+                    <span class="step-id">Step: ${stepId}</span>
+                    <button class="danger" onclick="removeStep(${stepCounter})">Elimina Step</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nome Step:</label>
+                    <input type="text" class="step-name-input" placeholder="Es. downsampling">
+                </div>
+
+                <div class="functions-list" id="functions-${stepCounter}">
+                    <!-- Funzioni parallele qui -->
+                </div>
+
+                <button class="add" onclick="addFunction(${stepCounter})">+ Aggiungi Funzione Parallela</button>
+            `;
+
+            container.appendChild(stepDiv);
+            updateJSON();
+        }
+
+        function removeStep(id) {
+            if(confirm("Sei sicuro di voler eliminare questo step?")) {
+                const step = document.getElementById(`step-${id}`);
+                step.remove();
+                updateJSON();
+            }
+        }
+
+        function addFunction(stepId) {
+            const functionsContainer = document.getElementById(`functions-${stepId}`);
+            const funcId = Date.now(); // ID unico per la funzione
+
+            // Crea la struttura HTML per la funzione
+            const funcDiv = document.createElement('div');
+            funcDiv.className = 'function-item';
+            funcDiv.id = `func-${funcId}`;
+
+            // Selezione Funzione
+            let selectHtml = `<select class="function-select" onchange="renderParams(${funcId}, this.value)">`;
+            selectHtml += `<option value="">Seleziona Funzione...</option>`;
+            for (const key in functionDefinitions) {
+                selectHtml += `<option value="${key}">${key}</option>`;
+            }
+            selectHtml += `</select>`;
+
+            funcDiv.innerHTML = `
+                <div class="function-header">
+                    <strong>Funzione:</strong>
+                    <button class="danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeFunction(${funcId})">X</button>
+                </div>
+                <div style="margin-bottom: 10px;">${selectHtml}</div>
+                
+                <div id="params-container-${funcId}" class="params-container hidden"></div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="save-${funcId}">
+                    <label for="save-${funcId}">Salva risultato (${stepId})</label>
+                </div>
+            `;
+
+            functionsContainer.appendChild(funcDiv);
+        }
+
+        function removeFunction(funcId) {
+            const func = document.getElementById(`func-${funcId}`);
+            func.remove();
+            updateJSON();
+        }
+
+        function renderParams(funcId, functionName) {
+            const container = document.getElementById(`params-container-${funcId}`);
+            const select = document.querySelector(`#func-${funcId} .function-select`);
+            
+            if (!functionName) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+
+            const def = functionDefinitions[functionName];
+            if (!def) return;
+
+            let html = '<h4>Parametri:</h4><div class="param-group">';
+            
+            def.params.forEach(param => {
+                let inputHtml = '';
+                
+                if (param.type === 'select') {
+                    inputHtml = `<select class="param-input" data-key="${param.key}">`;
+                    param.options.forEach(opt => {
+                        const selected = opt === param.default ? 'selected' : '';
+                        inputHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    inputHtml += `</select>`;
+                } else if (param.type === 'textarea') {
+                    inputHtml = `<textarea class="param-input" data-key="${param.key}" rows="3" placeholder="${param.placeholder || ''}">${param.default || ''}</textarea>`;
+                } else {
+                    inputHtml = `<input type="${param.type}" class="param-input" data-key="${param.key}" value="${param.default || ''}" placeholder="${param.placeholder || ''}">`;
+                }
+
+                html += `
+                    <div>
+                        <label>${param.label}</label><br>
+                        ${inputHtml}
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+        }
+
+        // --- Logica di Generazione JSON ---
+
+        function getStepData(stepDiv) {
+            const stepId = stepDiv.querySelector('.step-id').innerText.replace('Step: ', '');
+            const stepName = stepDiv.querySelector('.step-name-input').value;
+            const functionsContainer = stepDiv.querySelector('.functions-list');
+            const functionItems = functionsContainer.querySelectorAll('.function-item');
+            
+            let functions = [];
+
+            functionItems.forEach(funcItem => {
+                const funcSelect = funcItem.querySelector('.function-select');
+                const funcName = funcSelect.value;
+                
+                if (!funcName) return; // Salta se nessuna funzione selezionata
+
+                //const save = funcItem.querySelector(`#save-${funcItem.id}`).checked;
+                const params = {};
+                
+                // Raccogli parametri
+                const paramInputs = funcItem.querySelectorAll('.param-input');
+                paramInputs.forEach(input => {
+                    const key = input.getAttribute('data-key');
+                    let val = input.value;
+                    
+                    // Conversione tipi
+                    if (input.type === 'number') {
+                        val = parseFloat(val) || 0;
+                    }
+                    params[key] = val;
+                });
+
+                functions.push({
+                    function: funcName,
+                    name: funcName, // Default name, o si potrebbe aggiungere un campo nome specifico
+                    //save: save,
+                    params: params
+                });
+            });
+
+            // Se la step ha solo 1 funzione, può essere un oggetto, se >1 è un array
+            // Nota: La tua struttura originale usa array per step2.5. 
+            // Qui semplifichiamo: se c'è più di 1 funzione, usiamo array. Se 0, ignoriamo lo step.
+            if (functions.length === 0) return null;
+            if (functions.length === 1) {
+                return {
+                    [stepId]: {
+                        ...functions[0],
+                        name: stepName || functions[0].name
+                    }
+                };
+            } else {
+                return {
+                    [stepId]: functions
+                };
+            }
+        }
+
+        function updateJSON() {
+            const stepsContainer = document.getElementById('steps-container');
+            const steps = stepsContainer.querySelectorAll('.step-card');
+            let finalJson = {};
+
+            steps.forEach(stepDiv => {
+                const stepData = getStepData(stepDiv);
+                if (stepData) {
+                    finalJson = { ...finalJson, ...stepData };
+                }
+            });
+
+            // Ordina le chiavi per leggibilità (opzionale)
+            // finalJson = Object.keys(finalJson).sort().reduce((obj, key) => {
+            //     obj[key] = finalJson[key];
+            //     return obj;
+            // }, {});
+
+            const jsonString = JSON.stringify(finalJson, null, 2);
+            document.getElementById('json-preview').textContent = jsonString;
+            return finalJson;
+        }
+
+        function downloadJSON() {
+            const json = updateJSON();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            // Genera nome file con timestamp
+            const date = new Date();
+            const timestamp = date.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+            downloadAnchorNode.setAttribute("download", `pipeline_${timestamp}.json`);
+            
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function resetForm() {
+            if(confirm("Vuoi cancellare tutto e ricominciare?")) {
+                document.getElementById('steps-container').innerHTML = '';
+                stepCounter = 0;
+                updateJSON();
+            }
+        }
+
+        // Inizializza con un esempio (opzionale)
+        // addStep(); 
+    </script>
+</body>
+</html>
