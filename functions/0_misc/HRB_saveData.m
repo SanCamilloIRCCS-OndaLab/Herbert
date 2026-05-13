@@ -84,6 +84,14 @@ function HRB_saveData(data, opt)
         case "EEGLAB"
             saveExt = 'set';
             filename = sprintf("%s.%s", opt.Name, saveExt);
+
+            % Inject setname and subj before saving
+            [~, nameNoExt, ~] = fileparts(opt.Name);
+            data.setname = nameNoExt;
+            if isfield(data, 'subject') && isempty(data.subject)
+                data.subject = nameNoExt;
+            end
+
             % Save with EEGLAB function
             log.info(sprintf("Save EEGLAB dataset: %s", fullfile(saveFolder,filename)))
             try

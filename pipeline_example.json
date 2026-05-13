@@ -14,7 +14,7 @@
         "save": true,
 		"params": {
             "Type": "bandpass",
-            "LowCutoff": 0.5,
+            "LowCutoff": 0.1,
             "HighCutoff": 48
             }        
 	    },
@@ -71,8 +71,46 @@
         "name": "ICflag", 
         "params": {
             "Muscle": [0.2, 1], 
-            "Eye": [0.8, 1], 
+            "Eye": [0.7, 1], 
             "Heart" : [0.9, 1]
         }
+    },
+    "step9": {
+        "function" : "HRB_subcomp", 
+        "save": true, 
+        "name": "IC_rej"
+    },
+    "step10": {
+        "function": "HRB_epoch",
+        "name": "rs_epoched_4s",
+        "save": true,
+        "params": {
+            "Mode": "Time",
+            "Recurrence": 4,
+            "Limits": [0, 4],
+            "Baseline": []
+        }
+    },
+    "step11": {
+        "function": "HRB_rejepochs",
+        "name": "final_clean_data",
+        "save": true,
+        "params": {
+            "Threshold": 100,
+            "Channels": [],
+            "TimeLimits": [],
+            "ConfirmRej": true
+        }
+    },
+    "step12": {
+    "function": "HRB_bst_import",
+    "name": "bst_import",
+    "save": true,
+    "params": {
+        "DataType": "rs",
+        "WindowLength": 4,
+        "ProtocolName": "HRB_Protocol_Prova",
+        "BrainstormDbDir": ""
     }
+}
 }
