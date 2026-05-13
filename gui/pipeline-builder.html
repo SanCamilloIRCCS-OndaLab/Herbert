@@ -1,468 +1,1103 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore Pipeline SPMA</title>
+    <title>Herbert — Pipeline Builder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
             --secondary: #3498db;
             --accent: #e74c3c;
-            --bg: #f4f7f6;
+            --success: #27ae60;
+            --bg: #f0f2f5;
             --card-bg: #ffffff;
+            --border: #d0d7de;
+            --text: #24292f;
+            --text-muted: #57606a;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --module-colors: #3498db, #9b59b6, #e67e22, #1abc9c, #e74c3c;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); font-size: 14px;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            gap: 20px;
-            height: 100vh;
-            box-sizing: border-box;
+        /* Header */
+        .header {
+            background: var(--primary); color: #fff; padding: 12px 24px;
+            display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header .subtitle { font-size: 12px; opacity: 0.7; margin-left: auto; }
+        .header .status-badge {
+            background: var(--success); color: #fff; font-size: 11px;
+            padding: 2px 10px; border-radius: 12px; font-weight: 600;
         }
 
         /* Layout */
-        .editor-container {
-            flex: 2;
-            overflow-y: auto;
-            padding-right: 10px;
+        .layout { display: flex; flex: 1; overflow: hidden; }
+        .editor-panel { flex: 2; display: flex; flex-direction: column; overflow: hidden; }
+        .preview-panel {
+            flex: 1; background: var(--card-bg); border-left: 1px solid var(--border);
+            display: flex; flex-direction: column; min-width: 320px;
         }
 
-        .preview-container {
-            flex: 1;
-            background: var(--card-bg);
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+        /* Module tabs */
+        .module-tabs {
+            display: flex; background: var(--card-bg); border-bottom: 1px solid var(--border);
+            padding: 0 16px; flex-shrink: 0; overflow-x: auto;
+        }
+        .module-tab {
+            padding: 10px 18px; cursor: pointer; font-size: 13px; font-weight: 500;
+            border-bottom: 2px solid transparent; color: var(--text-muted);
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .module-tab:hover { color: var(--text); }
+        .module-tab.active { color: var(--secondary); border-bottom-color: var(--secondary); }
+        .module-tab .count {
+            display: inline-block; background: #e8ecf0; color: var(--text-muted);
+            font-size: 10px; padding: 1px 6px; border-radius: 8px; margin-left: 6px;
+        }
+        .module-tab.active .count { background: #ddf4ff; color: var(--secondary); }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex; gap: 8px; padding: 12px 16px; align-items: center;
+            border-bottom: 1px solid var(--border); background: var(--card-bg); flex-shrink: 0;
+        }
+        .toolbar button, .btn {
+            padding: 6px 14px; border: none; border-radius: 6px; font-size: 13px;
+            font-weight: 500; cursor: pointer; transition: all 0.15s;
+            background: var(--secondary); color: #fff; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .toolbar button:hover { filter: brightness(1.1); }
+        .toolbar button:active { transform: scale(0.97); }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--accent); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: #f6f8fa; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .toolbar .spacer { flex: 1; }
+        .toolbar label { font-size: 13px; color: var(--text-muted); }
+
+        /* Steps container */
+        .steps-container {
+            flex: 1; overflow-y: auto; padding: 16px; display: flex;
+            flex-direction: column; gap: 12px;
         }
 
-        h1, h2, h3 { color: var(--primary); margin-top: 0; }
-        
-        /* Step Card */
+        /* Step card */
         .step-card {
-            background: var(--card-bg);
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: var(--shadow);
+            transition: box-shadow 0.2s; position: relative;
         }
-
+        .step-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .step-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; border-bottom: 1px solid #f0f0f0;
+            background: #fafbfc; border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .step-header .step-id-input {
+            font-weight: 600; color: var(--secondary); border: 1px solid transparent;
+            background: transparent; padding: 2px 8px; border-radius: 4px;
+            font-size: 14px; width: 100px; font-family: monospace;
+        }
+        .step-header .step-id-input:focus {
+            border-color: var(--secondary); outline: none; background: #fff;
         }
 
-        .step-id { font-weight: bold; color: var(--secondary); }
+        .step-header .step-actions { margin-left: auto; display: flex; gap: 4px; }
 
-        /* Funzioni Parallele */
-        .functions-list {
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--secondary);
+        /* Branch grid */
+        .branch-grid {
+            display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px 16px;
+        }
+        .branch-grid.has-multiple { grid-template-columns: 1fr 1fr; }
+        .branch-grid.has-three { grid-template-columns: 1fr 1fr 1fr; }
+
+        .branch-card {
+            border: 1px solid var(--border); border-radius: 6px;
+            padding: 10px 12px; background: #fafbfc; position: relative;
+        }
+        .branch-card .branch-label {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--text-muted); margin-bottom: 6px; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .branch-card .func-select {
+            width: 100%; padding: 5px 8px; border: 1px solid var(--border);
+            border-radius: 4px; font-size: 13px; margin-bottom: 8px;
+        }
+        .branch-card .params-area { margin-top: 6px; }
+        .branch-card .param-row {
+            display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+        }
+        .branch-card .param-row label {
+            font-size: 12px; color: var(--text-muted); min-width: 70px; flex-shrink: 0;
+        }
+        .branch-card .param-row input, .branch-card .param-row select, .branch-card .param-row textarea {
+            flex: 1; padding: 4px 8px; border: 1px solid var(--border);
+            border-radius: 4px; font-size: 13px;
+        }
+        .branch-card .param-row input:focus, .branch-card .param-row select:focus { border-color: var(--secondary); outline: none; }
+        .branch-card .param-row input[type="checkbox"] { flex: none; width: 16px; height: 16px; }
+        .branch-card .param-row .array-input {
+            display: flex; align-items: center; gap: 4px; flex: 1;
+        }
+        .branch-card .param-row .array-input input { flex: 1; min-width: 0; }
+        .branch-card .param-row .array-input .delim { color: var(--text-muted); font-weight: bold; }
+
+        .branch-footer {
+            display: flex; align-items: center; gap: 10px; margin-top: 8px;
+            padding-top: 6px; border-top: 1px solid #eee;
+        }
+        .branch-footer label { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+
+        .step-footer {
+            display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+            border-top: 1px solid #f0f0f0;
         }
 
-        .function-item {
-            background: white;
-            border: 1px solid #eee;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        /* add step area */
+        .add-step-area {
+            border: 2px dashed var(--border); border-radius: var(--radius);
+            padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;
         }
+        .add-step-area:hover { border-color: var(--secondary); background: #f6f8fa; }
 
-        .function-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+        /* Preview panel */
+        .preview-header {
+            padding: 14px 16px; border-bottom: 1px solid var(--border);
+            font-weight: 600; font-size: 14px;
         }
-
-        /* Form Elements */
-        input, select, button {
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            margin-top: 4px;
-        }
-
-        button {
-            cursor: pointer;
-            transition: background 0.2s;
-            border: none;
-            color: white;
-            font-weight: 500;
-        }
-
-        button.primary { background-color: var(--secondary); }
-        button.primary:hover { background-color: #2980b9; }
-        
-        button.danger { background-color: var(--accent); }
-        button.danger:hover { background-color: #c0392b; }
-        
-        button.add { background-color: #27ae60; }
-        button.add:hover { background-color: #219a52; }
-
-        .param-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-
-        /* Preview Area */
         #json-preview {
-            flex-grow: 1;
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: auto;
-            white-space: pre;
-            margin-top: 10px;
-            font-size: 13px;
+            flex: 1; overflow: auto; padding: 16px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px; line-height: 1.5; white-space: pre;
+            background: #1e1e2e; color: #cdd6f4;
+        }
+        .preview-actions {
+            display: flex; gap: 8px; padding: 12px 16px;
+            border-top: 1px solid var(--border); flex-wrap: wrap;
         }
 
-        .btn-group {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
+        /* Loading overlay */
+        .loading { opacity: 0.5; pointer-events: none; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .layout { flex-direction: column; }
+            .preview-panel { border-left: none; border-top: 1px solid var(--border); min-width: 0; max-height: 40vh; }
+            .branch-grid.has-multiple { grid-template-columns: 1fr; }
         }
 
-        .add-step-container {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px dashed #ccc;
-            margin-bottom: 20px;
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; background: var(--primary);
+            color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 999;
+            opacity: 0; transform: translateY(10px); transition: all 0.3s;
         }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: var(--accent); }
+        .toast.success { background: var(--success); }
 
-        /* Utility */
-        .hidden { display: none; }
+        /* Drag handle */
+        .drag-handle {
+            cursor: grab; color: var(--text-muted); font-size: 16px;
+            padding: 0 4px; user-select: none;
+        }
+        .drag-handle:active { cursor: grabbing; }
     </style>
 </head>
 <body>
 
-    <!-- Editor Section -->
-    <div class="editor-container">
-        <h1>Configuratore Pipeline SPMA</h1>
-        <p>Definisci gli step e le funzioni parallele per generare il tuo JSON.</p>
+<div class="header">
+    <h1>Herbert · Pipeline Builder</h1>
+    <span class="status-badge">JSON</span>
+    <span class="subtitle">Multiverse EEG Pipeline</span>
+</div>
 
-        <div id="steps-container">
-            <!-- Gli step verranno inseriti qui via JS -->
+<div class="layout">
+    <!-- Editor -->
+    <div class="editor-panel">
+        <div class="module-tabs" id="module-tabs"></div>
+        <div class="toolbar">
+            <button class="btn-success" onclick="addStep()">+ Add Step</button>
+            <button class="btn-outline btn-sm" onclick="reorderStep(-1)">↑ Move Up</button>
+            <button class="btn-outline btn-sm" onclick="reorderStep(1)">↓ Move Down</button>
+            <span class="spacer"></span>
+            <label><span id="step-counter">0</span> steps</label>
         </div>
-
-        <div class="add-step-container">
-            <button class="add" onclick="addStep()">+ Aggiungi Nuovo Step</button>
+        <div class="steps-container" id="steps-container">
+            <div class="add-step-area" onclick="addStep()">
+                <strong>+ Add your first step</strong><br>
+                <span style="font-size:12px;color:var(--text-muted);">Click to define a pipeline step</span>
+            </div>
         </div>
     </div>
 
-    <!-- Preview Section -->
-    <div class="preview-container">
-        <h2>Anteprima JSON</h2>
-        <div id="json-preview">{}</div>
-        
-        <div class="btn-group">
-            <button class="primary" onclick="downloadJSON()">Scarica JSON</button>
-            <button class="secondary" onclick="resetForm()">Reset</button>
+    <!-- Preview -->
+    <div class="preview-panel">
+        <div class="preview-header">
+            Pipeline Preview
+            <span style="font-weight:normal;font-size:12px;color:var(--text-muted);margin-left:8px;" id="format-label">JSON</span>
+        </div>
+        <div id="json-preview">{ }</div>
+        <div class="preview-actions">
+            <button class="btn-success btn-sm" onclick="downloadJSON()">⬇ Download JSON</button>
+            <button class="btn-success btn-sm" onclick="downloadYAML()">⬇ Download YAML</button>
+            <button class="btn-outline btn-sm" onclick="copyJSON()">📋 Copy</button>
+            <button class="btn-outline btn-sm" onclick="document.getElementById('load-input').click()">📂 Load</button>
+            <input type="file" id="load-input" accept=".json,.yaml,.yml" style="display:none" onchange="loadPipeline(event)">
+            <button class="btn-outline btn-sm" onclick="resetPipeline()">Reset</button>
         </div>
     </div>
+</div>
 
-    <script>
-        // --- Configurazione delle Funzioni (Universi) ---
-        // Questa mappa definisce quali parametri sono richiesti per ogni funzione.
-        // In un'app reale, questi dati potrebbero venire da un server o un file di configurazione.
-        const functionDefinitions = {
-            "SPMA_resample": {
-                params: [
-                    { key: "Frequency", type: "number", label: "Frequenza (Hz)", default: 250 }
-                ]
-            },
-            "SPMA_filter": {
-                params: [
-                    { key: "Type", type: "select", label: "Tipo", options: ["bandpass", "lowpass", "highpass", "bandstop"], default: "bandpass" },
-                    { key: "LowCutoff", type: "number", label: "Frequenza Bassa (Hz)", default: 0.5 },
-                    { key: "HighCutoff", type: "number", label: "Frequenza Alta (Hz)", default: 48 }
-                ]
-            },
-            "SPMA_removeChannels": {
-                params: [
-                    { key: "Channels", type: "textarea", label: "Lista Canali (separati da virgola)", placeholder: "E67, E73, E82..." }
-                ]
-            },
-            "SPMA_selectTime": {
-                params: [
-                    { key: "AfterStart", type: "number", label: "Dopo inizio (s)", default: 5 },
-                    { key: "BeforeEnd", type: "number", label: "Prima fine (s)", default: 5 }
-                ]
-            },
-            "SPMA_cleanData": {
-                params: [
-                    { key: "Severity", type: "select", label: "Severità", options: ["loose", "strict", "aggressive"], default: "loose" }
-                ]
+<div id="toast" class="toast"></div>
+
+<script>
+// ===================================================================
+// 1. LOAD FUNCTION DEFINITIONS
+// ===================================================================
+let functionDefinitions = {
+  "preprocessing": {
+    "chanedit": {
+      "module": "preprocessing",
+      "label": "HRB_chanedit",
+      "params": {
+        "Method": {
+          "default": "template",
+          "type": "string"
+        },
+        "Template": {
+          "default": "",
+          "type": "string"
+        }
+      }
+    },
+    "resample": {
+      "module": "preprocessing",
+      "label": "HRB_resample",
+      "params": {
+        "Frequency": {
+          "default": 250,
+          "type": "double"
+        }
+      }
+    },
+    "filter": {
+      "module": "preprocessing",
+      "label": "HRB_filter",
+      "params": {
+        "Type": {
+          "default": "bandpass",
+          "type": "string"
+        },
+        "LowCutoff": {
+          "default": 0.5,
+          "type": "double"
+        },
+        "HighCutoff": {
+          "default": 48,
+          "type": "double"
+        }
+      }
+    },
+    "removeChannels": {
+      "module": "preprocessing",
+      "label": "HRB_removeChannels",
+      "params": {
+        "Channels": {
+          "default": [],
+          "type": "cell"
+        }
+      }
+    },
+    "selectChannels": {
+      "module": "preprocessing",
+      "label": "HRB_selectChannels",
+      "params": {
+        "Channels": {
+          "default": [],
+          "type": "cell"
+        }
+      }
+    },
+    "selectTime": {
+      "module": "preprocessing",
+      "label": "HRB_selectTime",
+      "params": {
+        "AfterStart": {
+          "default": 5,
+          "type": "double"
+        },
+        "BeforeEnd": {
+          "default": 5,
+          "type": "double"
+        }
+      }
+    },
+    "cleanData": {
+      "module": "preprocessing",
+      "label": "HRB_cleanData",
+      "params": {
+        "Severity": {
+          "default": "loose",
+          "type": "string"
+        },
+        "SaveExcludedChannels": {
+          "default": true,
+          "type": "logical"
+        }
+      }
+    },
+    "runica": {
+      "module": "preprocessing",
+      "label": "HRB_runica",
+      "params": {
+        "Extended": {
+          "default": 1,
+          "type": "double"
+        },
+        "Interrupt": {
+          "default": true,
+          "type": "logical"
+        },
+        "SaveBefore": {
+          "default": true,
+          "type": "logical"
+        },
+        "SaveNameBefore": {
+          "default": "before_runica",
+          "type": "string"
+        }
+      }
+    },
+    "iclabel": {
+      "module": "preprocessing",
+      "label": "HRB_iclabel",
+      "params": {
+        "Version": {
+          "default": "default",
+          "type": "string"
+        }
+      }
+    },
+    "icflag": {
+      "module": "preprocessing",
+      "label": "HRB_icflag",
+      "params": {
+        "Brain": {
+          "default": [
+            null,
+            null
+          ],
+          "type": "double"
+        },
+        "Muscle": {
+          "default": [
+            0.9,
+            1
+          ],
+          "type": "double"
+        },
+        "Eye": {
+          "default": [
+            0.9,
+            1
+          ],
+          "type": "double"
+        },
+        "Heart": {
+          "default": [
+            null,
+            null
+          ],
+          "type": "double"
+        },
+        "LineNoise": {
+          "default": [
+            null,
+            null
+          ],
+          "type": "double"
+        },
+        "ChannelNoise": {
+          "default": [
+            null,
+            null
+          ],
+          "type": "double"
+        },
+        "Other": {
+          "default": [
+            null,
+            null
+          ],
+          "type": "double"
+        }
+      }
+    },
+    "subcomp": {
+      "module": "preprocessing",
+      "label": "HRB_subcomp",
+      "params": {
+        "Components": {
+          "default": [],
+          "type": "double"
+        },
+        "Keep": {
+          "default": false,
+          "type": "logical"
+        }
+      }
+    },
+    "epoch": {
+      "module": "preprocessing",
+      "label": "HRB_epoch",
+      "params": {
+        "Mode": {
+          "default": "Event",
+          "type": "string"
+        },
+        "Events": {
+          "default": [],
+          "type": "double"
+        },
+        "Recurrence": {
+          "default": 1,
+          "type": "double"
+        },
+        "Limits": {
+          "default": [
+            -1,
+            2
+          ],
+          "type": "double"
+        },
+        "Baseline": {
+          "default": [],
+          "type": "double"
+        }
+      }
+    },
+    "rejepochs": {
+      "module": "preprocessing",
+      "label": "HRB_rejepochs",
+      "params": {
+        "Threshold": {
+          "default": 100,
+          "type": "double"
+        },
+        "Channels": {
+          "default": [],
+          "type": "double"
+        },
+        "TimeLimits": {
+          "default": [],
+          "type": "double"
+        }
+      }
+    },
+    "import": {
+      "module": "preprocessing",
+      "label": "HRB_importData",
+      "params": {}
+    }
+  },
+  "headModel": {},
+  "sourceEstimation": {},
+  "connectivity": {},
+  "network": {}
+};
+
+function loadDefinitions() {
+    initUI();
+}
+
+// ===================================================================
+// 2. STATE
+// ===================================================================
+let steps = [];
+let stepIdCounter = 0;
+let selectedModule = 'preprocessing';
+let activeStepIndex = -1;
+
+// ===================================================================
+// 3. UI INIT
+// ===================================================================
+function initUI() {
+    renderModuleTabs();
+    // Add one default step as demo
+    addStep();
+}
+
+function renderModuleTabs() {
+    const container = document.getElementById('module-tabs');
+    container.innerHTML = '';
+    const modules = Object.keys(functionDefinitions);
+    modules.forEach(mod => {
+        const tab = document.createElement('div');
+        tab.className = 'module-tab' + (mod === selectedModule ? ' active' : '');
+        const funcCount = Object.keys(functionDefinitions[mod] || {}).length;
+        tab.innerHTML = `${moduleLabel(mod)} <span class="count">${funcCount}</span>`;
+        tab.onclick = () => switchModule(mod);
+        container.appendChild(tab);
+    });
+}
+
+function switchModule(mod) {
+    selectedModule = mod;
+    document.querySelectorAll('.module-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.module-tab').forEach(t => {
+        const txt = t.textContent.trim();
+        if (txt.startsWith(moduleLabel(mod))) t.classList.add('active');
+    });
+}
+
+function moduleLabel(mod) {
+    const labels = {
+        preprocessing: 'Preprocessing',
+        headModel: 'Head Model',
+        sourceEstimation: 'Source Estimation',
+        connectivity: 'Connectivity',
+        network: 'Network Analysis'
+    };
+    return labels[mod] || mod;
+}
+
+// ===================================================================
+// 4. STEP MANAGEMENT
+// ===================================================================
+function addStep() {
+    stepIdCounter++;
+    const step = {
+        id: stepIdCounter,
+        stepId: `step${stepIdCounter}`,
+        branches: []
+    };
+    // Add one default branch
+    addBranch(step);
+    steps.push(step);
+    activeStepIndex = steps.length - 1;
+    render();
+}
+
+function removeStep(id) {
+    const idx = steps.findIndex(s => s.id === id);
+    if (idx < 0) return;
+    if (!confirm('Delete this step and all its branches?')) return;
+    steps.splice(idx, 1);
+    if (steps.length === 0) stepIdCounter = 0;
+    render();
+}
+
+function addBranch(step) {
+    const funcs = functionDefinitions[selectedModule] || {};
+    const keys = Object.keys(funcs);
+    const firstKey = keys.length > 0 ? keys[0] : '';
+    step.branches.push({
+        funcKey: firstKey,
+        name: '',
+        params: {},
+        save: false
+    });
+}
+
+function removeBranch(stepId, branchIdx) {
+    const step = steps.find(s => s.id === stepId);
+    if (!step || step.branches.length <= 1) return;
+    step.branches.splice(branchIdx, 1);
+    render();
+}
+
+function reorderStep(direction) {
+    if (activeStepIndex < 0 || activeStepIndex >= steps.length) return;
+    const newIdx = activeStepIndex + direction;
+    if (newIdx < 0 || newIdx >= steps.length) return;
+    [steps[activeStepIndex], steps[newIdx]] = [steps[newIdx], steps[activeStepIndex]];
+    activeStepIndex = newIdx;
+    render();
+}
+
+// ===================================================================
+// 5. RENDER
+// ===================================================================
+function render() {
+    const container = document.getElementById('steps-container');
+    if (steps.length === 0) {
+        container.innerHTML = `
+            <div class="add-step-area" onclick="addStep()">
+                <strong>+ Add your first step</strong><br>
+                <span style="font-size:12px;color:var(--text-muted);">Click to define a pipeline step</span>
+            </div>`;
+        document.getElementById('step-counter').textContent = '0';
+        updatePreview();
+        return;
+    }
+
+    let html = '';
+    steps.forEach((step, idx) => {
+        const isActive = idx === activeStepIndex;
+        const branchCount = step.branches.length;
+        const gridClass = branchCount === 2 ? 'has-multiple' : (branchCount >= 3 ? 'has-three' : '');
+
+        html += `
+        <div class="step-card" data-step-idx="${idx}" onclick="activeStepIndex=${idx};document.querySelectorAll('.step-card').forEach(c=>c.style.borderColor='');this.style.borderColor='var(--secondary)';">
+            <div class="step-header">
+                <span class="drag-handle" title="Drag to reorder">⠿</span>
+                <input class="step-id-input" value="${escHtml(step.stepId)}"
+                       onchange="steps[${idx}].stepId=this.value;updatePreview()"
+                       placeholder="step1">
+                <span style="font-size:11px;color:var(--text-muted);">Branches: ${branchCount}</span>
+                <div class="step-actions">
+                    <button class="btn-outline btn-sm" onclick="event.stopPropagation();addBranch(steps[${idx}]);render()" title="Add parallel branch">+ Branch</button>
+                    <button class="btn-outline btn-sm" onclick="event.stopPropagation();moveStep(${idx},-1)" ${idx===0?'disabled':''}>↑</button>
+                    <button class="btn-outline btn-sm" onclick="event.stopPropagation();moveStep(${idx},1)" ${idx===steps.length-1?'disabled':''}>↓</button>
+                    <button class="btn-danger btn-sm" onclick="event.stopPropagation();removeStep(${step.id})">✕</button>
+                </div>
+            </div>
+
+            <div class="branch-grid ${gridClass}">
+                ${step.branches.map((branch, bIdx) => renderBranch(step, branch, idx, bIdx)).join('')}
+            </div>
+
+            <div class="step-footer">
+                <span style="font-size:11px;color:var(--text-muted);">
+                    ${branchCount} branch${branchCount > 1 ? 'es' : ''} (multiverse)
+                </span>
+            </div>
+        </div>`;
+    });
+
+    // Add step button at the bottom
+    html += `
+    <div style="display:flex;gap:8px;padding:8px 0;">
+        <button class="btn-success" onclick="addStep()" style="flex:1;padding:10px;">+ Add Step</button>
+    </div>`;
+
+    container.innerHTML = html;
+    document.getElementById('step-counter').textContent = steps.length;
+
+    // Highlight active
+    document.querySelectorAll('.step-card').forEach((c, i) => {
+        if (i === activeStepIndex) c.style.borderColor = 'var(--secondary)';
+    });
+
+    updatePreview();
+}
+
+function renderBranch(step, branch, stepIdx, bIdx) {
+    const funcDef = findFuncDef(branch.funcKey);
+
+    // Build grouped select: all functions from all modules
+    let selectHtml = `<select class="func-select" onchange="changeBranchFunc(${step.id}, ${bIdx}, this.value)">`;
+    selectHtml += `<option value="">-- Select function --</option>`;
+    for (const [mod, funcs] of Object.entries(functionDefinitions)) {
+        if (Object.keys(funcs).length === 0) continue;
+        selectHtml += `<optgroup label="${moduleLabel(mod)}">`;
+        for (const [key, def] of Object.entries(funcs)) {
+            const sel = key === branch.funcKey ? 'selected' : '';
+            selectHtml += `<option value="${mod}::${key}" ${sel}>${def.label || key}</option>`;
+        }
+        selectHtml += `</optgroup>`;
+    }
+    selectHtml += `</select>`;
+
+    let paramsHtml = '';
+    if (funcDef) {
+        paramsHtml = renderParams(step, branch, funcDef, bIdx);
+    }
+
+    const saveChecked = branch.save ? 'checked' : '';
+
+    return `
+    <div class="branch-card">
+        <div class="branch-label">
+            <span>Branch ${bIdx + 1}</span>
+            ${step.branches.length > 1 ? `<button class="btn-danger btn-sm" onclick="removeBranch(${step.id}, ${bIdx});event.stopPropagation()" style="padding:1px 6px;font-size:11px;">✕</button>` : ''}
+        </div>
+        ${selectHtml}
+        <div class="param-row" style="margin-top:4px;">
+            <label>Name</label>
+            <input type="text" value="${escHtml(branch.name || '')}" placeholder="e.g. downsampling"
+                   onchange="steps.find(s=>s.id===${step.id}).branches[${bIdx}].name=this.value;updatePreview()">
+        </div>
+        <div class="params-area" id="params-${step.id}-${bIdx}">
+            ${paramsHtml}
+        </div>
+        <div class="branch-footer">
+            <label><input type="checkbox" ${saveChecked} onchange="steps.find(s=>s.id===${step.id}).branches[${bIdx}].save=this.checked;updatePreview()"> Save result</label>
+        </div>
+    </div>`;
+}
+
+// Find function definition across all modules
+function findFuncDef(funcKey) {
+    if (!funcKey) return null;
+    for (const funcs of Object.values(functionDefinitions)) {
+        if (funcs[funcKey]) return funcs[funcKey];
+    }
+    return null;
+}
+
+// ===================================================================
+// 6. PARAMETER RENDERING
+// ===================================================================
+function renderParams(step, branch, funcDef, bIdx) {
+    const params = funcDef.params || {};
+    const keys = Object.keys(params);
+    if (keys.length === 0) return '<span style="font-size:12px;color:var(--text-muted);">No parameters</span>';
+
+    return keys.map(key => {
+        const pdef = params[key];
+        const val = branch.params[key] !== undefined ? branch.params[key] : pdef.default;
+        const inputId = `param-${step.id}-${bIdx}-${key}`;
+
+        let inputHtml = '';
+        const changeHandler = `steps.find(s=>s.id===${step.id}).branches[${bIdx}].params['${key}']=getParamValue('${inputId}','${pdef.type}');updatePreview()`;
+
+        if (pdef.type === 'logical') {
+            const checked = val ? 'checked' : '';
+            inputHtml = `<input type="checkbox" id="${inputId}" ${checked} onchange="${changeHandler}">`;
+        } else if (pdef.enum && pdef.enum.length > 0) {
+            let opts = pdef.enum.map(v => {
+                const sel = String(v) === String(val) ? 'selected' : '';
+                return `<option value="${escHtml(v)}" ${sel}>${escHtml(v)}</option>`;
+            }).join('');
+            inputHtml = `<select id="${inputId}" onchange="${changeHandler}">${opts}</select>`;
+        } else if (pdef.size && pdef.size.length === 2 && pdef.size[0] === 1 && pdef.size[1] === 2) {
+            // Array of 2: [a, b]
+            const arr = Array.isArray(val) ? val : [val, val];
+            const v0 = arr[0] !== null && arr[0] !== undefined ? arr[0] : '';
+            const v1 = arr[1] !== null && arr[1] !== undefined ? arr[1] : '';
+            inputHtml = `
+                <div class="array-input">
+                    <span class="delim">[</span>
+                    <input type="number" id="${inputId}-0" value="${escHtml(v0)}" step="any" onchange="updateArrayParam(${step.id},${bIdx},'${key}')">
+                    <span class="delim">,</span>
+                    <input type="number" id="${inputId}-1" value="${escHtml(v1)}" step="any" onchange="updateArrayParam(${step.id},${bIdx},'${key}')">
+                    <span class="delim">]</span>
+                </div>`;
+        } else if (pdef.type === 'cell' || (pdef.size && pdef.size.includes(null))) {
+            // String/Cell array → textarea
+            const arrVal = Array.isArray(val) ? val.join(', ') : (val || '');
+            inputHtml = `<textarea id="${inputId}" rows="2" placeholder="comma, separated, values" onchange="${changeHandler}">${escHtml(arrVal)}</textarea>`;
+        } else {
+            // Number or string scalar
+            const inputType = pdef.type === 'double' || pdef.type === 'integer' ? 'number' : 'text';
+            const stepAttr = pdef.type === 'integer' ? 'step="1"' : 'step="any"';
+            inputHtml = `<input type="${inputType}" id="${inputId}" value="${escHtml(val !== null && val !== undefined ? val : '')}" ${stepAttr} onchange="${changeHandler}">`;
+        }
+
+        return `
+        <div class="param-row">
+            <label title="${escHtml(key)}">${pdef.label || key}</label>
+            ${inputHtml}
+        </div>`;
+    }).join('');
+}
+
+function getParamValue(inputId, type) {
+    const el = document.getElementById(inputId);
+    if (!el) return '';
+    if (type === 'logical') return el.checked;
+    if (type === 'double' || type === 'integer') {
+        const v = parseFloat(el.value);
+        return isNaN(v) ? 0 : v;
+    }
+    if (el.tagName === 'TEXTAREA') {
+        const parts = el.value.split(',').map(s => s.trim()).filter(s => s);
+        return parts.length === 0 ? [] : parts;
+    }
+    if (el.tagName === 'SELECT') return el.value;
+    return el.value;
+}
+
+function updateArrayParam(stepId, bIdx, key) {
+    const v0 = parseFloat(document.getElementById(`param-${stepId}-${bIdx}-${key}-0`).value) || 0;
+    const v1 = parseFloat(document.getElementById(`param-${stepId}-${bIdx}-${key}-1`).value) || 0;
+    const step = steps.find(s => s.id === stepId);
+    if (step) {
+        step.branches[bIdx].params[key] = [v0, v1];
+        updatePreview();
+    }
+}
+
+function changeBranchFunc(stepId, bIdx, value) {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    const branch = step.branches[bIdx];
+    // value is either "mod::key" or empty
+    const parts = value.split('::');
+    const funcKey = parts.length === 2 ? parts[1] : '';
+    branch.funcKey = funcKey;
+    branch.params = {}; // reset params when function changes
+    render();
+}
+
+function moveStep(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= steps.length) return;
+    [steps[idx], steps[newIdx]] = [steps[newIdx], steps[idx]];
+    activeStepIndex = newIdx;
+    render();
+}
+
+// ===================================================================
+// 7. JSON/YAML GENERATION
+// ===================================================================
+function buildPipeline() {
+    const pipeline = {};
+    steps.forEach(step => {
+        if (step.branches.length === 0) return;
+        const stepId = step.stepId || `step${step.id}`;
+
+        const functions = step.branches.map(branch => {
+            const def = findFuncDef(branch.funcKey);
+            if (!def) return null;
+
+            const funcEntry = {
+                function: def.function,
+                params: buildParams(branch.params, def.params)
+            };
+
+            // Name: per-branch
+            if (branch.name) {
+                funcEntry.name = branch.name;
             }
+
+            if (branch.save) funcEntry.save = true;
+
+            return funcEntry;
+        }).filter(f => f !== null);
+
+        if (functions.length === 0) return;
+        if (functions.length === 1) {
+            pipeline[stepId] = functions[0];
+        } else {
+            pipeline[stepId] = functions;
+        }
+    });
+    return pipeline;
+}
+
+function buildParams(userParams, defs) {
+    const params = {};
+    for (const [key, pdef] of Object.entries(defs || {})) {
+        let val = userParams[key] !== undefined ? userParams[key] : pdef.default;
+        // Clean null → [] for array params
+        if (Array.isArray(val)) {
+            val = val.map(v => v === null ? NaN : v);
+        }
+        if (val !== undefined && val !== null && val !== '') {
+            params[key] = val;
+        }
+    }
+    // Also include any user-set params not in defs
+    for (const [key, val] of Object.entries(userParams || {})) {
+        if (!(key in defs)) {
+            params[key] = val;
+        }
+    }
+    return params;
+}
+
+function updatePreview() {
+    const pipeline = buildPipeline();
+    const jsonStr = JSON.stringify(pipeline, null, 2);
+    document.getElementById('json-preview').textContent = jsonStr || '{ }';
+    // Update module badge counts
+    updateModuleCounts();
+}
+
+function updateModuleCounts() {
+    const tabs = document.querySelectorAll('.module-tab');
+    tabs.forEach(t => {
+        const txt = t.textContent.trim();
+        for (const [mod, funcs] of Object.entries(functionDefinitions)) {
+            if (txt.startsWith(moduleLabel(mod))) {
+                const count = Object.keys(funcs).length;
+                const span = t.querySelector('.count');
+                if (span) span.textContent = count;
+            }
+        }
+    });
+}
+
+// ===================================================================
+// 8. DOWNLOAD / EXPORT
+// ===================================================================
+function downloadJSON() {
+    const pipeline = buildPipeline();
+    const jsonStr = JSON.stringify(pipeline, null, 2);
+    downloadFile(jsonStr, 'pipeline.json', 'application/json');
+}
+
+function downloadYAML() {
+    const pipeline = buildPipeline();
+    try {
+        const yamlStr = jsyaml.dump(pipeline, { indent: 2, lineWidth: -1, noRefs: true });
+        downloadFile(yamlStr, 'pipeline.yaml', 'text/yaml');
+    } catch (e) {
+        showToast('YAML export error: ' + e.message, 'error');
+    }
+}
+
+function downloadFile(content, filename, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded ${filename}`, 'success');
+}
+
+function copyJSON() {
+    const pipeline = buildPipeline();
+    const jsonStr = JSON.stringify(pipeline, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+        showToast('Copied to clipboard', 'success');
+    }).catch(() => {
+        showToast('Could not copy', 'error');
+    });
+}
+
+// ===================================================================
+// 9. LOAD EXISTING PIPELINE
+// ===================================================================
+function loadPipeline(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let data;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'yaml' || ext === 'yml') {
+                data = jsyaml.load(e.target.result);
+            } else {
+                data = JSON.parse(e.target.result);
+            }
+            importPipeline(data);
+            showToast('Pipeline loaded successfully', 'success');
+        } catch (err) {
+            showToast('Error parsing file: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+function importPipeline(data) {
+    steps = [];
+    stepIdCounter = 0;
+
+    // Determine module from function names
+    // Try to find the module that contains the first function
+    const allFuncs = {};
+    for (const [mod, funcs] of Object.entries(functionDefinitions)) {
+        for (const [key, def] of Object.entries(funcs)) {
+            allFuncs[def.function] = { mod, key };
+        }
+    }
+
+    for (const [stepId, stepDef] of Object.entries(data)) {
+        const step = {
+            id: ++stepIdCounter,
+            stepId: stepId,
+            branches: []
         };
 
-        let stepCounter = 0;
+        // stepDef can be an object (single function) or array (multiple branches)
+        const funcs = Array.isArray(stepDef) ? stepDef : [stepDef];
 
-        // --- Funzioni di Gestione UI ---
+        funcs.forEach(f => {
+            const branch = {
+                funcKey: '',
+                name: f.name || '',
+                params: {},
+                save: false
+            };
 
-        function addStep() {
-            stepCounter++;
-            const stepId = stepCounter === 1 ? "step1" : `step${stepCounter}`;
-            
-            const container = document.getElementById('steps-container');
-            const stepDiv = document.createElement('div');
-            stepDiv.className = 'step-card';
-            stepDiv.id = `step-${stepCounter}`;
-            
-            stepDiv.innerHTML = `
-                <div class="step-header">
-                    <span class="step-id">Step: ${stepId}</span>
-                    <button class="danger" onclick="removeStep(${stepCounter})">Elimina Step</button>
-                </div>
-                
-                <div class="form-group">
-                    <label>Nome Step:</label>
-                    <input type="text" class="step-name-input" placeholder="Es. downsampling">
-                </div>
-
-                <div class="functions-list" id="functions-${stepCounter}">
-                    <!-- Funzioni parallele qui -->
-                </div>
-
-                <button class="add" onclick="addFunction(${stepCounter})">+ Aggiungi Funzione Parallela</button>
-            `;
-
-            container.appendChild(stepDiv);
-            updateJSON();
-        }
-
-        function removeStep(id) {
-            if(confirm("Sei sicuro di voler eliminare questo step?")) {
-                const step = document.getElementById(`step-${id}`);
-                step.remove();
-                updateJSON();
-            }
-        }
-
-        function addFunction(stepId) {
-            const functionsContainer = document.getElementById(`functions-${stepId}`);
-            const funcId = Date.now(); // ID unico per la funzione
-
-            // Crea la struttura HTML per la funzione
-            const funcDiv = document.createElement('div');
-            funcDiv.className = 'function-item';
-            funcDiv.id = `func-${funcId}`;
-
-            // Selezione Funzione
-            let selectHtml = `<select class="function-select" onchange="renderParams(${funcId}, this.value)">`;
-            selectHtml += `<option value="">Seleziona Funzione...</option>`;
-            for (const key in functionDefinitions) {
-                selectHtml += `<option value="${key}">${key}</option>`;
-            }
-            selectHtml += `</select>`;
-
-            funcDiv.innerHTML = `
-                <div class="function-header">
-                    <strong>Funzione:</strong>
-                    <button class="danger" style="padding: 2px 6px; font-size: 12px;" onclick="removeFunction(${funcId})">X</button>
-                </div>
-                <div style="margin-bottom: 10px;">${selectHtml}</div>
-                
-                <div id="params-container-${funcId}" class="params-container hidden"></div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="save-${funcId}">
-                    <label for="save-${funcId}">Salva risultato (${stepId})</label>
-                </div>
-            `;
-
-            functionsContainer.appendChild(funcDiv);
-        }
-
-        function removeFunction(funcId) {
-            const func = document.getElementById(`func-${funcId}`);
-            func.remove();
-            updateJSON();
-        }
-
-        function renderParams(funcId, functionName) {
-            const container = document.getElementById(`params-container-${funcId}`);
-            const select = document.querySelector(`#func-${funcId} .function-select`);
-            
-            if (!functionName) {
-                container.innerHTML = '';
-                container.classList.add('hidden');
-                return;
-            }
-
-            const def = functionDefinitions[functionName];
-            if (!def) return;
-
-            let html = '<h4>Parametri:</h4><div class="param-group">';
-            
-            def.params.forEach(param => {
-                let inputHtml = '';
-                
-                if (param.type === 'select') {
-                    inputHtml = `<select class="param-input" data-key="${param.key}">`;
-                    param.options.forEach(opt => {
-                        const selected = opt === param.default ? 'selected' : '';
-                        inputHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
-                    });
-                    inputHtml += `</select>`;
-                } else if (param.type === 'textarea') {
-                    inputHtml = `<textarea class="param-input" data-key="${param.key}" rows="3" placeholder="${param.placeholder || ''}">${param.default || ''}</textarea>`;
-                } else {
-                    inputHtml = `<input type="${param.type}" class="param-input" data-key="${param.key}" value="${param.default || ''}" placeholder="${param.placeholder || ''}">`;
-                }
-
-                html += `
-                    <div>
-                        <label>${param.label}</label><br>
-                        ${inputHtml}
-                    </div>
-                `;
-            });
-
-            html += '</div>';
-            container.innerHTML = html;
-            container.classList.remove('hidden');
-        }
-
-        // --- Logica di Generazione JSON ---
-
-        function getStepData(stepDiv) {
-            const stepId = stepDiv.querySelector('.step-id').innerText.replace('Step: ', '');
-            const stepName = stepDiv.querySelector('.step-name-input').value;
-            const functionsContainer = stepDiv.querySelector('.functions-list');
-            const functionItems = functionsContainer.querySelectorAll('.function-item');
-            
-            let functions = [];
-
-            functionItems.forEach(funcItem => {
-                const funcSelect = funcItem.querySelector('.function-select');
-                const funcName = funcSelect.value;
-                
-                if (!funcName) return; // Salta se nessuna funzione selezionata
-
-                //const save = funcItem.querySelector(`#save-${funcItem.id}`).checked;
-                const params = {};
-                
-                // Raccogli parametri
-                const paramInputs = funcItem.querySelectorAll('.param-input');
-                paramInputs.forEach(input => {
-                    const key = input.getAttribute('data-key');
-                    let val = input.value;
-                    
-                    // Conversione tipi
-                    if (input.type === 'number') {
-                        val = parseFloat(val) || 0;
-                    }
-                    params[key] = val;
-                });
-
-                functions.push({
-                    function: funcName,
-                    name: funcName, // Default name, o si potrebbe aggiungere un campo nome specifico
-                    //save: save,
-                    params: params
-                });
-            });
-
-            // Se la step ha solo 1 funzione, può essere un oggetto, se >1 è un array
-            // Nota: La tua struttura originale usa array per step2.5. 
-            // Qui semplifichiamo: se c'è più di 1 funzione, usiamo array. Se 0, ignoriamo lo step.
-            if (functions.length === 0) return null;
-            if (functions.length === 1) {
-                return {
-                    [stepId]: {
-                        ...functions[0],
-                        name: stepName || functions[0].name
-                    }
-                };
+            // Find the function key from function name
+            const funcName = f.function || '';
+            const info = allFuncs[funcName];
+            if (info) {
+                branch.funcKey = info.key;
             } else {
-                return {
-                    [stepId]: functions
-                };
-            }
-        }
-
-        function updateJSON() {
-            const stepsContainer = document.getElementById('steps-container');
-            const steps = stepsContainer.querySelectorAll('.step-card');
-            let finalJson = {};
-
-            steps.forEach(stepDiv => {
-                const stepData = getStepData(stepDiv);
-                if (stepData) {
-                    finalJson = { ...finalJson, ...stepData };
+                // Unknown function — try to infer key from name
+                const shortName = funcName.replace('HRB_', '').toLowerCase();
+                for (const funcs of Object.values(functionDefinitions)) {
+                    for (const [key, def] of Object.entries(funcs)) {
+                        if (key.toLowerCase() === shortName) {
+                            branch.funcKey = key;
+                            break;
+                        }
+                    }
+                    if (branch.funcKey) break;
                 }
-            });
-
-            // Ordina le chiavi per leggibilità (opzionale)
-            // finalJson = Object.keys(finalJson).sort().reduce((obj, key) => {
-            //     obj[key] = finalJson[key];
-            //     return obj;
-            // }, {});
-
-            const jsonString = JSON.stringify(finalJson, null, 2);
-            document.getElementById('json-preview').textContent = jsonString;
-            return finalJson;
-        }
-
-        function downloadJSON() {
-            const json = updateJSON();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            
-            // Genera nome file con timestamp
-            const date = new Date();
-            const timestamp = date.toISOString().replace(/[:.]/g, "-").slice(0, 19);
-            downloadAnchorNode.setAttribute("download", `pipeline_${timestamp}.json`);
-            
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        }
-
-        function resetForm() {
-            if(confirm("Vuoi cancellare tutto e ricominciare?")) {
-                document.getElementById('steps-container').innerHTML = '';
-                stepCounter = 0;
-                updateJSON();
             }
-        }
 
-        // Inizializza con un esempio (opzionale)
-        // addStep(); 
-    </script>
+            // Params
+            if (f.params) {
+                branch.params = { ...f.params };
+            }
+
+            // Save flag
+            if (f.save) branch.save = true;
+
+            step.branches.push(branch);
+        });
+
+        steps.push(step);
+    }
+
+    activeStepIndex = 0;
+    render();
+}
+
+// ===================================================================
+// 10. RESET
+// ===================================================================
+function resetPipeline() {
+    if (!confirm('Clear the entire pipeline?')) return;
+    steps = [];
+    stepIdCounter = 0;
+    render();
+}
+
+// ===================================================================
+// 11. HELPERS
+// ===================================================================
+function escHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast' + (type ? ' ' + type : '') + ' show';
+    clearTimeout(el._timeout);
+    el._timeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+loadDefinitions();
+</script>
 </body>
 </html>
