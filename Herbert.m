@@ -50,6 +50,10 @@ EEG = pop_loadbv(data_path, file_name);
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
 % data = HRB_runPipeline(pipeline, data_test);
 
+%% Run old pipeline (not in parallel)
+EEG = pop_loadbv(data_path, file_name);
+data = HRB_runPipelineOld(EEG, pipeline) % Not parallel pipeline!
+
 
 %% Create pipeline
 step1 = @(eeg) HRB_resample(eeg,Frequency=250, Save=true);
