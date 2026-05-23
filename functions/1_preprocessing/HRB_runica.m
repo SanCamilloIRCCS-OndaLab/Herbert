@@ -29,6 +29,7 @@ function [EEG] = HRB_runica(EEG, opt)
         % Optional
         opt.Extended double {mustBeInteger}
         opt.Interrupt logical
+        opt.Seed double 
         opt.EEGLAB (1,:) cell
         opt.SaveBefore logical
         opt.SaveNameBefore string
@@ -64,7 +65,23 @@ function [EEG] = HRB_runica(EEG, opt)
     %% Run ICA
     log.info(sprintf("Starting ICA with runICA algorithm, with Extended value %d", config.Extended))
 
-    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',config.Extended,'interrupt', bool2onoff(config.Interrupt), config.EEGLAB{:}); 
+    if ~isempty(config.Seed)
+        rng(congif.Seed);
+        log.info(sprintf("Random seed fixed: %d. rndreset set to "no", config.Seed));
+
+        EEG = pop_runica(EEG, 'icatype', 'runica', ...
+            'extended',config.Extended, ...
+            'interrupt', bool2onoff(config.Interrupt), ...
+            'rndreset', 'no', ...
+            config.EEGLAB{:});
+
+    else
+        log.info("No seed set: ICA decomposition is non-deterministic");
+
+        EEG = pop_runica(EEG, 'icatype, 'runica', ...
+            'extended', config.Extended, ...
+            'interrupt', bool2onoff(config.Interrupt), ...
+            config.EEGLAB{:});
 
     %% Save
     if config.Save
