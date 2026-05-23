@@ -15,6 +15,7 @@ function [EEG] = HRB_ica(EEG, opt)
         EEG struct
         % Optional parameter for HRB_runica
         opt.Extended double = 1
+        opt.Seed double 
         % Optional parameter for HRB_iclabel
         opt.Version string {mustBeMember(opt.Version, ["default", "lite", "beta"])} = "default"
         % Optional parameters for HRB_icflag
@@ -70,6 +71,7 @@ function [EEG] = HRB_ica(EEG, opt)
     log.info("Step 1/4: Running ICA decomposition");
     EEG = HRB_runica(EEG, ...
         'Extended', config.Extended, ...
+        'Seed', config.Seed, ...
         'Save', false, ... 
         'LogEnabled', logConfig.LogEnabled, 'LogLevel', logConfig.LogLevel);
 
