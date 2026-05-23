@@ -42,7 +42,7 @@ function structFinal = mergeStruct(mainStruct,subStructs,opt)
         return
     end
     
-    for ii = length(subStructs)
+    for ii = 1:length(subStructs)
         subStruct = subStructs{ii};
 
         subStructFields = fieldnames(subStruct);
