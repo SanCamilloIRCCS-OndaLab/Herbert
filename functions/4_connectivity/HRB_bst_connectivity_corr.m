@@ -1,0 +1,266 @@
+function EEG = HRB_bst_connectivity_corr(InputData, opt)
+% HRB_BST_CONNECTIVITY_CORR - Compute Pearson correlation connectivity.
+% Method-specific sub-function of HRB_bst_connectivity.
+%
+% Usage:
+%   >>> EEG = HRB_bst_connectivity_corr(EEG, 'Topology','NxN');
+%
+% Method-specific parameters:
+%   ScalarProduct (logical): default false
+%   TimeRes (string): "none" (default) | "windowed"
+%
+% Authors: Ettore Napoli, University of Bologna, 2026
+% See also: HRB_BST_CONNECTIVITY
+
+arguments(Input)
+    InputData
+    opt.ScalarProduct logical = false
+    opt.TimeRes string {mustBeMember(opt.TimeRes, ["windowed","none"])} = "none"
+    opt.Topology string {mustBeMember(opt.Topology, ["1xN","NxN"])} = "NxN"
+    opt.TimeWindow double = []
+    opt.SelectScouts logical = true
+    opt.Atlas string = ""
+    opt.Scouts string = ""
+    opt.FlattenPCA logical = false
+    opt.ScoutFunction string {mustBeMember(opt.ScoutFunction, ["mean","max","std","pca"])} = "mean"
+    opt.ScoutTime string {mustBeMember(opt.ScoutTime, ["before","after"])} = "after"
+    opt.AvgWinLength double = 1
+    opt.AvgWinOverlap double = 50
+    opt.SaveMode string {mustBeMember(opt.SaveMode, ["separately","average","concatenate"])} = "separately"
+    opt.ProtocolName string = "HRB_Protocol"
+    opt.BrainstormDbDir string = ""
+    opt.Save logical
+    opt.SaveName string
+    opt.OutputFolder string
+    opt.LogEnabled logical
+    opt.LogLevel double {mustBeInteger, mustBeInRange(opt.LogLevel, 0,6)}
+    opt.LogToFile logical
+    opt.LogFileDir string
+    opt.LogFileName string
+end
+
+module = "connectivity";
+config    = HRB_loadConfig(module, "bst_connectivity", opt);
+logConfig = HRB_loadConfig(module, "logging", opt);
+log = HRB_loggerSetUp(module, logConfig);
+
+%% 1. Input type detection
+isSubjName = isstring(InputData) || ischar(InputData);
+
+if isSubjName
+    subjName = char(InputData); protocolName = char(config.ProtocolName);
+    if isempty(subjName), error("HRB:BadInput","InputData is empty."); end
+    log.info(sprintf("Input mode: subject name (%s)", subjName));
+else
+    if ~isstruct(InputData), error("HRB:BadInput","InputData must be a struct or string."); end
+    if ~isfield(InputData,'etc') || ~isfield(InputData.etc,'brainstorm')
+        error("HRB:MissingMetadata","EEG.etc.brainstorm not found.");
+    end
+    if ~isfield(InputData.etc.brainstorm,'inverse_method')
+        error("HRB:MissingInverse","No inverse solution found. Run HRB_bst_inverse first.");
+    end
+    subjName = InputData.etc.brainstorm.subject;
+    protocolName = InputData.etc.brainstorm.protocol;
+    log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
+end
+
+%% 2. Output folder
+if config.OutputFolder == ""
+    config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
+end
+if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
+
+%% 3. Brainstorm database location
+if strlength(config.BrainstormDbDir) > 0
+    dbDir = char(config.BrainstormDbDir);
+else
+    dbDir = fullfile(pwd, 'brainstorm_db');
+end
+if ~exist(dbDir,'dir'), mkdir(dbDir); end
+
+%% 4. Start Brainstorm
+bst_working = false;
+if brainstorm('status')
+    try, bst_get('BrainstormDbDir'); bst_working = true; catch, end
+end
+if ~bst_working
+    log.info("Starting Brainstorm (nogui)...");
+    brainstorm nogui;
+    timeout = 120; t = tic;
+    while toc(t) < timeout
+        try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
+    end
+    if toc(t) >= timeout
+        error("HRB:BrainstormTimeout","Brainstorm failed to initialize within %d seconds.", timeout);
+    end
+end
+
+%% 5. Switch DB if needed
+currentDbDir = bst_get('BrainstormDbDir');
+if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
+    bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
+end
+
+%% 6. Activate protocol
+iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound","Protocol '%s' not found.", protocolName);
+end
+gui_brainstorm('SetCurrentProtocol', iProtocol);
+pause(2);
+t = tic; while toc(t) < 30; try, bst_get('BrainstormDbDir'); break; catch, pause(0.5); end; end
+
+%% 7. Get subject surface info (before any bst_process call)
+if config.SelectScouts
+    [sSubject, ~] = bst_get('Subject', char(subjName));
+    if isempty(sSubject) || isempty(sSubject.Surface)
+        error("HRB:NoSurface","No surfaces for subject '%s'.", subjName);
+    end
+    cortexFile = sSubject.Surface(sSubject.iCortex).FileName;
+    SurfaceMat = in_tess_bst(cortexFile);
+    if isempty(SurfaceMat.Atlas)
+        error("HRB:NoAtlas","No atlases on cortex for subject '%s'.", subjName);
+    end
+    atlasNames = {SurfaceMat.Atlas.Name};
+end
+
+%% 8. Select source result files
+sFiles = bst_process('CallProcess','process_select_files_results',[],[], ...
+    'subjectname',subjName,'condition','','tag','', ...
+    'includebad',0,'includeintra',1,'includecommon',0);
+if isempty(sFiles)
+    error("HRB:NoSourceFiles","No source files for '%s'. Run HRB_bst_inverse first.", subjName);
+end
+log.info(sprintf("Found %d source file(s).", length(sFiles)));
+
+%% 9. Frequency bands
+if isempty(config.FreqBands)
+    freqBands = {'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
+                 'beta','13, 30','mean'; 'gamma','31, 80','mean'};
+else
+    freqBands = config.FreqBands;
+end
+
+%% 10. Scout selection
+if config.SelectScouts
+    [iAtlas, ok] = listdlg('ListString',atlasNames,'SelectionMode','single', ...
+        'Name','Select Atlas','PromptString','Select atlas for connectivity:','ListSize',[400 300]);
+    if ~ok, error("HRB:NoAtlasSelected","No atlas selected."); end
+    selectedAtlas = atlasNames{iAtlas};
+    scoutNames = {SurfaceMat.Atlas(iAtlas).Scouts.Label};
+    [iScouts, ok] = listdlg('ListString',scoutNames,'SelectionMode','multiple', ...
+        'Name',sprintf('Select ROIs (%s)',selectedAtlas), ...
+        'PromptString','Select ROIs:','ListSize',[500 400]);
+    if ~ok, error("HRB:NoScoutsSelected","No ROIs selected."); end
+    selectedScouts = scoutNames(iScouts);
+    log.info(sprintf("Selected %d ROI(s) from '%s'.", length(selectedScouts), selectedAtlas));
+else
+    if strlength(config.Atlas)==0 || strlength(config.Scouts)==0
+        error("HRB:NoScouts","Provide Atlas and Scouts, or set SelectScouts=true.");
+    end
+    selectedAtlas  = char(config.Atlas);
+    selectedScouts = cellstr(config.Scouts);
+end
+
+scoutsCell = {selectedAtlas, selectedScouts};
+
+switch config.ScoutFunction
+    case "mean", scoutFuncStr = 'mean'; case "max", scoutFuncStr = 'max';
+    case "std",  scoutFuncStr = 'std';  case "pca", scoutFuncStr = 'pca';
+end
+switch config.ScoutTime
+    case "before", scoutTimeStr = 'before'; case "after", scoutTimeStr = 'after';
+end
+switch config.SaveMode
+    case "separately", outputMode = 'input';
+    case "average",    outputMode = 'avg';
+    case "concatenate",outputMode = 'concat';
+end
+
+%% 11. Kernel-shared detection
+try
+    ResultsMat = in_bst_results(sFiles(1).FileName, 0);
+    isKernelShared = isfield(ResultsMat,'ImagingKernel') && ~isempty(ResultsMat.ImagingKernel);
+catch
+    isKernelShared = false;
+end
+
+if isKernelShared
+    log.info("Kernel-shared results. Extracting scout time series first...");
+    sFilesInput = bst_process('CallProcess','process_extract_scout',sFiles,[], ...
+        'timewindow',config.TimeWindow,'scouts',scoutsCell,'scoutfunc',scoutFuncStr, ...
+        'isflip',1,'isnorm',0,'concatenate',0,'save',1, ...
+        'addrowcomment',1,'addfilecomment',1);
+    if isempty(sFilesInput)
+        error("HRB:ExtractScoutsFailed","Scout extraction failed for '%s'.", subjName);
+    end
+    scoutsCellConn = {};
+else
+    sFilesInput    = sFiles;
+    scoutsCellConn = scoutsCell;
+end
+useScouts = ~isempty(scoutsCellConn);
+
+%% 12. Compute correlation
+pcaEdit = struct('Method','pca','Baseline',[-0.1,0],'DataTimeWindow',[0,1],'RemoveDcOffset','file');
+
+switch config.TimeRes
+    case "windowed", timeResStr = 'windowed';
+    otherwise,       timeResStr = 'none';
+end
+
+if strcmp(config.Topology,'NxN')
+    processName = 'process_corr1n';
+else
+    processName = 'process_corr1';
+end
+
+try
+    log.info(sprintf("Computing correlation (%s)...", config.Topology));
+    if useScouts
+        sFilesConn = bst_process('CallProcess',processName,sFilesInput,[], ...
+            'timewindow',config.TimeWindow,'scouts',scoutsCellConn, ...
+            'flatten',double(config.FlattenPCA),'scouttime',scoutTimeStr, ...
+            'scoutfunc',scoutFuncStr,'scoutfuncaft',scoutFuncStr,'pcaedit',pcaEdit, ...
+            'timeres',timeResStr,'avgwinlength',config.AvgWinLength, ...
+            'avgwinoverlap',config.AvgWinOverlap, ...
+            'scalarprod',double(config.ScalarProduct),'outputmode',outputMode);
+    else
+        sFilesConn = bst_process('CallProcess',processName,sFilesInput,[], ...
+            'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
+            'timeres',timeResStr,'avgwinlength',config.AvgWinLength, ...
+            'avgwinoverlap',config.AvgWinOverlap, ...
+            'scalarprod',double(config.ScalarProduct),'outputmode',outputMode);
+    end
+    if isempty(sFilesConn)
+        error("HRB:ConnectivityFailed","Correlation failed for subject '%s'.", subjName);
+    end
+    log.info(sprintf("Correlation computed. %d file(s).", length(sFilesConn)));
+catch ME
+    log.error(sprintf("HRB_bst_connectivity_corr failed: %s", ME.message));
+    rethrow(ME);
+end
+
+%% 13. Build output EEG struct
+if isSubjName
+    EEG = struct(); EEG.etc.brainstorm = struct();
+else
+    EEG = InputData;
+end
+
+EEG.etc.brainstorm.connectivity_metric        = 'corr';
+EEG.etc.brainstorm.connectivity_topology      = char(config.Topology);
+EEG.etc.brainstorm.connectivity_files         = {sFilesConn.FileName};
+EEG.etc.brainstorm.connectivity_kernel_shared = isKernelShared;
+EEG.etc.brainstorm.protocol                   = protocolName;
+EEG.etc.brainstorm.subject                    = subjName;
+EEG.etc.brainstorm.db_path                    = dbDir;
+
+%% 14. Save
+if config.Save
+    logParams = unpackStruct(logConfig);
+    HRB_saveData(EEG,"Name",config.SaveName,"Folder",module, ...
+        "OutputFolder",config.OutputFolder,logParams{:});
+end
+
+end
