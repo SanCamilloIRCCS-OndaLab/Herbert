@@ -1,9 +1,10 @@
 function EEG = HRB_bst_headmodel(InputData, opt)
-% HRB_bst_headmodel - Computes the head model and noise covariance matrix
-% in Brainstorm for a given subject. This function acts as a bridge between
+% HRB_bst_headmodel - Computes the head model in brainstorm. This function acts as a bridge between
 % the Herbert pipeline and Brainstorm's forward modeling tools.
 % It supports multiple head model methods (OpenMEEG BEM, 3-Shell Sphere,
-% DUNeuro FEM) and both cortex surface and volume source spaces.
+% DUNeuro FEM) and both cortex surface and volume source spaces. Noise / data covariance is NOT computed here - use HRB_bst_noisecov
+%
+% This separation allows the headmodel to run once per subjet regardless of how many preprocessing universe exist in the multiverse
 %
 % Usage:
 %   >>> EEG = HRB_bst_headmodel(EEG);
@@ -37,13 +38,6 @@ function EEG = HRB_bst_headmodel(InputData, opt)
 %                             the channel template from the BST database.
 %                             The list is automatically filtered based on
 %                             the anatomy used for the subject. Default: false.
-%
-%   NoiseCovBaseline (double): Time window [t1, t2] in seconds for noise
-%                              covariance computation. Default: [] (whole
-%                              epoch window).
-%
-%   NoiseCovSensorTypes (string): Sensor types for noise covariance.
-%                                 Default: "EEG".
 %
 %   ProtocolName (string): Name of the Brainstorm protocol. Used in
 %                          standalone mode (InputData is a string).
@@ -100,8 +94,6 @@ arguments(Input)
     opt.SelectTemplate logical = false % Show available BST template to choose from
     opt.Method string {mustBeMember(opt.Method, ["OpenMEEG", "3-ShellSphere", "DUNeuro"])} = "OpenMEEG"
     opt.SourceSpace string {mustBeMember(opt.SourceSpace, ["cortex","volume"])} = "cortex"
-    opt.NoiseCovBaseline double = [] % [] whole window | [t1, t2] specific window
-    opt.NoiseCovSensorTypes string  = "EEG"
     opt.ProtocolName string = "HRB_Protocol"
     opt.BrainstormDbDir string = ""
     % OpenMEEG BEM options
@@ -318,7 +310,6 @@ try
     log.info("Channel locations added successfully.");
 
 
-
     %% 8. Compute Head Model
 
     switch config.Method
@@ -433,54 +424,12 @@ try
     end
     log.info(sprintf("Head model computed successfully (method: %s).", config.Method));
 
-    %% 9. Noise Covariance
-    log.info(sprintf("Computing noise covariance (sensors: %s)...", config.NoiseCovSensorTypes));
-
-    recordings = bst_process('CallProcess', 'process_noisecov', recordings, [], ...
-        'baseline',       config.NoiseCovBaseline, ...
-        'datatimewindow', [], ...
-        'sensortypes',    char(config.NoiseCovSensorTypes), ...
-        'target',         1, ...
-        'dcoffset',       1, ...
-        'identity',       0, ...
-        'copycond',       0, ...
-        'copysubj',       0, ...
-        'copymatch',      0, ...
-        'replacefile',    1);
-
-    if isempty(recordings)
-        error("HRB:NoiseCovFailed", ...
-            "Noise covariance computation failed for subject '%s'.", subjName);
-    end
-    log.info("Noise covariance computed successfully.");
-
-    % 9b. Data Covariance (required for LCMV beamformer)
-    log.info("Computing data covariance...");
-
-    recordings = bst_process('CallProcess', 'process_noisecov', recordings, [], ...
-        'baseline',       [], ...
-        'datatimewindow', [], ...
-        'sensortypes',    char(config.NoiseCovSensorTypes), ...
-        'target',         2, ...  % 2 = Data covariance (vs 1 = Noise covariance)
-        'dcoffset',       1, ...
-        'identity',       0, ...
-        'copycond',       0, ...
-        'copysubj',       0, ...
-        'copymatch',      0, ...
-        'replacefile',    1);
-
-    if isempty(recordings)
-        error("HRB:DataCovFailed", ...
-            "Data covariance computation failed for subject '%s'.", subjName);
-    end
-    log.info("Data covariance computed successfully.");
-
 catch ME
     log.error(sprintf("HRB_bst_headmodel failed: %s", ME.message));
     rethrow(ME);
 end
 
-%% 10. Build output EEG struct
+%% 9. Build output EEG struct
 if isSubjName
     % Initialize EEG struct
     EEG = struct();
@@ -499,7 +448,7 @@ EEG.etc.brainstorm.db_path           = dbDir;
 
 log.info(sprintf("Output EEG struct ready (subject: %s, method: %s).", subjName, config.Method));
 
-%% 11. Save
+%% 10. Save
 if config.Save
     logParams = unpackStruct(logConfig);
     HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
