@@ -164,6 +164,9 @@ try
         'BstEegLfFile','eeg_lf.dat','BstMegLfFile','meg_lf.dat', ...
         'UseIntegrationPoint',1,'EnableCacheMemory',0,'MegPerBlockOfSensor',0);
 
+    if local_headmodelExists
+        log.info("Skip: headmodel 'FEM' already exists. Skipping recomputation");
+    else
     log.info(sprintf("Computing head model (DUNeuro FEM, type=%s, space: %s)...", ...
         config.DUNeuroFemType, config.SourceSpace));
 
@@ -201,4 +204,24 @@ if config.Save
         "OutputFolder",config.OutputFolder,logParams{:});
 end
 
+end
+
+%% Helper - check if headmodel already exists
+function found = local_headmodelExists(subjName, comment)
+    found = false;
+    try
+        [sSubject, ~] = bst_get('Subject', char(subjName));
+        if isempty(sSubject), return; end
+        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
+        for i = 1:length(sStudies)
+            if ~isempty(sStudies(i).HeadModel)
+                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
+                    found = true;
+                    return;
+                end
+            end
+        end
+    catch
+        found = false;
+    end
 end

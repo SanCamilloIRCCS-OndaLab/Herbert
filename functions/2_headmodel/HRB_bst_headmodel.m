@@ -331,6 +331,19 @@ try
             spaceValue = 2;
     end
 
+    % Check existence of headmodel. if already exists skips computation
+    if local_headmodelExists(subjName, comment)
+        log.info(sprinf("Skip headmodel ''%s'' already exist for subject ''%s''. Skipping recomputation", comment, subjName));
+
+    else
+        switch config.SourceSpace
+            case "cortex"
+                spaceValue = 1;
+            case "volume"
+                spaceValue = 2;
+        end
+    end
+
     % OpenMEEG struct (always required by BST)
     openmeegStruct = struct(...
         'BemFiles',     {{}}, ...
@@ -454,4 +467,24 @@ if config.Save
     HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
         "OutputFolder", config.OutputFolder, logParams{:});
 end
+end
+
+%% Helper - check if headmodel is already computed
+function found = local_headmodelExists(subjName, comment)
+    found = false;
+    try
+        [sSubject, ~] = bst_get('Subject', char(subjName));
+        if isempty(sSubject), return; end
+        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
+        for i = 1:length(sStudies)
+            if ~isempty(sStudies(i).HeadModel)
+                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
+                    found = true;
+                    return;
+                end
+            end
+        end
+    catch
+        found = false;
+    end
 end

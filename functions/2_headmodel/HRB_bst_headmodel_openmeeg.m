@@ -172,6 +172,12 @@ try
     log.info("Channel locations added successfully.");
 
     %% 9. Compute head model — OpenMEEG BEM (eeg = 3)
+    
+    % Check existence of headmodel and skip computation if found
+    if local_headmodelExist(subjName, 'BEM')
+        local.info("Skip: HeadModel BEM already exists. Skipping recomputation")
+    else
+    
     switch config.SourceSpace
         case "cortex", spaceValue = 1;
         case "volume", spaceValue = 2;
@@ -225,4 +231,24 @@ if config.Save
         "OutputFolder", config.OutputFolder, logParams{:});
 end
 
+end
+
+%% Helper - check if headmodel already exists
+function found = local_headmodelExists(subjName, comment)
+    found = false;
+    try
+        [sSubject, ~] = bst_get('Subject', char(subjName));
+        if isempty(sSubject), return; end
+        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
+        for i = 1:length(sStudies)
+            if ~isempty(sStudies(i).HeadModel)
+                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
+                    found = true;
+                    return;
+                end
+            end
+        end
+    catch
+        found = false;
+    end
 end

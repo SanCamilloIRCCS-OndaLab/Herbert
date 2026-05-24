@@ -133,6 +133,11 @@ try
         'https://neuroimage.usc.edu/resources/nst_data/fluence/', ...
         'smoothing_method','geodesic_dist','smoothing_fwhm',10);
 
+    if local_headmodelExists(subjName, '3-Shell')
+        log.info("Skip: Headmodel '3-Shell' already exists. Skipping recomputation");
+    
+    else
+
     log.info(sprintf("Computing head model (3-Shell Sphere, space: %s)...", config.SourceSpace));
     recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
         'Comment','3_Shell','sourcespace',spaceValue, ...
@@ -167,4 +172,24 @@ if config.Save
         "OutputFolder",config.OutputFolder,logParams{:});
 end
 
+end
+
+%% Helper - Check if headmodel already exists
+function found = local_headmodelExists(subjName, comment)
+    found = false;
+    try
+        [sSubject, ~] = bst_get('Subject', char(subjName));
+        if isempty(sSubject), return; end
+        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
+        for i = 1:length(sStudies)
+            if ~isempty(sStudies(i).HeadModel)
+                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
+                    found = true;
+                    return;
+                end
+            end
+        end
+    catch
+        found = false;
+    end
 end
