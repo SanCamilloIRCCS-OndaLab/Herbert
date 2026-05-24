@@ -67,7 +67,7 @@ function [EEG] = HRB_runica(EEG, opt)
 
     if ~isempty(config.Seed)
         rng(congif.Seed);
-        log.info(sprintf("Random seed fixed: %d. rndreset set to "no", config.Seed));
+        log.info(sprintf("Random seed fixed: %d. rndreset set to 'no'", config.Seed));
 
         EEG = pop_runica(EEG, 'icatype', 'runica', ...
             'extended',config.Extended, ...
