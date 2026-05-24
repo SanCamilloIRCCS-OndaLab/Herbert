@@ -66,7 +66,7 @@ function [EEG] = HRB_runica(EEG, opt)
     log.info(sprintf("Starting ICA with runICA algorithm, with Extended value %d", config.Extended))
 
     if ~isempty(config.Seed)
-        rng(congif.Seed);
+        rng(config.Seed);
         log.info(sprintf("Random seed fixed: %d. rndreset set to 'no'", config.Seed));
 
         EEG = pop_runica(EEG, 'icatype', 'runica', ...
@@ -78,7 +78,7 @@ function [EEG] = HRB_runica(EEG, opt)
     else
         log.info("No seed set: ICA decomposition is non-deterministic");
 
-        EEG = pop_runica(EEG, 'icatype, 'runica', ...
+        EEG = pop_runica(EEG, 'icatype', 'runica', ...
             'extended', config.Extended, ...
             'interrupt', bool2onoff(config.Interrupt), ...
             config.EEGLAB{:});
