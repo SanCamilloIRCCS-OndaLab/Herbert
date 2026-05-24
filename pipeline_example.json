@@ -1,88 +1,94 @@
 {
-	"step1": {
+    "step1_resample": {
         "function": "HRB_resample",
-		"name": "downsampling",
+        "name": "resample_250",
         "save": true,
-		"params": {
-		    "Frequency": 250
+        "params": {
+            "Frequency": 250
         }
-	},
-	"step2.5": [
+    },
+
+    "step2_filter": [
         {
-		"function": "HRB_filter",
-        "name": "bandpass",
-        "save": true,
-		"params": {
-            "Type": "bandpass",
-            "LowCutoff": 0.1,
-            "HighCutoff": 48
-            }        
-	    },
-        {
-		"function": "HRB_filter",
-        "name": "lowpass",
-		"params": {
-            "Type": "lowpass",
-            "HighCutoff": 48
+            "function": "HRB_filter",
+            "name": "bandpass_1_48",
+            "save": true,
+            "params": {
+                "Type": "bandpass",
+                "LowCutoff": 1,
+                "HighCutoff": 48
             }
-	    }
+        },
+        {
+            "function": "HRB_filter",
+            "name": "lowpass_48",
+            "save": true,
+            "params": {
+                "Type": "lowpass",
+                "HighCutoff": 48
+            }
+        }
     ],
-    "step3": {
+
+    "step3_removeChannels": {
         "function": "HRB_removeChannels",
+        "name": "remove_bad",
+        "save": false,
         "params": {
-            "Channels": ["E67","E73","E82","E91","E92","E102","E111","E120","E133","E145","E165","E174","E187","E199","E208","E209","E216","E217","E218","E219","E225","E226","E227","E228","E229","E230","E231","E232","E233","E234","E235","E236","E237","E238","E239","E240","E241","E242","E243","E244","E245","E246","E247","E248","E249","E250","E251","E252","E253","E254","E255","E256"]
+            "Channels": ["E257", "E258"]
         }
     },
-    "step4": {
-        "function": "HRB_selectTime",
-        "params": {
-            "AfterStart": 5,
-            "BeforeEnd": 5
-        }
-    },
-    "step5": {
+
+    "step4_cleanData": {
         "function": "HRB_cleanData",
+        "name": "clean",
         "save": true,
         "params": {
             "Severity": "loose"
         }
     },
-    "step6": {
-        "function" : "HRB_runica", 
+
+    "step5_runica": {
+        "function": "HRB_runica",
+        "name": "ica",
         "save": true,
-        "name": "ica_decomposition", 
-        "params":{
+        "params": {
             "Extended": 1,
-            "Interrupt": false, 
+            "Interrupt": false,
+            "Seed": 42,
             "SaveBefore": false
         }
-    }, 
-    "step7": {
-        "function": "HRB_iclabel", 
-        "save": true, 
-        "name": "ICLabel", 
+    },
+
+    "step6_iclabel": {
+        "function": "HRB_iclabel",
+        "name": "iclabel",
+        "save": true,
         "params": {
             "Version": "default"
         }
-    }, 
-    "step8": {
-        "function": "HRB_icflag", 
-        "save": true, 
-        "name": "ICflag", 
+    },
+
+    "step7_icflag": {
+        "function": "HRB_icflag",
+        "name": "icflag",
+        "save": true,
         "params": {
-            "Muscle": [0.2, 1], 
-            "Eye": [0.7, 1], 
-            "Heart" : [0.9, 1]
+            "Muscle": [0.9, 1],
+            "Eye": [0.9, 1],
+            "Heart": [0.9, 1]
         }
     },
-    "step9": {
-        "function" : "HRB_subcomp", 
-        "save": true, 
-        "name": "IC_rej"
+
+    "step8_subcomp": {
+        "function": "HRB_subcomp",
+        "name": "ic_removal",
+        "save": true
     },
-    "step10": {
+
+    "step9_epoch": {
         "function": "HRB_epoch",
-        "name": "rs_epoched_4s",
+        "name": "epochs_2s",
         "save": true,
         "params": {
             "Mode": "Time",
@@ -91,26 +97,97 @@
             "Baseline": []
         }
     },
-    "step11": {
+
+    "step10_rejepochs": {
         "function": "HRB_rejepochs",
-        "name": "final_clean_data",
+        "name": "clean_epochs",
         "save": true,
         "params": {
             "Threshold": 100,
-            "Channels": [],
-            "TimeLimits": [],
-            "ConfirmRej": true
+            "ConfirmRej": false
         }
     },
-    "step12": {
-    "function": "HRB_bst_import",
-    "name": "bst_import",
-    "save": true,
-    "params": {
-        "DataType": "rs",
-        "WindowLength": 4,
-        "ProtocolName": "HRB_Protocol_Prova",
-        "BrainstormDbDir": ""
+
+    "step11_bst_import": {
+        "function": "HRB_bst_import",
+        "name": "bst_import",
+        "save": true,
+        "params": {
+            "DataType": "rs",
+            "WindowLength": 2,
+            "ProtocolName": "HRB_TEST_Protocol",
+            "BrainstormDbDir": ""
+        }
+    },
+
+    "step12_headmodel": [
+        {
+            "function": "HRB_bst_headmodel_openmeeg",
+            "name": "openmeeg",
+            "save": true,
+            "params": {
+                "SourceSpace": "cortex",
+                "SelectTemplate": true,
+                "BemConductivities": [1, 0.0125, 1]
+            }
+        },
+        {
+            "function": "HRB_bst_headmodel_sphere",
+            "name": "3shell",
+            "save": true,
+            "params": {
+                "SourceSpace": "cortex",
+                "SelectTemplate": true
+            }
+        }
+    ],
+
+    "step13_noisecov": {
+        "function": "HRB_bst_noisecov",
+        "name": "noisecov",
+        "save": false,
+        "params": {
+            "Target": "noise",
+            "NoiseCovSensorTypes": "EEG"
+        }
+    },
+
+    "step14_inverse": [
+        {
+            "function": "HRB_bst_inverse_mne",
+            "name": "mne_dspm",
+            "save": true,
+            "params": {
+                "MNEMeasure": "dspm",
+                "DipolOrientation": "constrained",
+                "ProcessOption": "kernel_shared",
+                "MNENoiseCovReg": "auto",
+                "MNESnr": 3
+            }
+        },
+        {
+            "function": "HRB_bst_inverse_lcmv",
+            "name": "lcmv",
+            "save": true,
+            "params": {
+                "DipolOrientation": "constrained",
+                "ProcessOption": "kernel_shared",
+                "LCMVDataCovReg": "auto"
+            }
+        }
+    ],
+
+    "step15_connectivity": {
+        "function": "HRB_bst_connectivity_phase",
+        "name": "wpli_NxN",
+        "save": true,
+        "params": {
+            "PLVMetric": "wpli",
+            "TFMethod": "hilbert",
+            "TimeRes": "full",
+            "Topology": "NxN",
+            "SelectScouts": true,
+            "SaveMode": "separately"
+        }
     }
-}
 }
