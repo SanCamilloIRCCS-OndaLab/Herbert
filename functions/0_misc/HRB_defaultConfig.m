@@ -108,6 +108,7 @@ preproc.cleanData.OutputFolder = "";
 preproc.runica.Extended = 1;
 preproc.runica.Interrupt = true;
 preproc.runica.EEGLAB = {};
+preproc.runica.Seed = 42;
 preproc.runica.SaveBefore = true;
 preproc.runica.SaveNameBefore = "before_runica";
 preproc.runica.Save = true;
@@ -143,6 +144,7 @@ preproc.subcomp.OutputFolder = "";
 %%
 % ICA Macro
 preproc.ica.Extended = 1;
+preproc.ica.Seed = 42;
 preproc.ica.Version = "default";
 % Thresholds
 preproc.ica.Brain = [0 0];
@@ -175,7 +177,7 @@ preproc.epoch.OutputFolder = "";
 preproc.rejepochs.Threshold = 100;
 preproc.rejepochs.Channels = [];
 preproc.rejepochs.TimeLimits = [];
-preproc.rejepochs.ConfirmRej = false
+preproc.rejepochs.ConfirmRej = false;
 preproc.rejepochs.Save = true;
 preproc.rejepochs.SaveName = "epoch_rej";
 preproc.rejepochs.OutputFolder = "";
@@ -203,7 +205,6 @@ headmodel.bst_import.UseDefaultAnat  = true;
 headmodel.bst_import.MRIFile = "";
 headmodel.bst_import.FreeSurferDir = "";
 headmodel.bst_import.BrainstormDbDir = "";
-headmodel.bst_import.BrainstormDbDir = "";
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 
@@ -214,8 +215,6 @@ headmodel.bst_headmodel.SourceSpace         = "cortex";
 headmodel.bst_headmodel.ChanLocs            = "";
 headmodel.bst_headmodel.ChanLocsTemplate    = "";
 headmodel.bst_headmodel.SelectTemplate      = false;
-headmodel.bst_headmodel.NoiseCovBaseline    = [];
-headmodel.bst_headmodel.NoiseCovSensorTypes = "EEG";
 headmodel.bst_headmodel.ProtocolName        = "HRB_Protocol";
 headmodel.bst_headmodel.BrainstormDbDir     = "";
 headmodel.bst_headmodel.BemConductivities   = [1, 0.0125, 1];
@@ -231,6 +230,16 @@ headmodel.bst_headmodel.Save                 = false;
 headmodel.bst_headmodel.SaveName             = "";
 headmodel.bst_headmodel.OutputFolder         = "";
 
+% bst_noisecov
+headmodel.bst_noisecov.NoiseCovBaseline    = [];       % [] = full window | [t1,t2] seconds
+headmodel.bst_noisecov.NoiseCovSensorTypes = "EEG";
+headmodel.bst_noisecov.Target              = "noise";  % "noise" (all methods) | "data" (LCMV only)
+headmodel.bst_noisecov.ProtocolName        = "HRB_Protocol";
+headmodel.bst_noisecov.BrainstormDbDir     = "";
+headmodel.bst_noisecov.Save                = false;
+headmodel.bst_noisecov.SaveName            = "";
+headmodel.bst_noisecov.OutputFolder        = "";
+
 % Logging
 headmodel.logging.LogEnabled = true;
 headmodel.logging.LogLevel = 2;
@@ -240,8 +249,6 @@ headmodel.logging.LogFileName = "HRB_headmodel.log";
 
 % Add to the main config struct
 config.headmodel = headmodel;
-
-
 
 
 %% SOURCE ESTIMATION
@@ -265,6 +272,8 @@ source.bst_inverse.MNESnr            = 3;
 
 % LCMV specific
 source.bst_inverse.LCMVDataCovReg   = "auto";   % "regularize"|"median"|"diagonal"|"none"|"auto"
+source.bst.inverse.DataCovBaseline = [];
+source.bst_inverse.DataCovSensorTypes = "EEG";
 
 % Dipole specific
 source.bst_inverse.DipoleNoiseCovReg = "auto";  % "regularize"|"median"|"diagonal"|"none"|"auto"
@@ -284,76 +293,71 @@ source.logging.LogFileName = "HRB_sourceEstimation.log";
 % Add to the main config struct
 config.sourceEstimation = source;
 
-% All the configurations
 
-% Logging
-source.logging.LogEnabled = true;
-source.logging.LogLevel = 2;
-source.logging.LogToFile = false;
-source.logging.LogFileDir = getCodeFolder();
-source.logging.LogFileName = "HRB_sourceEstimation.log";
-
-% Add to the main config struct
-config.sourceEstimation = source;
 %% CONNECTIVITY
 connectivity = struct();
 
-% All the configurations
-connectivity.bst_connectivity.Metric        = "coh";
-connectivity.bst_connectivity.Topology      = "NxN";
+% Common params (omni + all subs)
+connectivity.bst_connectivity.Topology      = "NxN";      % "NxN"|"1xN"
 connectivity.bst_connectivity.TimeWindow    = [];
 connectivity.bst_connectivity.SelectScouts  = true;
 connectivity.bst_connectivity.Atlas         = "";
 connectivity.bst_connectivity.Scouts        = "";
 connectivity.bst_connectivity.FlattenPCA    = false;
-connectivity.bst_connectivity.ScoutFunction = "mean";
-connectivity.bst_connectivity.ScoutTime     = "after";
-connectivity.bst_connectivity.FreqBands     = {};
-connectivity.bst_connectivity.SaveMode      = "separately";
+connectivity.bst_connectivity.ScoutFunction = "mean";     % "mean"|"max"|"std"|"pca"
+connectivity.bst_connectivity.ScoutTime     = "after";    % "before"|"after"
+connectivity.bst_connectivity.FreqBands     = {};         % {} = default 5-band (delta/theta/alpha/beta/gamma)
+connectivity.bst_connectivity.SaveMode      = "separately"; % "separately"|"average"|"concatenate"
 connectivity.bst_connectivity.AvgWinLength  = 1;
 connectivity.bst_connectivity.AvgWinOverlap = 50;
 connectivity.bst_connectivity.ProtocolName  = "HRB_Protocol";
 connectivity.bst_connectivity.BrainstormDbDir = "";
-
-% Coherence specific
-connectivity.bst_connectivity.CohMetric  = "mscohere";
-connectivity.bst_connectivity.TFMethod   = "hilbert";
-connectivity.bst_connectivity.TimeRes    = "full";
-
-% Correlation specific
+ 
+% Omni-only param (ignored by sub-functions which fix the metric in their name)
+connectivity.bst_connectivity.Metric = "coh"; % "corr"|"coh"|"gc"|"gc_spectral"|"plv"|"envelope"|"pte"
+ 
+% Coherence params (omni + HRB_bst_connectivity_coh)
+connectivity.bst_connectivity.CohMetric = "mscohere"; % "mscohere"|"icoh"|"lcohere2019"
+connectivity.bst_connectivity.TFMethod  = "hilbert";  % "hilbert"|"morlet"|"stft"
+connectivity.bst_connectivity.TimeRes   = "full";     % "full"|"windowed"|"none"
+ 
+% Correlation params (omni + HRB_bst_connectivity_corr)
 connectivity.bst_connectivity.ScalarProduct = false;
-
-% Granger Causality specific
-connectivity.bst_connectivity.GCMethod    = "bst";
-connectivity.bst_connectivity.GCDirection = "both";
+ 
+% Granger causality params (omni + HRB_bst_connectivity_gc)
+connectivity.bst_connectivity.GCMethod    = "bst";   % "bst"|"mvgc"
+connectivity.bst_connectivity.GCDirection = "both";  % "both"|"in"|"out"  [1xN only]
 connectivity.bst_connectivity.GCOrder     = 10;
-
-% Spectral GC specific
-connectivity.bst_connectivity.MaxFreqRes  = 2;
-connectivity.bst_connectivity.MaxFreq     = 100;
-
-% PLV specific
-connectivity.bst_connectivity.PLVMetric   = "wpli";
-
-% Envelope specific
-connectivity.bst_connectivity.EnvMetric   = "penv";
-
-% PTE specific
-connectivity.bst_connectivity.PTENormalized = true;
-
+ 
+% Spectral GC params (omni + HRB_bst_connectivity_gc_spectral)
+connectivity.bst_connectivity.MaxFreqRes = 2;        % [Hz]
+connectivity.bst_connectivity.MaxFreq    = 100;      % [Hz]
+ 
+% Phase params (omni + HRB_bst_connectivity_phase)
+connectivity.bst_connectivity.PLVMetric = "wpli";    % "wpli"|"plv"|"ciplv"
+                                                     % wpli: VC-robust (recommended default)
+                                                     % plv: sensitive to volume conduction
+                                                     % ciplv: also VC-robust
+ 
+% Envelope params (omni + HRB_bst_connectivity_envelope)
+connectivity.bst_connectivity.EnvMetric = "penv";   % "penv"|"oenv"
+                                                     % oenv: orthogonalized (Hipp 2012), VC-robust
+ 
+% PTE params (omni + HRB_bst_connectivity_pte)
+connectivity.bst_connectivity.PTENormalized = true;  % NxN only in Brainstorm
+ 
 % Save
-connectivity.bst_connectivity.Save        = false;
-connectivity.bst_connectivity.SaveName    = "";
+connectivity.bst_connectivity.Save         = false;
+connectivity.bst_connectivity.SaveName     = "";
 connectivity.bst_connectivity.OutputFolder = "";
-
+ 
 % Logging
-connectivity.logging.LogEnabled = true;
-connectivity.logging.LogLevel = 2;
-connectivity.logging.LogToFile = false;
-connectivity.logging.LogFileDir = getCodeFolder();
+connectivity.logging.LogEnabled  = true;
+connectivity.logging.LogLevel    = 2;
+connectivity.logging.LogToFile   = false;
+connectivity.logging.LogFileDir  = fullfile(pwd, "HRB_logs"); % *** FIX Q1 ***
 connectivity.logging.LogFileName = "HRB_connectivity.log";
-
-% Add to the main config struct
+ 
 config.connectivity = connectivity;
 
 %% NETWORK ANALYSIS
