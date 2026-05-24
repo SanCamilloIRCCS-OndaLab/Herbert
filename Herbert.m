@@ -37,7 +37,7 @@ HRB_loadDependencies();
 %% Variables
 data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
 file_name = 'MMCI_01_RESTING.vhdr'
-pipeline = "pipeline_new.json";
+pipeline = "pipeline_example.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
