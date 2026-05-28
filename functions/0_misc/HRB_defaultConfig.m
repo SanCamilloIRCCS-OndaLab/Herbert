@@ -205,7 +205,7 @@ headmodel.bst_import.UseDefaultAnat  = true;
 headmodel.bst_import.MRIFile = "";
 headmodel.bst_import.FreeSurferDir = "";
 headmodel.bst_import.BrainstormDbDir = "";
-headmodel.bst.import.ConditionName = "";
+headmodel.bst_import.ConditionName = "";
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 
@@ -273,7 +273,7 @@ source.bst_inverse.MNESnr            = 3;
 
 % LCMV specific
 source.bst_inverse.LCMVDataCovReg   = "auto";   % "regularize"|"median"|"diagonal"|"none"|"auto"
-source.bst.inverse.DataCovBaseline = [];
+source.bst_inverse.DataCovBaseline = [];
 source.bst_inverse.DataCovSensorTypes = "EEG";
 
 % Dipole specific
