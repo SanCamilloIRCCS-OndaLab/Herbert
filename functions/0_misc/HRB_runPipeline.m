@@ -95,6 +95,21 @@ function data = HRB_runPipeline(data, pipelineFile, opt)
         new_data  = cell(l_data * l_multiverse, 1);
         new_names = cell(l_data * l_multiverse, 1);
 
+        isBstStep = false;
+        for iCheck = 1:l_multiverse
+            if isstruct(step)
+                u = step(iCheck)
+            else
+                u = step{iCheck};
+            end
+
+            if isfield(u, 'function') && startsWith(string(u, function), "HRB_bst_")
+                    isBstStep = true;
+                    break;
+            end
+        end
+
+
         parfor idx = 1:(l_data * l_multiverse)
             n_data     = mod(idx-1, l_data) + 1;
             n_universe = floor((idx-1) / l_data) + 1;

@@ -44,7 +44,13 @@ pipeline = "pipeline_example.json";
 EEG = pop_loadbv(data_path, file_name);
 % data_test = '';
 
+%% PROVA BST ONLY
+pipeline = "pipeline_bst_only.json"
+EEG_bp = pop_loadset('filename', 'bandpass-1-48_clean-epochs.set', 'filepath', '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/output/20260528_103602/preprocessing')
+EEG_lp = pop_loadset('filename', 'lowpass-48_clean-epochs.set', 'filepath', '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/output/20260528_103602/preprocessing')
 
+data_bandpass = HRB_runPipelineNew(EEG_bp, pipeline)
+data_lowpass = HRB_runPipelineNew(EEG_lp, pipeline)
 
 %% Run pipeline
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
