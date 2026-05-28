@@ -48,6 +48,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         opt.UseDefaultAnat logical = true
         opt.MRIFile
         opt.BrainstormDbDir string = ""
+        opt.ConditionName string = ""
         % Pipeline Output Options
         opt.Save logical
         opt.SaveName string
@@ -110,6 +111,18 @@ function [EEG] = HRB_bst_import(InputData, opt)
     epochStr    = "continuous";
     if isEpoched, epochStr = "epoched"; end
     log.info(sprintf("Dataset type detected: %s | Paradigm: %s", epochStr, dataTypeStr));
+
+    % Resolve BST condition name for a given universe
+    % Using the universe name as condition nae isolates each pipeline branch on its own BST condition folder, preventing overwriting
+    if strlength(config.ConditionName) > 0
+        conditionName = char(config.ConditionName);
+    elseif isfield(config, 'SaveName') && strlength(config.SaveName) > 0
+        conditionName = char(config.SaveName);
+    else
+        conditionName = upper(char(config.DataType)); % 'RS' or 'Task'
+    end
+
+    log.info(sprintf("BST condition name: '%s'", conditionName));
 
     % =========================================================================
     %% 3. Output folder
@@ -388,6 +401,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         EEG.etc.brainstorm.db_path   = dbDir;
         EEG.etc.brainstorm.data_type = dataTypeStr;
         EEG.etc.brainstorm.epoched   = isEpoched;
+        EEG.etc.brainstorm.condition = conditionName;
 
         % Update setname
         if isfield(config, 'SaveName') && strlength(config.SaveName) > 0

@@ -205,6 +205,7 @@ headmodel.bst_import.UseDefaultAnat  = true;
 headmodel.bst_import.MRIFile = "";
 headmodel.bst_import.FreeSurferDir = "";
 headmodel.bst_import.BrainstormDbDir = "";
+headmodel.bst.import.CondtionName = "";
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 

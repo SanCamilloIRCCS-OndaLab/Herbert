@@ -156,6 +156,13 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
+% Extract BST condition name from metadata
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+    bstCondition = InputData.etc.brainstorm.condition
+else
+    bstCondition = '';
+end
+
 %% 2. Set Output Folder
 
 if config.OutputFolder == ""

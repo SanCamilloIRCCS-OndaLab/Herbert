@@ -180,6 +180,12 @@ if strcmp(config.DipolOrientation, 'loose') && ~strcmp(config.Method, 'mne')
         "'loose' orientation is only valid for MNE. Method '%s' does not support it.", config.Method);
 end
 
+% Extract bst condition name from metadata
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+    bstCondition = InputData.etc.brainstorm.condition
+else
+    bstCondition = '';
+end
 
 %% 3. Output folder
 

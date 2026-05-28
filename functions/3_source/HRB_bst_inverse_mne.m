@@ -69,6 +69,13 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
+% Extract bst condition name from metadata
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+    bstCondition = InputData.etc.brainstorm.condition
+else
+    bstCondition = '';
+end
+
 %% 2. Output folder
 if config.OutputFolder == ""
     config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
