@@ -33,6 +33,7 @@ config    = HRB_loadConfig(module, "bst_headmodel", opt);
 logConfig = HRB_loadConfig(module, "logging", opt);
 log = HRB_loggerSetUp(module, logConfig);
 
+%% 1. Input type detection
 isSubjName = isstring(InputData) || ischar(InputData);
 if isSubjName
     subjName = char(InputData); protocolName = char(config.ProtocolName);
@@ -48,18 +49,20 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-% Extract bst condition name from metadata
+%% Extract BST condition name from metadata
 if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-    bstCondition = InputData.etc.brainstorm.condition
+    bstCondition = InputData.etc.brainstorm.condition;
 else
     bstCondition = '';
 end
 
+%% 2. Output folder
 if config.OutputFolder == ""
     config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
 end
 if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
 
+%% 3. Brainstorm database location
 if strlength(config.BrainstormDbDir) > 0
     dbDir = char(config.BrainstormDbDir);
 else
@@ -67,32 +70,45 @@ else
 end
 if ~exist(dbDir,'dir'), mkdir(dbDir); end
 
+%% 4. Start Brainstorm
 if ~brainstorm('status')
-    brainstorm nogui;
+    brainstorm server;
     t = tic;
     while toc(t) < 60
         try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
     end
 end
 
+%% 5. Switch DB if needed
 currentDbDir = bst_get('BrainstormDbDir');
 if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
     bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
 end
 
+%% 6. Activate protocol
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found.", protocolName);
+    protocolDir = fullfile(dbDir, protocolName);
+    if exist(protocolDir, 'dir')
+        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
+        db_reload_database('current');
+        iProtocol = bst_get('Protocol', protocolName);
+    end
+end
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 
+%% 7. Select recordings
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
-    'subjectname', subjName, 'condition','','tag','', ...
+    'subjectname', subjName, 'condition', bstCondition, 'tag', '', ...
     'includebad',1,'includeintra',1,'includecommon',1);
 if isempty(recordings)
     error("HRB:NoRecordings","No recordings for subject '%s'.", subjName);
 end
 
+%% 8. Channel location + headmodel
 if ~config.SelectTemplate && strlength(config.ChanLocsTemplate)==0 && strlength(config.ChanLocs)==0
     error("HRB:NoChanLocs","Provide ChanLocsTemplate, ChanLocs, or SelectTemplate=true.");
 end
@@ -140,27 +156,28 @@ try
         'https://neuroimage.usc.edu/resources/nst_data/fluence/', ...
         'smoothing_method','geodesic_dist','smoothing_fwhm',10);
 
-    if local_headmodelExists(subjName, '3-Shell')
-        log.info("Skip: Headmodel '3-Shell' already exists. Skipping recomputation");
-    
+    % Skip if headmodel already computed for this subject/method
+    if local_headmodelExists(subjName, '3_Shell')
+        log.info("*** SKIP: Headmodel '3_Shell' already exists. Skipping recomputation. ***");
     else
+        log.info(sprintf("Computing head model (3-Shell Sphere, space: %s)...", config.SourceSpace));
+        recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
+            'Comment','3_Shell','sourcespace',spaceValue, ...
+            'meg',1,'eeg',2,'ecog',2,'seeg',2,'nirs',1, ...
+            'openmeeg',openmeegStruct,'nirstorm',nirstormStruct,'channelfile','');
 
-    log.info(sprintf("Computing head model (3-Shell Sphere, space: %s)...", config.SourceSpace));
-    recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
-        'Comment','3_Shell','sourcespace',spaceValue, ...
-        'meg',1,'eeg',2,'ecog',2,'seeg',2,'nirs',1, ...
-        'openmeeg',openmeegStruct,'nirstorm',nirstormStruct,'channelfile','');
-
-    if isempty(recordings)
-        error("HRB:HeadModelFailed","3-Shell Sphere failed for subject '%s'.", subjName);
-    end
-    log.info("Head model computed successfully (3-Shell Sphere).");
+        if isempty(recordings)
+            error("HRB:HeadModelFailed","3-Shell Sphere failed for subject '%s'.", subjName);
+        end
+        log.info("Head model computed successfully (3-Shell Sphere).");
+    end  % end skip check
 
 catch ME
     log.error(sprintf("HRB_bst_headmodel_sphere failed: %s", ME.message));
     rethrow(ME);
 end
 
+%% 9. Build output EEG struct
 if isSubjName
     EEG = struct(); EEG.etc.brainstorm = struct();
 else
@@ -173,6 +190,7 @@ EEG.etc.brainstorm.protocol         = protocolName;
 EEG.etc.brainstorm.subject          = subjName;
 EEG.etc.brainstorm.db_path          = dbDir;
 
+%% 10. Save
 if config.Save
     logParams = unpackStruct(logConfig);
     HRB_saveData(EEG,"Name",config.SaveName,"Folder",module, ...
@@ -181,8 +199,10 @@ end
 
 end
 
-%% Helper - Check if headmodel already exists
+%% Local helper — check if headmodel already computed
 function found = local_headmodelExists(subjName, comment)
+% Returns true if a headmodel with the given BST comment already exists
+% for this subject. Used to skip redundant computation across filter branches.
     found = false;
     try
         [sSubject, ~] = bst_get('Subject', char(subjName));

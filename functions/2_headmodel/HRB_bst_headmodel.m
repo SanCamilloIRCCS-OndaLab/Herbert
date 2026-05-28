@@ -1,10 +1,9 @@
 function EEG = HRB_bst_headmodel(InputData, opt)
-% HRB_bst_headmodel - Computes the head model in brainstorm. This function acts as a bridge between
-% the Herbert pipeline and Brainstorm's forward modeling tools.
-% It supports multiple head model methods (OpenMEEG BEM, 3-Shell Sphere,
-% DUNeuro FEM) and both cortex surface and volume source spaces. Noise / data covariance is NOT computed here - use HRB_bst_noisecov
-%
-% This separation allows the headmodel to run once per subjet regardless of how many preprocessing universe exist in the multiverse
+% HRB_bst_headmodel - Computes the forward head model in Brainstorm.
+% Supports OpenMEEG BEM, 3-Shell Sphere, and DUNeuro FEM methods.
+% Noise/data covariance is NOT computed here — use HRB_bst_noisecov instead.
+% This separation allows the headmodel to run once per subject regardless
+% of how many preprocessing universes exist in the multiverse.
 %
 % Usage:
 %   >>> EEG = HRB_bst_headmodel(EEG);
@@ -156,12 +155,12 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-% Extract BST condition name from metadata
-if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-    bstCondition = InputData.etc.brainstorm.condition
-else
-    bstCondition = '';
-end
+    % *** NEW: extract BST condition name from metadata ***
+    if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+        bstCondition = InputData.etc.brainstorm.condition;
+    else
+        bstCondition = '';
+    end
 
 %% 2. Set Output Folder
 
@@ -191,7 +190,7 @@ log.info(sprintf("Brainstorm DB: %s", dbDir));
 %% 4. Start Brainstorm
 if ~brainstorm('status')
     log.info("Starting Brainstorm (nogui)...");
-    brainstorm nogui;
+    brainstorm server;
 
     % Wait for Brainstorm to fully start before continuing
     timeout = 60;
@@ -225,6 +224,14 @@ end
 iProtocol = bst_get('Protocol', protocolName);
 
 if isempty(iProtocol)
+    protocolDir = fullfile(dbDir, protocolName);
+    if exist(protocolDir, 'dir')
+        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
+        db_reload_database('current');
+        iProtocol = bst_get('Protocol', protocolName);
+    end
+end
+if isempty(iProtocol)
     error("HRB:ProtocolNotFound", "Protocol '%s' not found. Run HRB_bst_import first", protocolName);
 else
     log.info(sprintf("Setting current protocol: %s", protocolName));
@@ -236,7 +243,7 @@ end
 
 recordings = bst_process('CallProcess', 'process_select_files_data', [], [], ...
     'subjectname', subjName, ...
-    'condition', '', ...
+    'condition', bstCondition,  % *** FIX: was '' *** ...
     'tag', '', ...
     'includebad', 1, ...
     'includeintra', 1, ...
@@ -316,7 +323,6 @@ try
     end
     log.info("Channel locations added successfully.");
 
-
     %% 8. Compute Head Model
 
     switch config.Method
@@ -331,24 +337,23 @@ try
             comment = "FEM";
     end
 
+    % *** NEW: skip headmodel if already computed for this subject/method ***
+    % The headmodel depends only on anatomy + electrode positions, NOT on the
+    % EEG data content (filter, ICA, etc.). In a multiverse pipeline where the
+    % filter branches before this step, every branch would recompute the same
+    % headmodel. This check detects an existing headmodel with the same BST
+    % comment string and skips recomputation, saving significant time.
+    if local_headmodelExists(subjName, comment)
+        log.info(sprintf( ...
+            "*** SKIP: Headmodel ''%s'' already exists for subject ''%s''. Skipping recomputation. ***", ...
+            comment, subjName));
+    else
+
     switch config.SourceSpace
         case "cortex"
             spaceValue = 1;
         case "volume"
             spaceValue = 2;
-    end
-
-    % Check existence of headmodel. if already exists skips computation
-    if local_headmodelExists(subjName, comment)
-        log.info(sprinf("Skip headmodel ''%s'' already exist for subject ''%s''. Skipping recomputation", comment, subjName));
-
-    else
-        switch config.SourceSpace
-            case "cortex"
-                spaceValue = 1;
-            case "volume"
-                spaceValue = 2;
-        end
     end
 
     % OpenMEEG struct (always required by BST)
@@ -443,13 +448,14 @@ try
             subjName, config.Method);
     end
     log.info(sprintf("Head model computed successfully (method: %s).", config.Method));
+    end % *** NEW: end of skip-if-exists else block ***
 
 catch ME
     log.error(sprintf("HRB_bst_headmodel failed: %s", ME.message));
     rethrow(ME);
 end
 
-%% 9. Build output EEG struct
+%% 10. Build output EEG struct
 if isSubjName
     % Initialize EEG struct
     EEG = struct();
@@ -468,7 +474,7 @@ EEG.etc.brainstorm.db_path           = dbDir;
 
 log.info(sprintf("Output EEG struct ready (subject: %s, method: %s).", subjName, config.Method));
 
-%% 10. Save
+%% 11. Save
 if config.Save
     logParams = unpackStruct(logConfig);
     HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
@@ -476,8 +482,12 @@ if config.Save
 end
 end
 
-%% Helper - check if headmodel is already computed
+% *** NEW: local helper — check if headmodel already computed ***
 function found = local_headmodelExists(subjName, comment)
+% Returns true if a headmodel with the given BST comment string already
+% exists for this subject in the current protocol. Used to avoid redundant
+% headmodel computation in multiverse pipelines where a filter (or other
+% data-independent) step branches before the headmodel step.
     found = false;
     try
         [sSubject, ~] = bst_get('Subject', char(subjName));
@@ -492,6 +502,6 @@ function found = local_headmodelExists(subjName, comment)
             end
         end
     catch
-        found = false;
+        found = false; % If check fails, compute normally
     end
 end

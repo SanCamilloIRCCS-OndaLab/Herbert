@@ -64,12 +64,21 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-% Extract bst condition name from metadata
-if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-    bstCondition = InputData.etc.brainstorm.condition
-else
-    bstCondition = '';
-end
+    % =========================================================================
+    %% Resolve BST condition name
+    % Each pipeline universe imports into a unique BST condition (named after
+    % the universe, set by HRB_bst_import via SaveName). Reading it here
+    % ensures we query only this universe's recordings — not recordings from
+    % other filter branches or universes sharing the same subject/protocol.
+    % If no condition is stored (subject-name input mode), bstCondition = ''
+    % selects all recordings for the subject (safe for single-universe use).
+    % =========================================================================
+    % *** condition name (set by HRB_bst_import = universe SaveName) ***
+    if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+        bstCondition = InputData.etc.brainstorm.condition;
+    else
+        bstCondition = '';
+    end
 
 %% 2. Output folder
 if config.OutputFolder == ""
@@ -92,7 +101,9 @@ if brainstorm('status')
 end
 if ~bst_working
     log.info("Starting Brainstorm (nogui)...");
-    brainstorm nogui;
+    % Use 'server' mode: fully headless, no Java/X11 required.
+    % 'nogui' mode still needs an X display on headless Linux servers.
+    brainstorm server;
     timeout = 120; t = tic;
     while toc(t) < timeout
         try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
@@ -111,7 +122,15 @@ end
 %% 6. Activate protocol
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found.", protocolName);
+    protocolDir = fullfile(dbDir, protocolName);
+    if exist(protocolDir, 'dir')
+        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
+        db_reload_database('current');
+        iProtocol = bst_get('Protocol', protocolName);
+    end
+end
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 pause(2);
@@ -133,7 +152,7 @@ end
 
 %% 8. Select source result files
 sFiles = bst_process('CallProcess','process_select_files_results',[],[], ...
-    'subjectname',subjName,'condition','','tag','', ...
+    'subjectname',subjName,'condition', bstCondition,  % *** FIX: was '' ***'tag','', ...
     'includebad',0,'includeintra',1,'includecommon',0);
 if isempty(sFiles)
     error("HRB:NoSourceFiles","No source files for '%s'. Run HRB_bst_inverse first.", subjName);

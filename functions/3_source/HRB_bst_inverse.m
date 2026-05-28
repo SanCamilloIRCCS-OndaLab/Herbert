@@ -149,7 +149,6 @@ isSubjName = isstring(InputData) || ischar(InputData);
 if isSubjName
     subjName     = char(InputData);
     protocolName = char(config.ProtocolName);
-    sourceSpace  = char(config.SourceSpace);
     if isempty(subjName)
         error("HRB:BadInput", "InputData is empty. Provide a valid subject name.");
     end
@@ -168,7 +167,9 @@ else
     end
     subjName     = InputData.etc.brainstorm.subject;
     protocolName = InputData.etc.brainstorm.protocol;
-   
+    % NOTE B3 FIX: sourceSpace was read from metadata here but never passed
+    % to bst_process. BST inherits the source space from the headmodel.
+    % The variable is removed to avoid misleading dead code.
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
@@ -180,12 +181,13 @@ if strcmp(config.DipolOrientation, 'loose') && ~strcmp(config.Method, 'mne')
         "'loose' orientation is only valid for MNE. Method '%s' does not support it.", config.Method);
 end
 
-% Extract bst condition name from metadata
-if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-    bstCondition = InputData.etc.brainstorm.condition
-else
-    bstCondition = '';
-end
+
+    % *** NEW: extract BST condition name from metadata ***
+    if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+        bstCondition = InputData.etc.brainstorm.condition;
+    else
+        bstCondition = '';
+    end
 
 %% 3. Output folder
 
@@ -215,7 +217,7 @@ log.info(sprintf("Brainstorm DB: %s", dbDir));
 
 if ~brainstorm('status')
     log.info("Starting Brainstorm (nogui)...");
-    brainstorm nogui;
+    brainstorm server;
 end
 
 % Update DB path only if different
@@ -233,8 +235,15 @@ end
 
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
+    protocolDir = fullfile(dbDir, protocolName);
+    if exist(protocolDir, 'dir')
+        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
+        db_reload_database('current');
+        iProtocol = bst_get('Protocol', protocolName);
+    end
+end
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 log.info(sprintf("Setting current protocol: %s", protocolName));
 gui_brainstorm('SetCurrentProtocol', iProtocol);
@@ -245,7 +254,7 @@ log.info(sprintf("Protocol '%s' set as current.", protocolName));
 
 recordings = bst_process('CallProcess', 'process_select_files_data', [], [], ...
     'subjectname',   subjName, ...
-    'condition',     '', ...
+    'condition', bstCondition,  % *** FIX *** ...
     'tag',           '', ...
     'includebad',    1, ...
     'includeintra',  1, ...
@@ -329,7 +338,7 @@ try
                     'Comment',         'MNE', ...
                     'InverseMethod',   'minnorm', ...
                     'InverseMeasure',  measureStr, ...
-                    'SourceOrient',    {{orientStr}}, ...
+                    'SourceOrient',    {{orientStr}}, ...  % FIX B2: was {{'fixed'}}, DipolOrientation is now respected
                     'Loose',           looseVal, ...
                     'UseDepth',        depthOption, ...
                     'WeightExp',       config.MNEDepthOrder, ...
@@ -360,7 +369,7 @@ try
                     'Comment',         'LCMV', ...
                     'InverseMethod',   'lcmv', ...
                     'InverseMeasure',  1, ...  % Current density map only
-                    'SourceOrient',    {{orientStr}}, ...
+                    'SourceOrient',    {{orientStr}}, ...  % FIX B2: was {{'fixed'}}
                     'Loose',           [], ...
                     'UseDepth',        0, ...
                     'WeightExp',       0.5, ...
@@ -390,7 +399,7 @@ try
                     'Comment',         'Dipole', ...
                     'InverseMethod',   'gls', ...
                     'InverseMeasure',  1, ...
-                    'SourceOrient',    {{orientStr}}, ...
+                    'SourceOrient',    {{orientStr}}, ...  % FIX B2: was {{'fixed'}}
                     'Loose',           [], ...
                     'UseDepth',        0, ...
                     'WeightExp',       0.5, ...

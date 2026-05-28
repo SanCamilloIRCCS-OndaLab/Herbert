@@ -48,6 +48,11 @@ function [EEG] = HRB_bst_import(InputData, opt)
         opt.UseDefaultAnat logical = true
         opt.MRIFile
         opt.BrainstormDbDir string = ""
+        % *** NEW: ConditionName — unique BST condition per universe.
+        % If empty, falls back to SaveName (set by HRB_runPipeline with the
+        % universe name). This ensures different pipeline universes (e.g.,
+        % bandpass vs lowpass) import into separate BST conditions and never
+        % overwrite each other. ***
         opt.ConditionName string = ""
         % Pipeline Output Options
         opt.Save logical
@@ -112,16 +117,18 @@ function [EEG] = HRB_bst_import(InputData, opt)
     if isEpoched, epochStr = "epoched"; end
     log.info(sprintf("Dataset type detected: %s | Paradigm: %s", epochStr, dataTypeStr));
 
-    % Resolve BST condition name for a given universe
-    % Using the universe name as condition nae isolates each pipeline branch on its own BST condition folder, preventing overwriting
+    % *** NEW: resolve BST condition name for this universe.
+    % Priority: explicit ConditionName > SaveName (universe name from pipeline)
+    % > DataType-based default ('RS' or 'Task').
+    % Using the universe name as condition name isolates each pipeline branch
+    % in its own BST condition folder — prevents overwrites between universes. ***
     if strlength(config.ConditionName) > 0
         conditionName = char(config.ConditionName);
     elseif isfield(config, 'SaveName') && strlength(config.SaveName) > 0
         conditionName = char(config.SaveName);
     else
-        conditionName = upper(char(config.DataType)); % 'RS' or 'Task'
+        conditionName = upper(char(config.DataType)); % 'RS' or 'TASK'
     end
-
     log.info(sprintf("BST condition name: '%s'", conditionName));
 
     % =========================================================================
@@ -153,7 +160,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     % =========================================================================
     if ~brainstorm('status')
         log.info("Starting Brainstorm (nogui)...");
-        brainstorm nogui;
+        brainstorm server;
         timeout = 120;
         t = tic;
         while toc(t) < timeout
@@ -288,7 +295,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
 
             sFilesEpoch = bst_process('CallProcess', 'process_import_data_time', sFilesRaw, [], ...
                 'subjectname',   subjName, ...
-                'condition',     '', ...
+                'condition',     conditionName, ...  % *** FIX: was '' (derived from filename) ***
                 'timewindow',    [], ...
                 'split',         config.WindowLength, ...
                 'ignoreshort',   1, ...
@@ -307,7 +314,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
             sFilesEpoch = bst_process('CallProcess', 'process_import_data_epoch', [], [], ...
                 'subjectname',   subjName, ...
                 'datafile',     {InputFiles{1}, 'EEG-EEGLAB'}, ...
-                'condition', 'RS', ...
+                'condition',    conditionName, ...  % *** FIX: was hardcoded 'RS' ***
                 'iepochs',       [],  ...
                 'eventtypes',   '', ...
                 'createcond',    1, ...
@@ -337,7 +344,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
 
             sFilesEpoch = bst_process('CallProcess', 'process_import_data_epoch', sFilesRaw, [], ...
                 'subjectname',   subjName, ...
-                'condition',     '', ...
+                'condition',     conditionName, ...  % *** FIX: was '' ***
                 'iepochs',       [], ...
                 'eventtypes',    '', ...
                 'createcond',    0, ...
@@ -361,6 +368,22 @@ function [EEG] = HRB_bst_import(InputData, opt)
                 'createcond',     1, ...
                 'channelreplace', 1, ...
                 'channelalign',   1);
+
+            % *** FIX: rename BST condition to universe name after import.
+            % process_import_data_event creates conditions named after event
+            % types (e.g., 'stim', 'response'). Rename to conditionName so
+            % each universe has its own isolated condition. ***
+            if ~isempty(sFilesEpoch) && ~isempty(conditionName)
+                try
+                    [sStudy, iStudy] = bst_get('Study', sFilesEpoch(1).iStudy);
+                    if ~isempty(sStudy)
+                        db_rename_condition(sStudy.FileName, conditionName);
+                        log.info(sprintf("Condition renamed to '%s'.", conditionName));
+                    end
+                catch renameErr
+                    log.warning(sprintf("Could not rename condition: %s", renameErr.message));
+                end
+            end
         end
 
         % =====================================================================
@@ -395,13 +418,13 @@ function [EEG] = HRB_bst_import(InputData, opt)
         end
 
         % Inject Brainstorm metadata
-        EEG.etc.brainstorm.db_file   = {sFilesEpoch.FileName};
-        EEG.etc.brainstorm.protocol  = char(config.ProtocolName);
-        EEG.etc.brainstorm.subject   = subjName;
-        EEG.etc.brainstorm.db_path   = dbDir;
-        EEG.etc.brainstorm.data_type = dataTypeStr;
-        EEG.etc.brainstorm.epoched   = isEpoched;
-        EEG.etc.brainstorm.condition = conditionName;
+        EEG.etc.brainstorm.db_file      = {sFilesEpoch.FileName};
+        EEG.etc.brainstorm.protocol     = char(config.ProtocolName);
+        EEG.etc.brainstorm.subject      = subjName;
+        EEG.etc.brainstorm.db_path      = dbDir;
+        EEG.etc.brainstorm.data_type    = dataTypeStr;
+        EEG.etc.brainstorm.epoched      = isEpoched;
+        EEG.etc.brainstorm.condition    = conditionName; % *** NEW: universe-specific condition ***
 
         % Update setname
         if isfield(config, 'SaveName') && strlength(config.SaveName) > 0
