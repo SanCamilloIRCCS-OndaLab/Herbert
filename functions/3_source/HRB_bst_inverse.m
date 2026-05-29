@@ -233,16 +233,18 @@ end
 
 %% 6. Manage Protocol
 
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
-log.info(sprintf("Setting current protocol: %s", protocolName));
 gui_brainstorm('SetCurrentProtocol', iProtocol);
-log.info(sprintf("Protocol '%s' set as current.", protocolName));
+log.info(sprintf("Setting current protocol: %s", protocolName));
 
 
 %% 7. Select recordings from DB

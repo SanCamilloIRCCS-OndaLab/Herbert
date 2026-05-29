@@ -103,51 +103,30 @@ function data = HRB_runPipeline(data, pipelineFile, opt)
                 u = step{iCheck};
             end
 
-            if isfield(u, 'function') && startsWith(string(u, function), "HRB_bst_")
+            if isfield(u, 'function') && startsWith(string(u.function), "HRB_bst_")
                     isBstStep = true;
                     break;
             end
         end
 
 
-        parfor idx = 1:(l_data * l_multiverse)
-            n_data     = mod(idx-1, l_data) + 1;
-            n_universe = floor((idx-1) / l_data) + 1;
-
-            % log.info(sprintf(">> Universe: %d", n_universe))
-        
-            current_data = data{n_data};
-            current_name = names{n_data};
-        
-            if isstruct(step)
-                universe = step(n_universe);
-            else %iscell
-                universe = step{n_universe};
+        if isBstStep
+            log.info(sprintf("Step %d uses BST  running sequentially.", n_steps))
+            for idx = 1:(l_data * l_multiverse)
+                [new_data{idx}, new_names{idx}] = process_universe( ...
+                    idx, data, names, step, l_data, config, n_steps);
             end
-        
-            % Run the step
-            out = run_step(current_data, universe, config.OutputFolder, current_name);
-
-            % Save the output in our data array
-            new_data{idx} = out;
-
-            % If multiverse add name to identify dataset
-            if l_multiverse > 1
-                if isempty(current_name)
-                    new_names{idx} = getStepName(universe);
-                else
-                    new_names{idx} = sprintf("%s_%s", current_name, getStepName(universe));
-                end
-            else % Otherwise keep the same name
-                new_names{idx} = current_name;
+        else
+            parfor idx = 1:(l_data * l_multiverse)
+                [new_data{idx}, new_names{idx}] = process_universe( ...
+                    idx, data, names, step, l_data, config, n_steps);
             end
-            % log.warning(sprintf("****** %s", getStepName(universe)))
-        end % n_data & n_universe
-        
+        end
+
         % Update data and names
         data  = new_data;
         names = new_names;
-    
+
     end % n_steps
 
     %% END
@@ -157,74 +136,116 @@ end
 
 function dataOut = run_step(dataIn, step, output, prevName)
 
-    % Check if there are custom params
-    if isfield(step, "params")
-        params = step.params;
-    else
-        params = struct();
-    end
-    
-    % Check if there is a custom name
-    name = getStepName(step);
+% Check if there are custom params
+if isfield(step, "params")
+    params = step.params;
+else
+    params = struct();
+end
 
-    if isempty(prevName)
-        params.SaveName = name;
-    else
-        params.SaveName = sprintf("%s_%s", prevName, name);
-    end
-    
-    % Check if must be saved
-    if isfield(step, "save")
-        params.Save = step.save;
-    end
+% Check if there is a custom name
+name = getStepName(step);
 
-    % Check if there are custom log params
-    if isfield(step, "log")
-        params = catStruct(params, step.log);
-        if ~isfield(step.log, "LogFileDir")
-            params.LogFileDir = output;
-        end
-        if ~isfield(step.log, "LogToFile")
-            params.LogToFile = true;
-        end
-    else
+if isempty(prevName)
+    params.SaveName = name;
+else
+    params.SaveName = sprintf("%s_%s", prevName, name);
+end
+
+% Check if must be saved
+if isfield(step, "save")
+    params.Save = step.save;
+end
+
+% Check if there are custom log params
+if isfield(step, "log")
+    params = catStruct(params, step.log);
+    if ~isfield(step.log, "LogFileDir")
         params.LogFileDir = output;
+    end
+    if ~isfield(step.log, "LogToFile")
         params.LogToFile = true;
     end
-    
-    % Update output folder
-    params.OutputFolder = output;
-    
-    % Create function handle
-    fun = str2func(step.function);
-    
-    % Convert params to a cell array
-    cellParams = unpackStruct(params);
-    
-    % Execute the step
-    dataOut = fun(dataIn, cellParams{:});
+else
+    params.LogFileDir = output;
+    params.LogToFile = true;
+end
+
+% Update output folder
+params.OutputFolder = output;
+
+% Create function handle
+fun = str2func(step.function);
+
+% Convert params to a cell array
+cellParams = unpackStruct(params);
+
+% Execute the step
+dataOut = fun(dataIn, cellParams{:});
 %     dataOut = sprintf("%s_%s", dataIn, params.SaveName);
 
-    % DEBUG TEMPORANEO
-    if isstruct(dataOut) && isfield(dataOut, 'trials')
-        fprintf('>>> %s | IN: %d trials | OUT: %d trials\n', ...
+% DEBUG TEMPORANEO
+if isstruct(dataOut) && isfield(dataOut, 'trials')
+    fprintf('>>> %s | IN: %d trials | OUT: %d trials\n', ...
         step.function, dataIn.trials, dataOut.trials);
-    end
+end
 
 end
 
 function name = getStepName(step)
 % Check if there is a custom name
-    if isfield(step, "name")
-        name = step.name;
-    else
-        name = step.function;
-    end
-    name = cleanName(name);
+if isfield(step, "name")
+    name = step.name;
+else
+    name = step.function;
+end
+name = cleanName(name);
 end
 
 function name = cleanName(name)
-    notAllowedChars = {' ', '_'};
-    cleanChar = '-';
-    name = replace(name, notAllowedChars, cleanChar);
+notAllowedChars = {' ', '_'};
+cleanChar = '-';
+name = replace(name, notAllowedChars, cleanChar);
+end
+
+function [out_data, out_name] = process_universe(idx, data, names, step, l_data, config, n_steps)
+
+    n_data     = mod(idx-1, l_data) + 1;
+    n_universe = floor((idx-1) / l_data) + 1;
+
+    current_data = data{n_data};
+    current_name = names{n_data};
+    l_multiverse = length(step);
+
+    if isstruct(step)
+        universe = step(n_universe);
+    else
+        universe = step{n_universe};
+    end
+
+    if isstruct(current_data) && isfield(current_data, 'HRB_failed') && current_data.HRB_failed
+        out_data = current_data;
+        out_name = current_name;
+        return;
+    end
+
+    try
+        out_data = run_step(current_data, universe, config.OutputFolder, current_name);
+    catch ME
+        warning("HRB:UniverseFailed", ...
+            "Step %d Universe %d failed: %s", n_steps, n_universe, ME.message);
+        out_data = struct('HRB_failed', true, 'HRB_error', ME.message, ...
+            'HRB_step', n_steps, 'HRB_universe', n_universe);
+    end
+
+    if l_multiverse > 1
+        if isempty(current_name)
+            out_name = getStepName(universe);
+        else
+            out_name = sprintf("%s_%s", current_name, getStepName(universe));
+        end
+    else
+        out_name = current_name;
+    end
+
 end

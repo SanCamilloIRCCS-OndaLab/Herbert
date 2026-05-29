@@ -97,17 +97,21 @@ if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
     bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
 end
 
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 
+
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
-    'subjectname',subjName,'condition', bstCondition,  % *** FIX: was '' ***'tag','', ...
+    'subjectname',subjName,'condition', bstCondition , ...  % *** FIX: was '' ***'tag',''
     'includebad',1,'includeintra',1,'includecommon',1);
 if isempty(recordings)
     error("HRB:NoRecordings","No recordings for subject '%s'.", subjName);

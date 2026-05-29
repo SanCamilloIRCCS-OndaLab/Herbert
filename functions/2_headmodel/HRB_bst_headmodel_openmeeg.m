@@ -124,13 +124,17 @@ if ~strcmpi(strip(currentDbDir, 'right', filesep), strip(dbDir, 'right', filesep
 end
 
 %% 6. Activate protocol
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
+gui_brainstorm('SetCurrentProtocol', iProtocol);
 
 %% 7. Select recordings
 recordings = bst_process('CallProcess', 'process_select_files_data', [], [], ...
@@ -243,13 +247,17 @@ end
 end
 
 %% Helper - check if headmodel already exists
-function found = local_headmodelExists(subjName, comment)
+    function found = local_headmodelExists(subjName, comment)
     found = false;
     try
         [sSubject, ~] = bst_get('Subject', char(subjName));
         if isempty(sSubject), return; end
         [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
         for i = 1:length(sStudies)
+            % *** FIX: skip studies that don't belong to this subject ***
+            if ~contains(sStudies(i).FileName, char(subjName))
+                continue;
+            end
             if ~isempty(sStudies(i).HeadModel)
                 if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
                     found = true;

@@ -120,11 +120,15 @@ if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
 end
 
 %% 6. Activate protocol
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound", ...
+        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 pause(2);

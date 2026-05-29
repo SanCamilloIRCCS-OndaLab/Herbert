@@ -44,7 +44,8 @@ function EEG = HRB_bst_connectivity(InputData, opt)
 %
 %   FreqBands (cell): Frequency bands as {name, freqs, method} rows.
 %                     Default: standard bands (delta to gamma)
-%                     Example: {{'alpha','8,12','mean'},{'beta','13,30','mean'}}
+%                     Example:
+%                     {{'alpha','8,12','mean'},{'beta','13,30','mean'}}
 %
 %   SaveMode (string): How to save results. Default: "separately"
 %       - "separately" : One file per input file
@@ -270,16 +271,17 @@ end
 % =========================================================================
 %% 5. Manage Protocol
 % =========================================================================
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
-iProtocol = bst_get('Protocol', protocolName);  % ← era "Protocol =" (typo)
+iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
-log.info(sprintf("Setting current protocol: %s", protocolName));
 gui_brainstorm('SetCurrentProtocol', iProtocol);
-
 % Wait for BST to finish loading protocol
 pause(2);
 t = tic;

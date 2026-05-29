@@ -222,13 +222,18 @@ end
 
 %% 5. Manage Protocol
 
-% Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
+if isempty(iProtocol)
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
+gui_brainstorm('SetCurrentProtocol', iProtocol);
+
 
 %% 6. Select recordings from DB
 
@@ -482,6 +487,10 @@ function found = local_headmodelExists(subjName, comment)
         if isempty(sSubject), return; end
         [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
         for i = 1:length(sStudies)
+            % *** FIX: skip studies that don't belong to this subject ***
+            if ~contains(sStudies(i).FileName, char(subjName))
+                continue;
+            end
             if ~isempty(sStudies(i).HeadModel)
                 if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
                     found = true;

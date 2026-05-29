@@ -10,25 +10,25 @@ arguments(Input)
     opt.GCOrder double = 10
     opt.MaxFreqRes double = 2
     opt.MaxFreq double = 100
-    opt.Topology string {{mustBeMember(opt.Topology, ["1xN","NxN"])}} = "NxN"
+    opt.Topology string {mustBeMember(opt.Topology, ["1xN","NxN"])} = "NxN"
     opt.TimeWindow double = []
     opt.SelectScouts logical = true
     opt.Atlas string = ""
     opt.Scouts string = ""
     opt.FlattenPCA logical = false
-    opt.ScoutFunction string {{mustBeMember(opt.ScoutFunction, ["mean","max","std","pca"])}} = "mean"
-    opt.ScoutTime string {{mustBeMember(opt.ScoutTime, ["before","after"])}} = "after"
-    opt.FreqBands cell = {{}}
+    opt.ScoutFunction string {mustBeMember(opt.ScoutFunction, ["mean","max","std","pca"])} = "mean"
+    opt.ScoutTime string {mustBeMember(opt.ScoutTime, ["before","after"])} = "after"
+    opt.FreqBands cell = {}
     opt.AvgWinLength double = 1
     opt.AvgWinOverlap double = 50
-    opt.SaveMode string {{mustBeMember(opt.SaveMode, ["separately","average","concatenate"])}} = "separately"
+    opt.SaveMode string {mustBeMember(opt.SaveMode, ["separately","average","concatenate"])} = "separately"
     opt.ProtocolName string = "HRB_Protocol"
     opt.BrainstormDbDir string = ""
     opt.Save logical
     opt.SaveName string
     opt.OutputFolder string
     opt.LogEnabled logical
-    opt.LogLevel double {{mustBeInteger, mustBeInRange(opt.LogLevel, 0,6)}}
+    opt.LogLevel double {mustBeInteger, mustBeInRange(opt.LogLevel, 0,6)}
     opt.LogToFile logical
     opt.LogFileDir string
     opt.LogFileName string
@@ -108,10 +108,15 @@ if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
 end
 
 % Rescan DB directory to discover protocols created by other BST instances.
-gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
+    % Protocol not found in memory — rescan DB to discover it
+    gui_brainstorm('UpdateProtocolsList');
+    iProtocol = bst_get('Protocol', protocolName);
+end
+if isempty(iProtocol)
+    error("HRB:ProtocolNotFound", ...
+        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 pause(2);
@@ -126,7 +131,7 @@ if config.SelectScouts
     if isempty(SurfaceMat.Atlas)
         error("HRB:NoAtlas","No atlases on cortex for subject '%s'.", subjName);
     end
-    atlasNames = {{SurfaceMat.Atlas.Name}};
+    atlasNames = {SurfaceMat.Atlas.Name};
 end
 
 sFiles = bst_process('CallProcess','process_select_files_results',[],[], ...
@@ -138,8 +143,8 @@ end
 log.info(sprintf("Found %d source file(s).", length(sFiles)));
 
 if isempty(config.FreqBands)
-    freqBands = {{'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
-                 'beta','13, 30','mean'; 'gamma','31, 80','mean'}};
+    freqBands = {'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
+                 'beta','13, 30','mean'; 'gamma','31, 80','mean'};
 else
     freqBands = config.FreqBands;
 end
@@ -148,8 +153,8 @@ if config.SelectScouts
     [iAtlas, ok] = listdlg('ListString',atlasNames,'SelectionMode','single', ...
         'Name','Select Atlas','PromptString','Select atlas:','ListSize',[400 300]);
     if ~ok, error("HRB:NoAtlasSelected","No atlas selected."); end
-    selectedAtlas = atlasNames{{iAtlas}};
-    scoutNames = {{SurfaceMat.Atlas(iAtlas).Scouts.Label}};
+    selectedAtlas = atlasNames{iAtlas};
+    scoutNames = {SurfaceMat.Atlas(iAtlas).Scouts.Label};
     [iScouts, ok] = listdlg('ListString',scoutNames,'SelectionMode','multiple', ...
         'Name',sprintf('Select ROIs (%s)',selectedAtlas), ...
         'PromptString','Select ROIs:','ListSize',[500 400]);
@@ -163,7 +168,7 @@ else
     selectedScouts = cellstr(config.Scouts);
 end
 
-scoutsCell = {{selectedAtlas, selectedScouts}};
+scoutsCell = {selectedAtlas, selectedScouts};
 
 switch config.ScoutFunction
     case "mean", scoutFuncStr = 'mean'; case "max", scoutFuncStr = 'max';
@@ -194,7 +199,7 @@ if isKernelShared
     if isempty(sFilesInput)
         error("HRB:ExtractScoutsFailed","Scout extraction failed for '%s'.", subjName);
     end
-    scoutsCellConn = {{}};
+    scoutsCellConn = {};
 else
     sFilesInput    = sFiles;
     scoutsCellConn = scoutsCell;
@@ -202,7 +207,7 @@ end
 useScouts = ~isempty(scoutsCellConn);
 
 pcaEdit = struct('Method','pca','Baseline',[-0.1,0],'DataTimeWindow',[0,1],'RemoveDcOffset','file');
-tfEdit  = struct('Comment','Complex','TimeBands',[],'Freqs',{{freqBands}}, ...
+tfEdit  = struct('Comment','Complex','TimeBands',[],'Freqs',{freqBands}, ...
     'ClusterFuncTime','none','Measure','none','Output','all','SaveKernel',0);
 
 try
@@ -259,7 +264,7 @@ end
 
 EEG.etc.brainstorm.connectivity_metric        = 'gc_spectral';
 EEG.etc.brainstorm.connectivity_topology      = char(config.Topology);
-EEG.etc.brainstorm.connectivity_files         = {{sFilesConn.FileName}};
+EEG.etc.brainstorm.connectivity_files         = {sFilesConn.FileName};
 EEG.etc.brainstorm.connectivity_kernel_shared = isKernelShared;
 EEG.etc.brainstorm.protocol                   = protocolName;
 EEG.etc.brainstorm.subject                    = subjName;
@@ -268,7 +273,7 @@ EEG.etc.brainstorm.db_path                    = dbDir;
 if config.Save
     logParams = unpackStruct(logConfig);
     HRB_saveData(EEG,"Name",config.SaveName,"Folder",module, ...
-        "OutputFolder",config.OutputFolder,logParams{{:}});
+        "OutputFolder",config.OutputFolder,logParams{:});
 end
 
 end

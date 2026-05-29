@@ -199,7 +199,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         
         if exist(protocolDir, 'dir')
             log.info(sprintf("Protocol '%s' found on disk. Reloading DB", protocolName));
-            gui_brainstorm('UpdateProtocolList');
+            gui_brainstorm('UpdateProtocolsList');
             iProtocol = bst_get('Protocol', protocolName);
         end
     end
@@ -256,11 +256,11 @@ function [EEG] = HRB_bst_import(InputData, opt)
         if ~exist(tempFolder, 'dir')
             mkdir(tempFolder);
         end
-        tempFile = fullfile(tempFolder, 'temp_import.set');
-        log.info(sprintf("Saving temp .set file to: %s", tempFolder));
-        InputData.filename = 'temp_import.set';
+        tempFileName = sprintf('%s.set', conditionName);
+        tempFile = fullfile(tempFolder, tempFileName);
+        InputData.filename = tempFileName;
         InputData.filepath = char(tempFolder);
-        pop_saveset(InputData, 'filename', 'temp_import.set', 'filepath', char(tempFolder), 'savemode', 'onefile');
+        pop_saveset(InputData, 'filename', tempFileName, 'filepath', char(tempFolder), 'savemode', 'onefile');
         InputFiles = {tempFile};
     end
 
