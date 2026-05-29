@@ -59,12 +59,12 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-    % *** NEW: extract BST condition name from metadata ***
-    if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-        bstCondition = InputData.etc.brainstorm.condition;
-    else
-        bstCondition = '';
-    end
+% Extract bst condition name from metadata
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+    bstCondition = InputData.etc.brainstorm.condition
+else
+    bstCondition = '';
+end
 
 if config.OutputFolder == ""
     config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
@@ -79,7 +79,7 @@ end
 if ~exist(dbDir,'dir'), mkdir(dbDir); end
 
 if ~brainstorm('status')
-    brainstorm server;
+    brainstorm nogui;
     t = tic;
     while toc(t) < 60
         try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
@@ -91,22 +91,17 @@ if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
     bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
 end
 
+% Rescan DB directory to discover protocols created by other BST instances.
+gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    protocolDir = fullfile(dbDir, protocolName);
-    if exist(protocolDir, 'dir')
-        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
-        db_reload_database('current');
-        iProtocol = bst_get('Protocol', protocolName);
-    end
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
+    error("HRB:ProtocolNotFound", ...
+        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 gui_brainstorm('SetCurrentProtocol', iProtocol);
 
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
-    'subjectname',subjName,'condition', bstCondition,  % *** FIX: was '' ***'tag','', ...
+    'subjectname',subjName,'condition','','tag','', ...
     'includebad',1,'includeintra',1,'includecommon',1);
 if isempty(recordings)
     error("HRB:NoRecordings","No recordings for subject '%s'.", subjName);
@@ -179,9 +174,8 @@ try
         'BstEegLfFile','eeg_lf.dat','BstMegLfFile','meg_lf.dat', ...
         'UseIntegrationPoint',1,'EnableCacheMemory',0,'MegPerBlockOfSensor',0);
 
-    % *** NEW: skip if headmodel already exists for this subject ***
-    if local_headmodelExists(subjName, 'FEM')
-        log.info("*** SKIP: Headmodel 'FEM' already exists. Skipping recomputation. ***");
+    if local_headmodelExists
+        log.info("Skip: headmodel 'FEM' already exists. Skipping recomputation");
     else
     log.info(sprintf("Computing head model (DUNeuro FEM, type=%s, space: %s)...", ...
         config.DUNeuroFemType, config.SourceSpace));
@@ -196,7 +190,6 @@ try
         error("HRB:HeadModelFailed","DUNeuro head model failed for subject '%s'.", subjName);
     end
     log.info("Head model computed successfully (DUNeuro FEM).");
-    end % *** NEW: end of skip-if-exists else block ***
 
 catch ME
     log.error(sprintf("HRB_bst_headmodel_duneuro failed: %s", ME.message));
@@ -223,7 +216,7 @@ end
 
 end
 
-% *** NEW: local helper — check if headmodel already computed ***
+%% Helper - check if headmodel already exists
 function found = local_headmodelExists(subjName, comment)
     found = false;
     try

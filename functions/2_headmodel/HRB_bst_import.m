@@ -199,7 +199,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         
         if exist(protocolDir, 'dir')
             log.info(sprintf("Protocol '%s' found on disk. Reloading DB", protocolName));
-            db_reload_database('current');
+            gui_brainstorm('UpdateProtocolList');
             iProtocol = bst_get('Protocol', protocolName);
         end
     end

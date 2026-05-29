@@ -233,17 +233,12 @@ end
 
 %% 6. Manage Protocol
 
+% Rescan DB directory to discover protocols created by other BST instances.
+gui_brainstorm('UpdateProtocolsList');
 iProtocol = bst_get('Protocol', protocolName);
 if isempty(iProtocol)
-    protocolDir = fullfile(dbDir, protocolName);
-    if exist(protocolDir, 'dir')
-        log.info(sprintf("Protocol '%s' found on disk. Reloading DB...", protocolName));
-        db_reload_database('current');
-        iProtocol = bst_get('Protocol', protocolName);
-    end
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound","Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
+    error("HRB:ProtocolNotFound", ...
+        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
 end
 log.info(sprintf("Setting current protocol: %s", protocolName));
 gui_brainstorm('SetCurrentProtocol', iProtocol);

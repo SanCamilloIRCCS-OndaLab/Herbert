@@ -270,7 +270,9 @@ end
 % =========================================================================
 %% 5. Manage Protocol
 % =========================================================================
-iProtocol = bst_get('Protocol', protocolName);
+% Rescan DB directory to discover protocols created by other BST instances.
+gui_brainstorm('UpdateProtocolsList');
+iProtocol = bst_get('Protocol', protocolName);  % ← era "Protocol =" (typo)
 if isempty(iProtocol)
     error("HRB:ProtocolNotFound", ...
         "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
