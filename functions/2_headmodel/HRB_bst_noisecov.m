@@ -236,6 +236,7 @@ EEG.etc.brainstorm.noisecov_target   = char(config.Target);
 EEG.etc.brainstorm.noisecov_baseline = config.NoiseCovBaseline;
 EEG.etc.brainstorm.protocol          = protocolName;
 EEG.etc.brainstorm.subject           = subjName;
+EEG.etc.brainstorm.condition         = bstCondition
 EEG.etc.brainstorm.db_path           = dbDir;
 
 log.info(sprintf("Output EEG struct ready (subject: %s, target: %s).", ...

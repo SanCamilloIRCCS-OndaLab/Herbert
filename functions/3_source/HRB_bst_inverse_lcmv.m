@@ -202,6 +202,7 @@ EEG.etc.brainstorm.inverse_orientation = char(config.DipolOrientation);
 EEG.etc.brainstorm.inverse_files       = {sFilesInverse.FileName};
 EEG.etc.brainstorm.protocol            = protocolName;
 EEG.etc.brainstorm.subject             = subjName;
+EEG.etc.brainstorm.condition           = bstCondition
 EEG.etc.brainstorm.db_path             = dbDir;
 
 if config.Save

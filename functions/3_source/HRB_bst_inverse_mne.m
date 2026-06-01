@@ -142,7 +142,7 @@ end
 
 %% 7. Select recordings
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
-    'subjectname',subjName,'condition', bstCondition, ...  % *** FIX: was '' ***'tag',''
+    'subjectname',subjName,'condition', bstCondition, ...
     'includebad',1,'includeintra',1,'includecommon',1);
 if isempty(recordings)
     error("HRB:NoRecordings","No recordings for subject '%s'.", subjName);
@@ -219,6 +219,7 @@ EEG.etc.brainstorm.inverse_orientation = char(config.DipolOrientation);
 EEG.etc.brainstorm.inverse_files       = {sFilesInverse.FileName};
 EEG.etc.brainstorm.protocol            = protocolName;
 EEG.etc.brainstorm.subject             = subjName;
+EEG.etc.brainstorm.condition           = bstCondition
 EEG.etc.brainstorm.db_path             = dbDir;
 
 %% 11. Save
