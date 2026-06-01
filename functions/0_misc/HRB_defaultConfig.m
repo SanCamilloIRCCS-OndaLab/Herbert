@@ -206,6 +206,7 @@ headmodel.bst_import.MRIFile = "";
 headmodel.bst_import.FreeSurferDir = "";
 headmodel.bst_import.BrainstormDbDir = "";
 headmodel.bst_import.ConditionName = "";
+headmodel.bst_import.SkipExisting    = false;  % true = skip if condition exists in BST
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 

@@ -48,11 +48,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         opt.UseDefaultAnat logical = true
         opt.MRIFile
         opt.BrainstormDbDir string = ""
-        % *** NEW: ConditionName — unique BST condition per universe.
-        % If empty, falls back to SaveName (set by HRB_runPipeline with the
-        % universe name). This ensures different pipeline universes (e.g.,
-        % bandpass vs lowpass) import into separate BST conditions and never
-        % overwrite each other. ***
+        opt.SkipExisting logical = false
         opt.ConditionName string = ""
         % Pipeline Output Options
         opt.Save logical
@@ -117,11 +113,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     if isEpoched, epochStr = "epoched"; end
     log.info(sprintf("Dataset type detected: %s | Paradigm: %s", epochStr, dataTypeStr));
 
-    % *** NEW: resolve BST condition name for this universe.
-    % Priority: explicit ConditionName > SaveName (universe name from pipeline)
-    % > DataType-based default ('RS' or 'Task').
-    % Using the universe name as condition name isolates each pipeline branch
-    % in its own BST condition folder — prevents overwrites between universes. ***
+    %% 2b. Resolve Condition Name
     if strlength(config.ConditionName) > 0
         conditionName = char(config.ConditionName);
     elseif isfield(config, 'SaveName') && strlength(config.SaveName) > 0
@@ -243,6 +235,44 @@ function [EEG] = HRB_bst_import(InputData, opt)
         subjName = char(config.SubjectName);
     end
     log.info(sprintf("Subject name: %s", subjName));
+
+    %% 7b. Skip check
+    if config.SkipExisting
+        existingRecordings = bst_process('CallProcess', ...
+            'process_select_files_data', [], [], ...
+            'subjectname', subjName, ...
+            'condition', conditionName, ...
+            'includebad', 1, ...
+            'includeintra', 1, ...
+            'includecommon', 1);
+
+        if ~isempty(existingRecordings)
+            log.info(sprintf("SkilExisting = true: condition '%s' already exists (%d files). Skipping import.", conditionName, length(existingRecordings)));
+            
+            if isFilePath
+                EEG = pop_loadset('filename', filePath, 'loadmode', 'info');
+            else
+                EEG = InputData;
+            end
+
+            EEG.etc.brainstorm.db_file = {existingRecordings.FileName};
+            EEG.etc.brainstorm.protocol = char(config.ProtocolName);
+            EEG.etc.brainstorm.subject = subjName;
+            EEG.etc.brainstorm.db_path = dbDir;
+            EEG.etc.brainstorm.data_type = char(config.DataType);
+            EEG.etc.brainstorm.epoched = isEpoched;
+            EEG.etc.brainstorm.condition = conditionName;
+
+            if isfield(config, 'SaveName') && strlength(config.SaveName) > 0
+                EEG.setname = char(config.SaveName);
+            else
+                EEG.setname = strcat(subjName, '_bst_imported');
+            end
+            return;
+        end
+    end
+    
+
 
     % =========================================================================
     %% 8. Prepare input files (save to temp if struct in RAM)
