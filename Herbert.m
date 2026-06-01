@@ -37,7 +37,7 @@ HRB_loadDependencies();
 %% Variables
 data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
 file_name = 'MMCI_01_RESTING.vhdr'
-pipeline = "pipeline_example.json";
+pipeline = "pipelineFULL_Prova.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
@@ -54,6 +54,7 @@ data_lowpass = HRB_runPipeline(EEG_lp, pipeline)
 
 
 %% Run pipeline
+
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
 % data = HRB_runPipeline(pipeline, data_test);
 
