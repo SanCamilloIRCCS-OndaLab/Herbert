@@ -157,7 +157,7 @@ if config.SelectScouts
     if ~ok, error("HRB:NoScoutsSelected","No ROIs selected."); end
     selectedScouts = scoutNames(iScouts);
 else
-    if strlength(config.Atlas)==0 || strlength(config.Scouts)==0
+    if strlength(config.Atlas)==0 || all(strlength(config.Scouts))==0
         error("HRB:NoScouts","Provide Atlas and Scouts, or set SelectScouts=true.");
     end
     selectedAtlas  = char(config.Atlas);

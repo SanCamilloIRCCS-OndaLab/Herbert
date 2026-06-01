@@ -178,7 +178,7 @@ if config.SelectScouts
     selectedScouts = scoutNames(iScouts);
     log.info(sprintf("Selected %d ROI(s) from '%s'.", length(selectedScouts), selectedAtlas));
 else
-    if strlength(config.Atlas)==0 || strlength(config.Scouts)==0
+    if strlength(config.Atlas)==0 || all(strlength(config.Scouts))==0
         error("HRB:NoScouts","Provide Atlas and Scouts, or set SelectScouts=true.");
     end
     selectedAtlas  = char(config.Atlas);
