@@ -146,11 +146,32 @@ end
 % Check if there is a custom name
 name = getStepName(step);
 
-if isempty(prevName)
-    params.SaveName = name;
-else
-    params.SaveName = sprintf("%s_%s", prevName, name);
+% Make SaveName unique per subject.
+% This ensures BST condition names don't collide across subjects
+
+subjId = '';
+
+if isstruct(dataIn) && isfield(dataIn, 'subject') && ~isempty(dataIn.subject)
+    subjId = cleanName(char(dataIn.subject));
+elseif isstruct(dataIn) && isfield(dataIn, 'setname') && ~isempty(dataIn.setname)
+    [~, subjId, ~] = fileparts(dataIn.setname);
+    subjId = cleanName(char(subjId));
 end
+
+if isempty(subjId)
+    if isempty(prevName)
+        params.SaveName = name;
+    else
+        params.SaveName = sprintf("%s_%s", prevName, name);
+    end
+else
+    if isempty(prevName)
+        params.SaveName = sprintf("%s_%s", subjId, name);
+    else
+        params.SaveName = sprintf("%s_%s_%s", subjId, prevName, name);
+    end
+end
+
 
 % Check if must be saved
 if isfield(step, "save")

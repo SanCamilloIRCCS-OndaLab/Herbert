@@ -52,6 +52,7 @@ EEG_lp = pop_loadset('filename', 'lowpass-48_clean-epochs.set', 'filepath', '/mn
 data_bandpass = HRB_runPipeline(EEG_bp, pipeline)
 data_lowpass = HRB_runPipeline(EEG_lp, pipeline)
 
+
 %% Run pipeline
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
 % data = HRB_runPipeline(pipeline, data_test);
