@@ -210,6 +210,12 @@ headmodel.bst_import.SkipExisting    = false;  % true = skip if condition exists
 headmodel.bst_import.OutputFolder    = "";    
 headmodel.bst_import.Save            = false; 
 headmodel.bst_import.SaveName        = ""; 
+% Logging specific for bst_import 
+headmodel.bst_import.LogEnabled  = true;
+headmodel.bst_import.LogLevel    = 2;
+headmodel.bst_import.LogToFile   = false;
+headmodel.bst_import.LogFileDir  = getCodeFolder();
+headmodel.bst_import.LogFileName = "HRB_bst_import.log";
 
 % bst_headmodel
 headmodel.bst_headmodel.Method              = "OpenMEEG";

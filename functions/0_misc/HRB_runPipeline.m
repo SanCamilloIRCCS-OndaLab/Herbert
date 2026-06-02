@@ -150,12 +150,8 @@ name = getStepName(step);
 % This ensures BST condition names don't collide across subjects
 
 subjId = '';
-
 if isstruct(dataIn) && isfield(dataIn, 'subject') && ~isempty(dataIn.subject)
     subjId = cleanName(char(dataIn.subject));
-elseif isstruct(dataIn) && isfield(dataIn, 'setname') && ~isempty(dataIn.setname)
-    [~, subjId, ~] = fileparts(dataIn.setname);
-    subjId = cleanName(char(subjId));
 end
 
 if isempty(subjId)
@@ -254,27 +250,25 @@ end
 subjId = '';
 if isstruct(current_data) && isfield(current_data, 'subject') && ~isempty(current_data.subject)
     subjId = cleanName(char(current_data.subject));
-elseif isstruct(current_data) && isfield(current_data, 'setname') && ~isempty(current_data.setname)
-    [~, subjId, ~] = fileparts(current_data.setname);
-    subjId = cleanName(char(subjId));
 end
+
 % Build branch name: current accumulated name + this universe's name (if multiverse)
 if l_multiverse > 1
     universeName = getStepName(universe);
     if isempty(current_name)
         branchName = universeName;
     else
-        branchName = sprintf("%s_%s", current_name, universeName);
+        branchName = fullfile(current_name, universeName);
     end
 else
     branchName = current_name;
 end
 
-% Build output folder: {timestamp}/{subjId}/{branchName}
+% Build output folder
 if isempty(subjId) && isempty(branchName)
-    universeFolder = config.OutputFolder;
+    universeFolder = fullfile(config.OutputFolder, "shared");  % ← era config.OutputFolder
 elseif isempty(branchName)
-    universeFolder = fullfile(config.OutputFolder, subjId);
+    universeFolder = fullfile(config.OutputFolder, subjId, "shared");  % ← era senza "shared"
 elseif isempty(subjId)
     universeFolder = fullfile(config.OutputFolder, branchName);
 else
@@ -285,8 +279,13 @@ if ~exist(universeFolder, 'dir')
     mkdir(universeFolder);
 end
 
+[~, prevNameFlat] = fileparts(current_name);
+if isempty(prevNameFlat)
+    prevNameFlat = current_name;
+end
+
 try
-    out_data = run_step(current_data, universe, universeFolder, current_name);
+    out_data = run_step(current_data, universe, universeFolder, prevNameFlat);
 catch ME
     warning("HRB:UniverseFailed", ...
         "Step %d Universe %d failed: %s", n_steps, n_universe, ME.message);
@@ -298,7 +297,7 @@ if l_multiverse > 1
     if isempty(current_name)
         out_name = getStepName(universe);
     else
-        out_name = sprintf("%s_%s", current_name, getStepName(universe));
+        out_name = fullfile(current_name, getStepName(universe));
     end
 else
     out_name = current_name;
