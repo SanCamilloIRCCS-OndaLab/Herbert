@@ -185,87 +185,93 @@ try
     log.info("Channel locations added successfully.");
 
     %% 9. Compute head model — OpenMEEG BEM (eeg = 3)
-    
+
+    % Load OpenMEEG plugin (not loaded automatically in server mode)
+    [isOk, errMsg] = bst_plugin('Load', 'openmeeg');
+    if ~isOk
+        error("HRB:OpenMEEGNotLoaded", "Failed to load OpenMEEG plugin: %s", errMsg);
+    end
+
     % Check existence of headmodel and skip computation if found
-    if local_headmodelExist(subjName, 'BEM')
-        local.info("Skip: HeadModel BEM already exists. Skipping recomputation")
+    if local_headmodelExists(subjName, 'BEM')
+        log.info("Skip: HeadModel BEM already exists. Skipping recomputation.")
     else
-    
-    switch config.SourceSpace
-        case "cortex", spaceValue = 1;
-        case "volume", spaceValue = 2;
+        switch config.SourceSpace
+            case "cortex", spaceValue = 1;
+            case "volume", spaceValue = 2;
+        end
+
+        openmeegStruct = struct(...
+            'BemFiles', {{}}, 'BemNames', {{'Scalp', 'Skull', 'Brain'}}, ...
+            'BemCond', config.BemConductivities, 'BemSelect', [1, 1, 1], ...
+            'isAdjoint', 0, 'isAdaptative', 1, 'isSplit', 0, 'SplitLength', 4000);
+
+        nirstormStruct = struct(...
+            'FluenceFolder', 'https://neuroimage.usc.edu/resources/nst_data/fluence/', ...
+            'smoothing_method', 'geodesic_dist', 'smoothing_fwhm', 10);
+
+        log.info(sprintf("Computing head model (OpenMEEG BEM, space: %s)...", config.SourceSpace));
+        recordings = bst_process('CallProcess', 'process_headmodel', recordings, [], ...
+            'Comment', 'BEM', 'sourcespace', spaceValue, ...
+            'meg', 1, 'eeg', 3, 'ecog', 2, 'seeg', 2, 'nirs', 1, ...
+            'openmeeg', openmeegStruct, 'nirstorm', nirstormStruct, 'channelfile', '');
+
+        if isempty(recordings)
+            error("HRB:HeadModelFailed", "OpenMEEG head model failed for subject '%s'.", subjName);
+        end
+        log.info("Head model computed successfully (OpenMEEG BEM).");
     end
 
-    openmeegStruct = struct(...
-        'BemFiles', {{}}, 'BemNames', {{'Scalp', 'Skull', 'Brain'}}, ...
-        'BemCond', config.BemConductivities, 'BemSelect', [1, 1, 1], ...
-        'isAdjoint', 0, 'isAdaptative', 1, 'isSplit', 0, 'SplitLength', 4000);
-
-    nirstormStruct = struct(...
-        'FluenceFolder', 'https://neuroimage.usc.edu/resources/nst_data/fluence/', ...
-        'smoothing_method', 'geodesic_dist', 'smoothing_fwhm', 10);
-
-    log.info(sprintf("Computing head model (OpenMEEG BEM, space: %s)...", config.SourceSpace));
-    recordings = bst_process('CallProcess', 'process_headmodel', recordings, [], ...
-        'Comment', 'BEM', 'sourcespace', spaceValue, ...
-        'meg', 1, 'eeg', 3, 'ecog', 2, 'seeg', 2, 'nirs', 1, ...
-        'openmeeg', openmeegStruct, 'nirstorm', nirstormStruct, 'channelfile', '');
-
-    if isempty(recordings)
-        error("HRB:HeadModelFailed", "OpenMEEG head model failed for subject '%s'.", subjName);
+    %% 10. Build output EEG struct
+    if isSubjName
+        EEG = struct();
+        EEG.etc.brainstorm = struct();
+    else
+        EEG = InputData;
     end
-    log.info("Head model computed successfully (OpenMEEG BEM).");
+
+    EEG.etc.brainstorm.headmodel_method = 'OpenMEEG';
+    EEG.etc.brainstorm.headmodel_space  = char(config.SourceSpace);
+    EEG.etc.brainstorm.protocol         = protocolName;
+    EEG.etc.brainstorm.subject          = subjName;
+    EEG.etc.brainstorm.db_path          = dbDir;
+
+    log.info(sprintf("Output EEG struct ready (subject: %s, method: OpenMEEG).", subjName));
+
+    %% 11. Save
+    if config.Save
+        logParams = unpackStruct(logConfig);
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
+            "OutputFolder", config.OutputFolder, logParams{:});
+    end
 
 catch ME
     log.error(sprintf("HRB_bst_headmodel_openmeeg failed: %s", ME.message));
     rethrow(ME);
 end
 
-%% 10. Build output EEG struct
-if isSubjName
-    EEG = struct();
-    EEG.etc.brainstorm = struct();
-else
-    EEG = InputData;
-end
-
-EEG.etc.brainstorm.headmodel_method = 'OpenMEEG';
-EEG.etc.brainstorm.headmodel_space  = char(config.SourceSpace);
-EEG.etc.brainstorm.protocol         = protocolName;
-EEG.etc.brainstorm.subject          = subjName;
-EEG.etc.brainstorm.db_path          = dbDir;
-
-log.info(sprintf("Output EEG struct ready (subject: %s, method: OpenMEEG).", subjName));
-
-%% 11. Save
-if config.Save
-    logParams = unpackStruct(logConfig);
-    HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
-        "OutputFolder", config.OutputFolder, logParams{:});
-end
-
 end
 
 %% Helper - check if headmodel already exists
-    function found = local_headmodelExists(subjName, comment)
-    found = false;
-    try
-        [sSubject, ~] = bst_get('Subject', char(subjName));
-        if isempty(sSubject), return; end
-        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
-        for i = 1:length(sStudies)
-            % *** FIX: skip studies that don't belong to this subject ***
-            if ~contains(sStudies(i).FileName, char(subjName))
-                continue;
-            end
-            if ~isempty(sStudies(i).HeadModel)
-                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
-                    found = true;
-                    return;
-                end
+function found = local_headmodelExists(subjName, comment)
+found = false;
+try
+    [sSubject, ~] = bst_get('Subject', char(subjName));
+    if isempty(sSubject), return; end
+    [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
+    for i = 1:length(sStudies)
+        % *** FIX: skip studies that don't belong to this subject ***
+        if ~contains(sStudies(i).FileName, char(subjName))
+            continue;
+        end
+        if ~isempty(sStudies(i).HeadModel)
+            if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
+                found = true;
+                return;
             end
         end
-    catch
-        found = false;
     end
+catch
+    found = false;
+end
 end

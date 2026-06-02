@@ -69,7 +69,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     config = HRB_loadConfig(module, "bst_import", opt);
 
     %% Logger
-    logConfig = HRB_loadConfig(module, "logging", opt);
+    logConfig = HRB_loadConfig(module, "bst_import", opt);
     log = HRB_loggerSetUp(module, logConfig);
 
     % =========================================================================
@@ -271,7 +271,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
             return;
         end
     end
-    
+
 
 
     % =========================================================================
@@ -478,7 +478,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     % =========================================================================
     if config.Save
         logParams = unpackStruct(logConfig);
-        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, ...
+        HRB_saveData(EEG, "Name", config.SaveName, "Folder", 'bst_import', ...
                      "OutputFolder", config.OutputFolder, logParams{:});
     end
 

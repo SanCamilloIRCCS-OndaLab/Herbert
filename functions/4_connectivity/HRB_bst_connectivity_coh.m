@@ -131,7 +131,7 @@ if config.SelectScouts
 end
 
 sFiles = bst_process('CallProcess','process_select_files_results',[],[], ...
-    'subjectname',subjName,'condition', bstCondition,  % *** FIX: was '' ***'tag','', ...
+    'subjectname',subjName,'condition', bstCondition,...  % 
     'includebad',0,'includeintra',1,'includecommon',0);
 if isempty(sFiles)
     error("HRB:NoSourceFiles","No source files for '%s'.", subjName);
