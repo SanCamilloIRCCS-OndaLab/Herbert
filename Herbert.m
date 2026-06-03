@@ -23,6 +23,7 @@
 %% Add internal functions to path
 %%% Uncomment this if you run the whole file
 % folder = fileparts(which(mfilename));
+
 % functions_folder = fullfile(folder, "functions");
 %%% uncomment this if you run the code line by line
 functions_folder = "functions";
@@ -32,18 +33,35 @@ addpath(genpath(functions_folder));
 %% Add external dependencies to path
 HRB_loadDependencies();
 
+
+
 %% Variables
-data_path = 'data/ses-20191120/EEG_ORIG/PATHS_101_Resting_20191120_022103.mff';
-pipeline = "pipeline_example.json";
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
+file_name = 'MMCI_01_RESTING.vhdr'
+pipeline = "pipelineFULL_Prova.json";
 % pipeline = "pipeline_test.json";
 
 %% Import
-EEG = pop_mffimport({data_path},'',0,0);
-data_test = '';
+EEG = pop_loadbv(data_path, file_name);
+% data_test = '';
+
+%% PROVA BST ONLY
+pipeline = "pipeline_bst_only.json"
+EEG_bp = pop_loadset('filename', 'bandpass-1-48_clean-epochs.set', 'filepath', '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/output/20260528_103602/preprocessing')
+EEG_lp = pop_loadset('filename', 'lowpass-48_clean-epochs.set', 'filepath', '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/output/20260528_103602/preprocessing')
+
+data_bandpass = HRB_runPipeline(EEG_bp, pipeline)
+data_lowpass = HRB_runPipeline(EEG_lp, pipeline)
+
 
 %% Run pipeline
+
 data = HRB_runPipeline(EEG, pipeline) %, "pipeline_example.json");
 % data = HRB_runPipeline(pipeline, data_test);
+
+%% Run old pipeline (not in parallel)
+EEG = pop_loadbv(data_path, file_name);
+data = HRB_runPipelineOld(EEG, pipeline) % Not parallel pipeline!
 
 
 %% Create pipeline

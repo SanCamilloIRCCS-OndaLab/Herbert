@@ -115,7 +115,7 @@ function pipeline = HRB_validatePipeline(pipelineFile, opt)
             end
 
             % If it is a multiverse also name is mandatory!
-            if l_multiverse > 1 && ~ismember('function', universe_fields)
+            if l_multiverse > 1 && ~ismember('name', universe_fields)
                 errmsg = sprintf("Pipeline error - All universes of multiverse step %s MUST contain the field 'name'!", ...
                     steps(s));
                 log.error(errmsg);

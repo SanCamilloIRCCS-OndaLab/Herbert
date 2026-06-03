@@ -122,8 +122,12 @@ function HRB_drawPipeline(pipeline, saveName, opt)
     
             saveNameExt = sprintf("%s.%s", saveName, format);
             imgFullPath = fullfile(config.OutputFolder,saveNameExt);
-            
+
+            try            
             websave(imgFullPath, query);
+            catch ME
+                log.warning(sprintf("Could not generate pipeline image: %s", ME.message))
+            end
             log.info(sprintf("Graph saved in: %s", imgFullPath))
         end
     else

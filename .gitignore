@@ -47,3 +47,6 @@ data/
 
 # Documentation
 docs/build/
+
+# Database BST
+brainstorm_db/

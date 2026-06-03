@@ -13,181 +13,294 @@
 %
 %
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
-% 
+%
 % See also: SAVE, POP_SAVESET
 
 function data = HRB_runPipeline(data, pipelineFile, opt)
-    arguments (Input)
-        data
-    end
-    arguments (Repeating)
-        pipelineFile string {mustBeFile}
-    end
-    arguments (Input)
-        opt.OutputFolder string
-    end
+arguments (Input)
+    data
+end
+arguments (Repeating)
+    pipelineFile string {mustBeFile}
+end
+arguments (Input)
+    opt.OutputFolder string
+end
 
-    %% Parsing arguments
-    config = HRB_loadConfig("general", "save", opt);
+%% Parsing arguments
+config = HRB_loadConfig("general", "save", opt);
 
-    %% Logger
-    logOptions = struct( ...
-        "LogFileDir", config.OutputFolder, ...
-        "LogToFile", true);
-    log = HRB_loggerSetUp("general", logOptions);
+%% Logger
+logOptions = struct( ...
+    "LogFileDir", config.OutputFolder, ...
+    "LogToFile", true);
+log = HRB_loggerSetUp("general", logOptions);
 
-    %% START
-    log.info(">>> START MULTIVERSE ANALYSIS <<<")
+%% START
+log.info(">>> START MULTIVERSE ANALYSIS <<<")
 
-    %% Load pipeline
-    allPipelines = cell(size(pipelineFile));
-    for n_pipeline = 1:length(pipelineFile)
-        currPipelineFile = pipelineFile{n_pipeline};
-        log.info(sprintf("Validate pipeline %s...", currPipelineFile))
-        pipeline = HRB_validatePipeline(currPipelineFile);
-        log.info("...Pipeline is valid!")
-        log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
-        allPipelines{n_pipeline} = pipeline;
-    end
-    log.info("Merging all pipelines")
-    pipeline = mergeStruct(allPipelines{:},"addMissingFields",true);
-    % Reorder fields
-%     pipeline = orderfields(pipeline);
-    log.info("Final merged pipeline is:")
+%% Load pipeline
+allPipelines = cell(size(pipelineFile));
+for n_pipeline = 1:length(pipelineFile)
+    currPipelineFile = pipelineFile{n_pipeline};
+    log.info(sprintf("Validate pipeline %s...", currPipelineFile))
+    pipeline = HRB_validatePipeline(currPipelineFile);
+    log.info("...Pipeline is valid!")
     log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
+    allPipelines{n_pipeline} = pipeline;
+end
+log.info("Merging all pipelines")
+pipeline = mergeStruct(allPipelines{:},"addMissingFields",true);
+% Reorder fields
+%     pipeline = orderfields(pipeline);
+log.info("Final merged pipeline is:")
+log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
 
-    logParams = unpackStruct(logOptions);
-    HRB_drawPipeline(pipeline, "OutputFolder", config.OutputFolder, logParams{:})
+logParams = unpackStruct(logOptions);
+HRB_drawPipeline(pipeline, "OutputFolder", config.OutputFolder, logParams{:})
 
-    % Save pipeline
-    pipelineSaveName = 'pipeline.json';
-    pipelineSaveFullPath = fullfile(config.OutputFolder, pipelineSaveName);
-    log.info(sprintf("Saving final pipeline in %s",pipelineSaveFullPath))
-    fid = fopen(pipelineSaveFullPath, "w");
-    fprintf(fid,jsonencode(pipeline, "PrettyPrint", true));
-    fclose(fid);
+% Save pipeline
+pipelineSaveName = 'pipeline.json';
+pipelineSaveFullPath = fullfile(config.OutputFolder, pipelineSaveName);
+log.info(sprintf("Saving final pipeline in %s",pipelineSaveFullPath))
+fid = fopen(pipelineSaveFullPath, "w");
+fprintf(fid,jsonencode(pipeline, "PrettyPrint", true));
+fclose(fid);
 
-    %% Starts the loop
-    steps = fieldnames(pipeline);
-    log.info(sprintf("There are %d steps", length(steps)))
+%% Starts the loop
+steps = fieldnames(pipeline);
+log.info(sprintf("There are %d steps", length(steps)))
 
-    data = {data};
-    names = {''};
+data = {data};
+names = {''};
 
-    % Loop over the steps
-    for n_steps = 1:length(steps)
-        step = pipeline.(steps{n_steps});
-        log.info(sprintf("> Step: %d", n_steps))
-        
-        l_multiverse = length(step);
-        log.info(sprintf("There are %d multiverses", l_multiverse))
+% Loop over the steps
+for n_steps = 1:length(steps)
+    step = pipeline.(steps{n_steps});
+    log.info(sprintf("> Step: %d", n_steps))
 
-        l_data = length(data);
+    l_multiverse = length(step);
+    log.info(sprintf("There are %d multiverses", l_multiverse))
 
-        % Loop over the data
-        for n_data = 1:l_data
+    l_data = length(data);
 
-            % Extract current data
-            current_data = data{n_data};
-            current_name = names{n_data};
+    % The plain loop would be
+    % for n_data = 1:l_data
+    %   for n_universe = 1:l_multiverse
+    %   end
+    % end
+    % However it is better to flatten the loops in order to get full
+    % parallelization
 
-            % Loop over the universes
-            for n_universe = 1:l_multiverse
-                if isstruct(step)
-                    universe = step(n_universe);
-                else %iscell
-                    universe = step{n_universe};
-                end
-                log.info(sprintf(">> Universe: %d", n_universe))
-    
-                % Run the step
-                out = run_step(current_data, universe, config.OutputFolder, current_name);
-    
-                % Save the output in our data array
-                idx = n_data + (n_universe-1)*l_data;
-                data{idx} = out;
-                % If multiverse add name to identify dataset
-                if l_multiverse > 1
-                    if isempty(current_name)
-                        names{idx} = getStepName(universe);
-                    else
-                        names{idx} = sprintf("%s_%s", current_name, getStepName(universe));
-                    end
-                end
-                log.warning(sprintf("****** %s", getStepName(universe)))
-            end % n_universe
-        end % n_data
-    end % n_steps
+    new_data  = cell(l_data * l_multiverse, 1);
+    new_names = cell(l_data * l_multiverse, 1);
 
-    %% END
-    log.info(">>> END MULTIVERSE ANALYSIS <<<")
+    isBstStep = false;
+    for iCheck = 1:l_multiverse
+        if isstruct(step)
+            u = step(iCheck)
+        else
+            u = step{iCheck};
+        end
+
+        if isfield(u, 'function') && startsWith(string(u.function), "HRB_bst_")
+            isBstStep = true;
+            break;
+        end
+    end
+
+
+    if isBstStep
+        log.info(sprintf("Step %d uses BST  running sequentially.", n_steps))
+        for idx = 1:(l_data * l_multiverse)
+            [new_data{idx}, new_names{idx}] = process_universe( ...
+                idx, data, names, step, l_data, config, n_steps);
+        end
+    else
+        parfor idx = 1:(l_data * l_multiverse)
+            [new_data{idx}, new_names{idx}] = process_universe( ...
+                idx, data, names, step, l_data, config, n_steps);
+        end
+    end
+
+    % Update data and names
+    data  = new_data;
+    names = new_names;
+
+end % n_steps
+
+%% END
+log.info(">>> END MULTIVERSE ANALYSIS <<<")
 
 end
 
 function dataOut = run_step(dataIn, step, output, prevName)
 
-    % Check if there are custom params
-    if isfield(step, "params")
-        params = step.params;
-    else
-        params = struct();
-    end
-    
-    % Check if there is a custom name
-    name = getStepName(step);
+% Check if there are custom params
+if isfield(step, "params")
+    params = step.params;
+else
+    params = struct();
+end
 
+% Check if there is a custom name
+name = getStepName(step);
+
+% Make SaveName unique per subject.
+% This ensures BST condition names don't collide across subjects
+
+subjId = '';
+if isstruct(dataIn) && isfield(dataIn, 'subject') && ~isempty(dataIn.subject)
+    subjId = cleanName(char(dataIn.subject));
+end
+
+if isempty(subjId)
     if isempty(prevName)
         params.SaveName = name;
     else
         params.SaveName = sprintf("%s_%s", prevName, name);
     end
-    
-    % Check if must be saved
-    if isfield(step, "save")
-        params.Save = step.save;
-    end
-
-    % Check if there are custom log params
-    if isfield(step, "log")
-        params = catStruct(params, step.log);
-        if ~isfield(step.log, "LogFileDir")
-            params.LogFileDir = output;
-        end
-        if ~isfield(step.log, "LogToFile")
-            params.LogToFile = true;
-        end
+else
+    if isempty(prevName)
+        params.SaveName = sprintf("%s_%s", subjId, name);
     else
+        params.SaveName = sprintf("%s_%s_%s", subjId, prevName, name);
+    end
+end
+
+
+% Check if must be saved
+if isfield(step, "save")
+    params.Save = step.save;
+end
+
+% Check if there are custom log params
+if isfield(step, "log")
+    params = catStruct(params, step.log);
+    if ~isfield(step.log, "LogFileDir")
         params.LogFileDir = output;
+    end
+    if ~isfield(step.log, "LogToFile")
         params.LogToFile = true;
     end
-    
-    % Update output folder
-    params.OutputFolder = output;
-    
-    % Create function handle
-    fun = str2func(step.function);
-    
-    % Convert params to a cell array
-    cellParams = unpackStruct(params);
-    
-    % Execute the step
-    dataOut = fun(dataIn, cellParams{:});
+else
+    params.LogFileDir = output;
+    params.LogToFile = true;
+end
+
+% Update output folder
+params.OutputFolder = output;
+
+% Create function handle
+fun = str2func(step.function);
+
+% Convert params to a cell array
+cellParams = unpackStruct(params);
+
+% Execute the step
+dataOut = fun(dataIn, cellParams{:});
 %     dataOut = sprintf("%s_%s", dataIn, params.SaveName);
+
+% DEBUG TEMPORANEO
+if isstruct(dataOut) && isfield(dataOut, 'trials')
+    fprintf('>>> %s | IN: %d trials | OUT: %d trials\n', ...
+        step.function, dataIn.trials, dataOut.trials);
+end
 
 end
 
 function name = getStepName(step)
 % Check if there is a custom name
-    if isfield(step, "name")
-        name = step.name;
-    else
-        name = step.function;
-    end
-    name = cleanName(name);
+if isfield(step, "name")
+    name = step.name;
+else
+    name = step.function;
+end
+name = cleanName(name);
 end
 
 function name = cleanName(name)
-    notAllowedChars = {' ', '_'};
-    cleanChar = '-';
-    name = replace(name, notAllowedChars, cleanChar);
+notAllowedChars = {' ', '_'};
+cleanChar = '-';
+name = replace(name, notAllowedChars, cleanChar);
+end
+
+function [out_data, out_name] = process_universe(idx, data, names, step, l_data, config, n_steps)
+
+n_data     = mod(idx-1, l_data) + 1;
+n_universe = floor((idx-1) / l_data) + 1;
+
+current_data = data{n_data};
+current_name = names{n_data};
+l_multiverse = length(step);
+
+if isstruct(step)
+    universe = step(n_universe);
+else
+    universe = step{n_universe};
+end
+
+if isstruct(current_data) && isfield(current_data, 'HRB_failed') && current_data.HRB_failed
+    out_data = current_data;
+    out_name = current_name;
+    return;
+end
+
+% Extract subject ID for folder structure
+subjId = '';
+if isstruct(current_data) && isfield(current_data, 'subject') && ~isempty(current_data.subject)
+    subjId = cleanName(char(current_data.subject));
+end
+
+% Build branch name: current accumulated name + this universe's name (if multiverse)
+if l_multiverse > 1
+    universeName = getStepName(universe);
+    if isempty(current_name)
+        branchName = universeName;
+    else
+        branchName = fullfile(current_name, universeName);
+    end
+else
+    branchName = current_name;
+end
+
+% Build output folder
+if isempty(subjId) && isempty(branchName)
+    universeFolder = fullfile(config.OutputFolder, "shared");  % ← era config.OutputFolder
+elseif isempty(branchName)
+    universeFolder = fullfile(config.OutputFolder, subjId, "shared");  % ← era senza "shared"
+elseif isempty(subjId)
+    universeFolder = fullfile(config.OutputFolder, branchName);
+else
+    universeFolder = fullfile(config.OutputFolder, subjId, branchName);
+end
+
+if ~exist(universeFolder, 'dir')
+    mkdir(universeFolder);
+end
+
+[~, prevNameFlat] = fileparts(current_name);
+if isempty(prevNameFlat)
+    prevNameFlat = current_name;
+end
+
+try
+    out_data = run_step(current_data, universe, universeFolder, prevNameFlat);
+catch ME
+    warning("HRB:UniverseFailed", ...
+        "Step %d Universe %d failed: %s", n_steps, n_universe, ME.message);
+    out_data = struct('HRB_failed', true, 'HRB_error', ME.message, ...
+        'HRB_step', n_steps, 'HRB_universe', n_universe);
+end
+
+if l_multiverse > 1
+    if isempty(current_name)
+        out_name = getStepName(universe);
+    else
+        out_name = fullfile(current_name, getStepName(universe));
+    end
+else
+    out_name = current_name;
+end
+
 end
