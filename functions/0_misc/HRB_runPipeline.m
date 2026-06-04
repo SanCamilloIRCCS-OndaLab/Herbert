@@ -44,7 +44,7 @@ allPipelines = cell(size(pipelineFile));
 for n_pipeline = 1:length(pipelineFile)
     currPipelineFile = pipelineFile{n_pipeline};
     log.info(sprintf("Validate pipeline %s...", currPipelineFile))
-    pipeline = HRB_validatePipeline(currPipelineFile);
+    pipeline = HRB_validatePipeline(currPipelineFile,"OutputFolder",config.OutputFolder);
     log.info("...Pipeline is valid!")
     log.info("\n"+jsonencode(pipeline, "PrettyPrint", true));
     allPipelines{n_pipeline} = pipeline;
@@ -279,10 +279,7 @@ if ~exist(universeFolder, 'dir')
     mkdir(universeFolder);
 end
 
-[~, prevNameFlat] = fileparts(current_name);
-if isempty(prevNameFlat)
-    prevNameFlat = current_name;
-end
+prevNameFlat = strrep(current_name, filesep, '_');
 
 try
     out_data = run_step(current_data, universe, universeFolder, prevNameFlat);

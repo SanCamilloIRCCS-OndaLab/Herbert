@@ -315,6 +315,13 @@ end
 % =========================================================================
 %% 6. Select source result files from DB
 % =========================================================================
+
+inverseComment = '';
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'inverse_comment')
+    inverseComment = char(InputData.etc.brainstorm.inverse_comment);
+end
+
+
 sFiles = bst_process('CallProcess', 'process_select_files_results', [], [], ...
     'subjectname',   subjName, ...
     'condition',     '', ...
