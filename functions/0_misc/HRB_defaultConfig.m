@@ -28,10 +28,6 @@
 
 
 function config = HRB_defaultConfig()
-st = dbstack;
-for i = 1:length(st)
-    fprintf('STACK %d: %s line %d\n', i, st(i).name, st(i).line);
-end
 
 config = struct();
 
