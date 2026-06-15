@@ -43,6 +43,13 @@ EEG = pop_loadbv(data_path, file_name);
 data = HRB_runPipeline(EEG, pipeline)
 % pipeline = "pipeline_test.json";
 
+%% multi subject
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/PROVA_2/';
+pipeline = 'pipelineFULL_Prova.json';
+HRB_generateSubjectMap(data_path, "fileExtension",'*.set');
+csv_file = fullfile(data_path, "subject_map.csv");
+results = HRB_runDataset(csv_file, pipeline); 
+
 %% Import
 EEG = pop_loadbv(data_path, file_name);
 % data_test = '';
