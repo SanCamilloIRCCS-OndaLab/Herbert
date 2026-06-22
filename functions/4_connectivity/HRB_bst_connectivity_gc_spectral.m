@@ -57,21 +57,21 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-    % =========================================================================
-    %% Resolve BST condition name
-    % Each pipeline universe imports into a unique BST condition (named after
-    % the universe, set by HRB_bst_import via SaveName). Reading it here
-    % ensures we query only this universe's recordings — not recordings from
-    % other filter branches or universes sharing the same subject/protocol.
-    % If no condition is stored (subject-name input mode), bstCondition = ''
-    % selects all recordings for the subject (safe for single-universe use).
-    % =========================================================================
-    % *** condition name (set by HRB_bst_import = universe SaveName) ***
-    if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-        bstCondition = InputData.etc.brainstorm.condition;
-    else
-        bstCondition = '';
-    end
+% =========================================================================
+%% Resolve BST condition name
+% Each pipeline universe imports into a unique BST condition (named after
+% the universe, set by HRB_bst_import via SaveName). Reading it here
+% ensures we query only this universe's recordings — not recordings from
+% other filter branches or universes sharing the same subject/protocol.
+% If no condition is stored (subject-name input mode), bstCondition = ''
+% selects all recordings for the subject (safe for single-universe use).
+% =========================================================================
+% *** condition name (set by HRB_bst_import = universe SaveName) ***
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
+    bstCondition = InputData.etc.brainstorm.condition;
+else
+    bstCondition = '';
+end
 
 if config.OutputFolder == ""
     config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
@@ -137,6 +137,7 @@ end
 log.info(sprintf("bstCondition: '%s'", bstCondition));
 log.info(sprintf("SaveName: '%s'", config.SaveName));
 
+inverseComment = '';
 if ~isSubjName && isfield(InputData.etc.brainstorm, 'inverse_comment')
     inverseComment = char(InputData.etc.brainstorm.inverse_comment);
 end
@@ -152,7 +153,7 @@ log.info(sprintf("Found %d source file(s).", length(sFiles)));
 
 if isempty(config.FreqBands)
     freqBands = {'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
-                 'beta','13, 30','mean'; 'gamma','31, 80','mean'};
+        'beta','13, 30','mean'; 'gamma','31, 80','mean'};
 else
     freqBands = config.FreqBands;
 end
@@ -213,6 +214,12 @@ if isKernelShared
     for iF = 1:length(sFilesInput)
         [sStudy, iStudy] = bst_get('Study', sFilesInput(iF).iStudy);
         iItem = sFilesInput(iF).iItem;
+
+        fullFilePath = file_fullpath(sStudy.Matrix(iItem).FileName);
+        matMat = load(fullFilePath, '-mat');
+        matMat.Comment = newComment;
+        bst_save(fullFilePath, matMat, 'v6');
+
         sStudy.Matrix(iItem).Comment = newComment;
         bst_set('Study', iStudy, sStudy);
     end
@@ -275,15 +282,21 @@ catch ME
     rethrow(ME);
 end
 
-% Rename FC in bst GUI
-    newComment = char(config.SaveName);
-    for iF = 1:length(sFilesConn)
-        [sStudy, iStudy] = bst_get('Study', sFilesConn(iF).iStudy);
-        iItem = sFilesConn(iF).iItem;
-        sStudy.Timefreq(iItem).Comment = newComment;
-        bst_set('Study', iStudy, sStudy);
-    end
-    db_save();
+% Rename connectivity files
+newComment = char(config.SaveName);
+for iF = 1:length(sFilesConn)
+    [sStudy, iStudy] = bst_get('Study', sFilesConn(iF).iStudy);
+    iItem = sFilesConn(iF).iItem;
+
+    fullFilePath = file_fullpath(sStudy.Timefreq(iItem).FileName);
+    tfMat = load(fullFilePath, '-mat');
+    tfMat.Comment = newComment;
+    bst_save(fullFilePath, tfMat, 'v6');
+
+    sStudy.Timefreq(iItem).Comment = newComment;
+    bst_set('Study', iStudy, sStudy);
+end
+db_save();
 
 if isSubjName
     EEG = struct(); EEG.etc.brainstorm = struct();
