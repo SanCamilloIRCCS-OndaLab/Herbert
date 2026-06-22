@@ -24,7 +24,7 @@ end
 files = dir(fullfile(filePath, opt.fileExtension));
 
 if isempty(files)
-    error("HRB:NoFiles", "No files matching '%s' in: %s", opts.FilePattern, dataPath);
+    error("HRB:NoFiles", "No files matching '%s' in: %s", opt.fileExtension, filePath);
 end
 
 fnames     = {files.name}';
