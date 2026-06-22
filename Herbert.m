@@ -38,17 +38,27 @@ HRB_loadDependencies();
 %% Variables
 data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
 file_name = 'MMCI_01_RESTING.vhdr'
-pipeline = "pipelineFULL_Prova.json";
+pipeline = "pipeline.json";
 EEG = pop_loadbv(data_path, file_name);
 data = HRB_runPipeline(EEG, pipeline)
 % pipeline = "pipeline_test.json";
 
 %% multi subject
-data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/PROVA_2/';
-pipeline = 'pipelineFULL_Prova.json';
-HRB_generateSubjectMap(data_path, "fileExtension",'*.set');
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/PROVA/';
+pipeline = 'pipeline_test.json';
+HRB_generateSubjectMap(data_path, "fileExtension",'*.vhdr');
 csv_file = fullfile(data_path, "subject_map.csv");
 results = HRB_runDataset(csv_file, pipeline); 
+
+%% OUTPUT
+manifest = HRB_universeManifest('output/20260618_092932') % check correct timestamp for output folder
+csv = readtable(csv_file);
+subjects = csv{:, 2};
+subjects = string(subjects)';
+
+
+T = HRB_collectFC('HRB_Test', subjects);
+T1 = join(T, manifest, 'Keys', 'universe_label');
 
 %% Import
 EEG = pop_loadbv(data_path, file_name);
