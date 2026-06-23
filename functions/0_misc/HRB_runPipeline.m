@@ -16,7 +16,7 @@
 %
 % See also: SAVE, POP_SAVESET
 
-function data = HRB_runPipeline(data, pipelineFile, opt)
+function [data, names] = HRB_runPipeline(data, pipelineFile, opt)
 arguments (Input)
     data
 end
