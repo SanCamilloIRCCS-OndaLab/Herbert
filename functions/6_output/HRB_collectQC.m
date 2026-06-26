@@ -33,7 +33,7 @@ function QC = HRB_collectQC(outputFolder, subjectList, opt)
 %  OPTIONAL NAME-VALUE
 %    OutputFile   string   if non-empty, write QC to this CSV path
 %
-%  FILE FORMAT ASSUMPTIONS 
+%  FILE FORMAT ASSUMPTIONS
 %    ExcludedChannels.csv : row 1 = comma-separated channel names; subsequent
 %                           rows contain -1 (artefact of HRB_removeChannels
 %                           logger) — ignored.
@@ -53,7 +53,7 @@ end
 
 outputFolder = char(outputFolder);
 
-%% Discover filter branches from folder structure 
+%% Discover filter branches from folder structure
 % A filter branch is any direct subfolder of <outputFolder>/<subjId>/
 % that is NOT 'shared' — shared/ contains pre-multiverse steps.
 
@@ -80,73 +80,96 @@ for iSubj = 1:numel(subjectList)
     end
 
     for iBranch = 1:numel(branches)
-        branch     = branches{iBranch};
-        prepFolder = fullfile(subjFolder, branch, 'preprocessing');
+        branch       = branches{iBranch};
+        branchFolder = fullfile(subjFolder, branch);
 
-        r.subj_id           = rawId;
-        r.filter_branch     = branch;
-        r.n_channels_removed = 0;
-        r.n_epochs_retained  = NaN;
-        r.n_ica_removed      = 0;
-        r.notes              = '';
+        % Find all preprocessing/ folders recursively under this branch
+        prepFolders = local_find_prep_folders(branchFolder);
 
-        if ~isfolder(prepFolder)
-            r.notes = 'preprocessing folder missing';
-            rows{end+1} = r; 
+        if isempty(prepFolders)
+            r.subj_id            = rawId;
+            r.filter_branch      = branch;
+            r.n_channels_removed = 0;
+            r.n_epochs_retained  = NaN;
+            r.n_ica_removed      = 0;
+            r.notes              = 'preprocessing folder missing';
+            rows{end+1}          = r; %#ok<AGROW>
             continue
         end
 
-        notesList = {};
+        for iPrep = 1:numel(prepFolders)
+            prepFolder = prepFolders{iPrep};
 
-        % 1. Excluded channels
-        chanFile = local_find_file(prepFolder, '*ExcludedChannels*');
-        if ~isempty(chanFile)
-            r.n_channels_removed = local_count_csv_items(chanFile);
-        else
-            notesList{end+1} = 'ExcludedChannels file missing';
-        end
+            % Build branch label from relative path
+            relPath     = strrep(prepFolder, [subjFolder filesep], '');
+            relPath     = strrep(relPath, [filesep 'preprocessing'], '');
+            branchLabel = strrep(relPath, filesep, '/');
 
-        % 2. Rejected ICA components
-        compFile = local_find_file(prepFolder, '*rejectedComps*');
-        if ~isempty(compFile)
-            r.n_ica_removed = local_count_csv_items(compFile);
-        else
-            notesList{end+1} = 'rejectedComps file missing';
-        end
+            r.subj_id            = rawId;
+            r.filter_branch      = branchLabel;
+            r.n_channels_removed = 0;
+            r.n_epochs_retained  = NaN;
+            r.n_ica_removed      = 0;
+            r.notes              = '';
 
-        %  3. Epoch count from clean-epochs.set
-        % Use load('-mat') to read only the struct metadata — avoids loading
-        % EEG.data which may be in an external .fdt file (100+ MB).
-        epochFile = local_find_file(prepFolder, '*clean-epochs.set');
-        if ~isempty(epochFile)
-            try
-                tmp = load('-mat', epochFile);
-                if isfield(tmp, 'trials')
-                    r.n_epochs_retained = tmp.trials;
-                elseif isfield(tmp, 'EEG') && isfield(tmp.EEG, 'trials')
-                    r.n_epochs_retained = tmp.EEG.trials;
-                else
-                    notesList{end+1} = 'trials field not found in .set';
-                end
-            catch ME
-                notesList{end+1} = sprintf('failed to read .set: %s', ME.message);
+            notesList = {};
+
+            % Skip preprocessing/ folders that contain none of the QC files
+            hasQC = ~isempty(local_find_file(prepFolder, '*ExcludedChannels*')) || ...
+                ~isempty(local_find_file(prepFolder, '*rejectedComps*'))    || ...
+                ~isempty(local_find_file(prepFolder, '*clean-epochs.set'));
+            if ~hasQC
+                continue
             end
-        else
-            notesList{end+1} = 'clean-epochs.set missing';
-        end
 
-        r.notes = strjoin(notesList, '; ');
-        rows{end+1} = r; 
+            % 1. Excluded channels
+            chanFile = local_find_file(prepFolder, '*ExcludedChannels*');
+            if ~isempty(chanFile)
+                r.n_channels_removed = local_count_csv_items(chanFile);
+            else
+                notesList{end+1} = 'ExcludedChannels file missing';
+            end
+
+            % 2. Rejected ICA components
+            compFile = local_find_file(prepFolder, '*rejectedComps*');
+            if ~isempty(compFile)
+                r.n_ica_removed = local_count_csv_items(compFile);
+            else
+                notesList{end+1} = 'rejectedComps file missing';
+            end
+
+            % 3. Epoch count from clean-epochs.set
+            epochFile = local_find_file(prepFolder, '*clean-epochs.set');
+            if ~isempty(epochFile)
+                try
+                    tmp = load('-mat', epochFile);
+                    if isfield(tmp, 'trials')
+                        r.n_epochs_retained = tmp.trials;
+                    elseif isfield(tmp, 'EEG') && isfield(tmp.EEG, 'trials')
+                        r.n_epochs_retained = tmp.EEG.trials;
+                    else
+                        notesList{end+1} = 'trials field not found in .set';
+                    end
+                catch ME
+                    notesList{end+1} = sprintf('failed to read .set: %s', ME.message);
+                end
+            else
+                notesList{end+1} = 'clean-epochs.set missing';
+            end
+
+            r.notes     = strjoin(notesList, '; ');
+            rows{end+1} = r; %#ok<AGROW>
+        end
     end
 end
 
-%%  Build output table 
+%%  Build output table
 if isempty(rows)
     warning('[HRB_collectQC] No data collected — returning empty table.');
     QC = table('Size', [0 6], ...
         'VariableTypes', {'string','string','double','double','double','string'}, ...
         'VariableNames', {'subj_id','filter_branch','n_channels_removed', ...
-                          'n_epochs_retained','n_ica_removed','notes'});
+        'n_epochs_retained','n_ica_removed','notes'});
     return
 end
 
@@ -158,15 +181,15 @@ n_ica_removed      = cellfun(@(r) r.n_ica_removed,      rows)';
 notes              = string(cellfun(@(r) r.notes,        rows, 'UniformOutput', false))';
 
 QC = table(subj_id, filter_branch, n_channels_removed, ...
-           n_epochs_retained, n_ica_removed, notes);
+    n_epochs_retained, n_ica_removed, notes);
 
-%%  Optional CSV export 
+%%  Optional CSV export
 if strlength(opt.OutputFile) > 0
     writetable(QC, char(opt.OutputFile));
     fprintf('[HRB_collectQC] QC table written to %s\n', opt.OutputFile);
 end
 
-%%  Console summary 
+%%  Console summary
 fprintf('[HRB_collectQC] %d rows collected (%d subjects × branches)\n', height(QC), height(QC));
 disp(QC)
 
@@ -209,7 +232,25 @@ else
 end
 end
 
-function name = local_clean_name(name)
+
 % Mirror of HRB_runPipeline cleanName: spaces and underscores become hyphens.
+function name = local_clean_name(name)
 name = replace(name, {' ', '_'}, '-');
+end
+function prepFolders = local_find_prep_folders(branchFolder)
+% Recursively find all preprocessing/ subfolders under branchFolder.
+% Does NOT stop at the first match — collects all occurrences at any depth.
+prepFolders = {};
+d = dir(branchFolder);
+subs = {d([d.isdir] & ~startsWith({d.name}, '.')).name};
+for k = 1:numel(subs)
+    if strcmp(subs{k}, 'preprocessing')
+        % Found a preprocessing/ — add it but don't recurse into it
+        prepFolders{end+1} = fullfile(branchFolder, 'preprocessing'); 
+    else
+        % Recurse into other subfolders
+        nested = local_find_prep_folders(fullfile(branchFolder, subs{k}));
+        prepFolders = [prepFolders, nested]; 
+    end
+end
 end
