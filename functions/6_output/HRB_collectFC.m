@@ -41,13 +41,35 @@ function T = HRB_collectFC(protocolName, subjectList, options)
 
 arguments
     protocolName  (1,1) string
-    subjectList         string   % shape enforced below
+    subjectList         
     options.AverageTime  (1,1) logical = true
     options.IncludeDiag  (1,1) logical = false
     options.OutputFile   (1,1) string  = ""
 end
 
 subjectList = subjectList(:);  % enforce column vector 
+
+% If results cell array passed instead of subject list, extract BST subject
+% names from EEG.etc.brainstorm.subject (set by HRB_bst_import after
+% sanitization — underscores, matching BST internal naming).
+if iscell(subjectList)
+    results_in = subjectList;
+    bstNames = {};
+    for iR = 1:numel(results_in)
+        entry = results_in{iR};
+        if ~iscell(entry), continue; end
+        for jR = 1:numel(entry)
+            u = entry{jR};
+            if isstruct(u) && isfield(u,'etc') && isfield(u.etc,'brainstorm') && ...
+               isfield(u.etc.brainstorm,'subject') && ~isempty(u.etc.brainstorm.subject)
+                bstNames{end+1} = char(u.etc.brainstorm.subject); %#ok<AGROW>
+                break  % one valid EEG per subject is enough
+            end
+        end
+    end
+    subjectList = string(unique(bstNames, 'stable'))';
+end
+
 
 % Column structure depends on AverageTime
 if options.AverageTime
@@ -68,7 +90,7 @@ end
 if isempty(iProtocol)
     error('HRB:ProtocolNotFound', 'Protocol ''%s'' not found.', protocolName);
 end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
+bst_set('iProtocol', iProtocol);
 
 % Process each subject 
 nSubj = numel(subjectList);
@@ -117,6 +139,7 @@ for iSubj = 1:nSubj
 
             % Load BST timefreq file (path is relative to protocol folder)
             tf = in_bst_timefreq(sStudy.Timefreq(iTF).FileName);
+            fprintf('  iTF=%d/%d\n', iTF, numel(sStudy.Timefreq));
 
             % Detect storage format (symmetric, directed, cross-connectivity, etc.)
             [pairMap, ~] = local_detect_storage(tf);
