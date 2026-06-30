@@ -134,7 +134,8 @@ gui_brainstorm('SetCurrentProtocol', iProtocol);
 pause(2);
 t = tic; while toc(t) < 30; try, bst_get('BrainstormDbDir'); break; catch, pause(0.5); end; end
 %% 7. Get subject surface info (before any bst_process call)
-if config.SelectScouts
+hasExplicitScouts = strlength(config.Atlas) > 0 && ~all(strlength(config.Scouts)==0);
+if config.SelectScouts && ~hasExplicitScouts
     [sSubject, ~] = bst_get('Subject', char(subjName));
     if isempty(sSubject) || isempty(sSubject.Surface)
         error("HRB:NoSurface","No surfaces for subject '%s'.", subjName);
@@ -172,9 +173,14 @@ else
 end
 
 %% 10. Scout selection
-if config.SelectScouts
+% Use Atlas/Scouts from config when provided; only fall back to the
+% interactive listdlg picker when SelectScouts=true AND no explicit
+% Atlas/Scouts were given (e.g. ad-hoc single-universe runs).
+hasExplicitScouts = strlength(config.Atlas) > 0 && ~all(strlength(config.Scouts)==0);
+
+if config.SelectScouts && ~hasExplicitScouts
     [iAtlas, ok] = listdlg('ListString',atlasNames,'SelectionMode','single', ...
-        'Name','Select Atlas','PromptString','Select atlas for connectivity:','ListSize',[400 300]);
+        'Name','Select Atlas','PromptString','Select atlas:','ListSize',[400 300]);
     if ~ok, error("HRB:NoAtlasSelected","No atlas selected."); end
     selectedAtlas = atlasNames{iAtlas};
     scoutNames = {SurfaceMat.Atlas(iAtlas).Scouts.Label};
@@ -183,13 +189,11 @@ if config.SelectScouts
         'PromptString','Select ROIs:','ListSize',[500 400]);
     if ~ok, error("HRB:NoScoutsSelected","No ROIs selected."); end
     selectedScouts = scoutNames(iScouts);
-    log.info(sprintf("Selected %d ROI(s) from '%s'.", length(selectedScouts), selectedAtlas));
-else
-    if strlength(config.Atlas)==0 || all(strlength(config.Scouts))==0
-        error("HRB:NoScouts","Provide Atlas and Scouts, or set SelectScouts=true.");
-    end
+elseif hasExplicitScouts
     selectedAtlas  = char(config.Atlas);
     selectedScouts = cellstr(config.Scouts);
+else
+    error("HRB:NoScouts","Provide Atlas and Scouts, or set SelectScouts=true.");
 end
 
 scoutsCell = {selectedAtlas, selectedScouts};
