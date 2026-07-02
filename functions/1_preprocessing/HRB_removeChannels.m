@@ -45,7 +45,7 @@ function [EEG] = HRB_removeChannels(EEG, opt)
 
     %% Logger
     logConfig = HRB_loadConfig(module, "logging", opt);
-    log = HRB_loggerSetUp(module);
+    log = HRB_loggerSetUp(module, logConfig);
     
     %% Removing channels
     log.info("Removing channels")

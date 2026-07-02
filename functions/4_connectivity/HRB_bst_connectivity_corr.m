@@ -148,8 +148,14 @@ if config.SelectScouts
 end
 
 %% 8. Select source result files
+
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'inverse_comment')
+    inverseComment = char(InputData.etc.brainstorm.inverse_comment);
+end
+
 sFiles = bst_process('CallProcess','process_select_files_results',[],[], ...
-    'subjectname',subjName,'condition', bstCondition,  % *** FIX: was '' ***'tag','', ...
+    'subjectname', subjName, 'condition', bstCondition, ...
+    'tag', inverseComment, ...
     'includebad',0,'includeintra',1,'includecommon',0);
 if isempty(sFiles)
     error("HRB:NoSourceFiles","No source files for '%s'. Run HRB_bst_inverse first.", subjName);
@@ -217,6 +223,17 @@ if isKernelShared
     if isempty(sFilesInput)
         error("HRB:ExtractScoutsFailed","Scout extraction failed for '%s'.", subjName);
     end
+    
+    % Rename scouts in bst GUI
+    newComment = char(config.SaveName);
+    for iF = 1:length(sFilesInput)
+        [sStudy, iStudy] = bst_get('Study', sFilesInput(iF).iStudy);
+        iItem = sFilesInput(iF).iItem;
+        sStudy.Matrix(iItem).Comment = newComment;
+        bst_set('Study', iStudy, sStudy);
+    end
+    db_save();
+    
     scoutsCellConn = {};
 else
     sFilesInput    = sFiles;
@@ -263,6 +280,16 @@ catch ME
     log.error(sprintf("HRB_bst_connectivity_corr failed: %s", ME.message));
     rethrow(ME);
 end
+
+% Rename connectivity files
+newComment = char(config.SaveName);
+for iF = 1:length(sFilesConn)
+    [sStudy, iStudy] = bst_get('Study', sFilesConn(iF).iStudy);
+    iItem = sFilesConn(iF).iItem;
+    sStudy.Timefreq(iItem).Comment = newComment;
+    bst_set('Study', iStudy, sStudy);
+end
+db_save();
 
 %% 13. Build output EEG struct
 if isSubjName

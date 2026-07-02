@@ -69,9 +69,10 @@ function [EEG] = HRB_bst_import(InputData, opt)
     config = HRB_loadConfig(module, "bst_import", opt);
 
     %% Logger
+    
     logConfig = HRB_loadConfig(module, "bst_import", opt);
-    log = HRB_loggerSetUp(module, logConfig);
-
+    logConfig.LogFileDir = fullfile(config.OutputFolder, "bst_import");
+    log = HRB_loggerSetUp("general", logConfig);
     % =========================================================================
     %% 1. Input type detection
     % =========================================================================
