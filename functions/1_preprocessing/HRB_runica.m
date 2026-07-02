@@ -66,7 +66,8 @@ function [EEG] = HRB_runica(EEG, opt)
     log.info(sprintf("Starting ICA with runICA algorithm, with Extended value %d", config.Extended))
 
     if ~isempty(config.Seed)
-        rng(config.Seed);
+        rng('default');
+        rng(config.Seed, 'twister');
         log.info(sprintf("Random seed fixed: %d. rndreset set to 'no'", config.Seed));
 
         EEG = pop_runica(EEG, 'icatype', 'runica', ...

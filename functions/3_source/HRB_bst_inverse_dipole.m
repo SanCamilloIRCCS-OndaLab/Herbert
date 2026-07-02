@@ -130,18 +130,24 @@ end
 
 noiseCovReg = mapCovReg(config.DipoleNoiseCovReg);
 
+log.info(sprintf("Computing dipole modeling (orient=%s)...", config.DipolOrientation));
+
+% Set correct head model
+if ~isSubjName && isfield(InputData.etc.brainstorm, 'headmodel_method')
+    local_set_headmodel(subjName, InputData.etc.brainstorm.headmodel_method, log);
+end
+
 try
-    log.info(sprintf("Computing dipole modeling (orient=%s)...", config.DipolOrientation));
 
     sFilesInverse = bst_process('CallProcess','process_inverse_2018', recordings, [], ...
         'output',  processOption, ...
         'inverse', struct( ...
-            'Comment',        char(config.SaveName), ...
-            'InverseMethod',  'gls', ...
-            'InverseMeasure', 1, ...
-            'SourceOrient',   {{orientStr}}, ...   % FIX B2
-            'Loose',          [], ...
-            'UseDepth',       0, ...
+        'Comment',        char(config.SaveName), ...
+        'InverseMethod',  'gls', ...
+        'InverseMeasure', 1, ...
+        'SourceOrient',   {{orientStr}}, ...   % FIX B2
+        'Loose',          [], ...
+        'UseDepth',       0, ...
             'WeightExp',      0.5, ...
             'WeightLimit',    10, ...
             'NoiseMethod',    noiseCovReg, ...
@@ -194,4 +200,79 @@ function v = mapCovReg(r)
         case "none",       v = 'none';
         case "auto",       v = 'shrink';
     end
+end
+
+function local_set_headmodel(subjName, headmodelMethod, log)
+% SELECT THE CORRECT HEADMODEL FOR INVERSE IN ALL SUBJECT STUDIES.
+%
+% FIX (M19): propagate iHeadModel to every study of the subject, not only
+% to the one that physically stores the headmodel file. Without this,
+% process_inverse_2018 running on a condition whose study has no local
+% headmodel falls back to an arbitrary BST default, ignoring the
+% iHeadModel we set in the headmodel-owning study. This caused openmeeg
+% and sphere branches of the same filter to produce identical inverse
+% kernels whenever their recordings were in a different study from the
+% one where the headmodel was computed.
+
+% Map HERBERT headmodel method name to BST Comment string
+switch char(headmodelMethod)
+    case '3-ShellSphere', bstComment = '3_Shell';
+    case 'OpenMEEG',      bstComment = 'BEM';
+    case 'DUNeuro',       bstComment = 'FEM';
+    otherwise,            bstComment = char(headmodelMethod);
+end
+
+[sSubject, ~] = bst_get('Subject', char(subjName));
+if isempty(sSubject)
+    log.warn(sprintf("local_set_headmodel: subject '%s' not found.", subjName));
+    return;
+end
+[sStudies, iStudies] = bst_get('StudyWithSubject', sSubject.FileName);
+
+% Step 1: find the HeadModel entry in whichever study currently owns it
+hmEntry = [];
+for iS = 1:numel(sStudies)
+    if ~contains(sStudies(iS).FileName, char(subjName)), continue; end
+    if isempty(sStudies(iS).HeadModel), continue; end
+    iHM = find(strcmpi({sStudies(iS).HeadModel.Comment}, bstComment), 1);
+    if ~isempty(iHM)
+        hmEntry = sStudies(iS).HeadModel(iHM);  % save struct entry (filename + comment)
+        break;
+    end
+end
+if isempty(hmEntry)
+    log.warn(sprintf("Headmodel '%s' not found for '%s'. Using BST default.", ...
+        bstComment, subjName));
+    return;
+end
+
+% Step 2: propagate iHeadModel to ALL studies of the subject.
+% Studies that already have the headmodel entry: just set the index.
+% Studies that do not: add the entry (pointing to the same file) and
+% set the index. This allows process_inverse_2018 to find the correct
+% headmodel regardless of which condition's study owns the recordings.
+nSet = 0;
+for iS = 1:numel(sStudies)
+    if ~contains(sStudies(iS).FileName, char(subjName)), continue; end
+    if isempty(sStudies(iS).HeadModel)
+        % No headmodel in this study: add a reference to the correct one
+        sStudies(iS).HeadModel  = hmEntry;
+        sStudies(iS).iHeadModel = 1;
+    else
+        iHM = find(strcmpi({sStudies(iS).HeadModel.Comment}, bstComment), 1);
+        if ~isempty(iHM)
+            % Entry already present: just update the selection index
+            sStudies(iS).iHeadModel = iHM;
+        else
+            % Entry missing: append it and point to the new slot
+            sStudies(iS).HeadModel(end+1) = hmEntry;
+            sStudies(iS).iHeadModel = numel(sStudies(iS).HeadModel);
+        end
+    end
+    bst_set('Study', iStudies(iS), sStudies(iS));
+    nSet = nSet + 1;
+end
+db_save();
+log.info(sprintf("Headmodel '%s' propagated to %d studies for '%s'.", ...
+    bstComment, nSet, subjName));
 end
