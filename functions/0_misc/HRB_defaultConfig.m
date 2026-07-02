@@ -65,6 +65,13 @@ preproc.chanedit.Method = "template";
 preproc.chanedit.Template = "";
 preproc.File = "";
 
+% Channel locations
+preproc.chanlocs.Template     = "auto";
+preproc.chanlocs.MinMatchRate = 0.90;
+preproc.chanlocs.Save         = false;
+preproc.chanlocs.SaveName     = "chanlocs";
+preproc.chanlocs.OutputFolder = "";
+
 preproc.resample.Frequency = 250;     % [Hz] Sample frequency for resampling
 preproc.resample.EEGLAB = {};
 preproc.resample.Save = false;        % 

@@ -290,6 +290,11 @@ end
 try
     log.info(sprintf("Computing inverse solution (method: %s)...", config.Method));
 
+    % Set correct headmodel 
+    if ~isSubjName && isfield(InputData.etc.brainstorm, 'headmodel_method')
+        local_set_headmodel(subjName, InputData.etc.brainstorm.headmodel_method, log);
+    end
+
     switch config.Method
 
         % -----------------------------------------------------------------
@@ -437,6 +442,8 @@ EEG.etc.brainstorm.inverse_files       = {sFilesInverse.FileName};
 EEG.etc.brainstorm.protocol            = protocolName;
 EEG.etc.brainstorm.subject             = subjName;
 EEG.etc.brainstorm.db_path             = dbDir;
+EEG.etc.brainstorm.inverse_comment = char(config.SaveName);
+EEG.etc.brainstorm.condition = bstCondition;
 
 % Add measure only for MNE
 if strcmp(config.Method, 'mne')
@@ -457,7 +464,8 @@ end
 end
 
 
-%% Helper: map covariance regularization string to BST integer
+%% Helpers
+%  map covariance regularization string to BST integer
 function val = mapCovReg(regStr)
     switch regStr
         case "regularize"
@@ -471,4 +479,41 @@ function val = mapCovReg(regStr)
         case "auto"
             val = 'shrink';
     end
+end
+
+% Set the correct headmodel as selected in BST before running inverse.
+function local_set_headmodel(subjName, headmodelMethod, log)
+switch char(headmodelMethod)
+    case '3-ShellSphere', bstComment = '3_Shell';
+    case 'OpenMEEG',      bstComment = 'BEM';
+    case 'DUNeuro',       bstComment = 'FEM';
+    otherwise,            bstComment = char(headmodelMethod);
+end
+
+[sSubject, ~] = bst_get('Subject', char(subjName));
+if isempty(sSubject)
+    log.warn(sprintf("local_set_headmodel: subject '%s' not found.", subjName));
+    return;
+end
+[sStudies, iStudies] = bst_get('StudyWithSubject', sSubject.FileName);
+
+for iS = 1:numel(sStudies)
+    if ~contains(sStudies(iS).FileName, char(subjName))
+        continue;  % skip cross-subject contamination (default anatomy)
+    end
+    if isempty(sStudies(iS).HeadModel)
+        continue;
+    end
+    iHM = find(strcmpi({sStudies(iS).HeadModel.Comment}, bstComment), 1);
+    if ~isempty(iHM)
+        sStudies(iS).iHeadModel = iHM;
+        bst_set('Study', iStudies(iS), sStudies(iS));
+        db_save();
+        log.info(sprintf("Headmodel set: '%s' (idx %d) in: %s", ...
+            bstComment, iHM, sStudies(iS).FileName));
+        return;
+    end
+end
+log.warn(sprintf("Headmodel '%s' not found for '%s'. Using BST default.", ...
+    bstComment, subjName));
 end

@@ -149,6 +149,7 @@ end
 
 %% 8. Select source result files
 
+inverseComment  = '';
 if ~isSubjName && isfield(InputData.etc.brainstorm, 'inverse_comment')
     inverseComment = char(InputData.etc.brainstorm.inverse_comment);
 end
@@ -229,6 +230,12 @@ if isKernelShared
     for iF = 1:length(sFilesInput)
         [sStudy, iStudy] = bst_get('Study', sFilesInput(iF).iStudy);
         iItem = sFilesInput(iF).iItem;
+
+        fullFilePath = file_fullpath(sStudy.Matrix(iItem).FileName);
+        matMat = load(fullFilePath, '-mat');
+        matMat.Comment = newComment;
+        bst_save(fullFilePath, matMat, 'v6');
+
         sStudy.Matrix(iItem).Comment = newComment;
         bst_set('Study', iStudy, sStudy);
     end
@@ -286,6 +293,12 @@ newComment = char(config.SaveName);
 for iF = 1:length(sFilesConn)
     [sStudy, iStudy] = bst_get('Study', sFilesConn(iF).iStudy);
     iItem = sFilesConn(iF).iItem;
+
+    fullFilePath = file_fullpath(sStudy.Timefreq(iItem).FileName);
+    tfMat = load(fullFilePath, '-mat');
+    tfMat.Comment = newComment;
+    bst_save(fullFilePath, tfMat, 'v6');
+
     sStudy.Timefreq(iItem).Comment = newComment;
     bst_set('Study', iStudy, sStudy);
 end

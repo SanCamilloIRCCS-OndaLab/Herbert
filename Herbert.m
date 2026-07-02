@@ -38,10 +38,43 @@ HRB_loadDependencies();
 %% Variables
 data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
 file_name = 'MMCI_01_RESTING.vhdr'
-pipeline = "pipelineFULL_Prova.json";
+pipeline = "pipeline.json";
 EEG = pop_loadbv(data_path, file_name);
 data = HRB_runPipeline(EEG, pipeline)
 % pipeline = "pipeline_test.json";
+
+%% multi subject
+data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/prova_singleSub/';
+pipeline = 'pipeline_extended.json';
+HRB_generateSubjectMap(data_path, "fileExtension",'*.set');
+csv_file = fullfile(data_path, "subject_map.csv");
+[results , allNames]= HRB_runDataset(csv_file, pipeline); 
+
+%% OUTPUT
+manifest = HRB_universeManifest('output/20260625_080006') % check correct timestamp for output folder
+csv = readtable(csv_file, TextType='string', VariableNamingRule='preserve', Delimiter=',');
+subjects = csv{:, 2};
+subjects = string(subjects)';
+
+reportLong = HRB_pipelineReport(results, allNames, Format = "long");
+reportShort = HRB_pipelineReport(results, allNames, Format = "summary")
+
+QC = HRB_collectQC('output/20260625_080006', subjects)
+
+parts = split(QC.filter_branch, '/');
+QC.filter    = parts(:,1);
+QC.cleanData = parts(:,2);
+
+QC_full = outerjoin(QC, manifest, ...
+    'LeftKeys',  {'filter', 'cleanData'}, ...
+    'RightKeys', {'filter', 'cleanData'}, ...
+    'MergeKeys', true, ...
+    'Type', 'left');
+
+T = HRB_collectFC('HRB_Test_Extended', results);
+T1 = join(T, manifest, 'Keys', 'universe_label');
+
+writetable(T1, 'T_FCResults.csv')
 
 %% Import
 EEG = pop_loadbv(data_path, file_name);

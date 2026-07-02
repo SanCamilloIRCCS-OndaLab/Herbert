@@ -291,6 +291,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         tempFile = fullfile(tempFolder, tempFileName);
         InputData.filename = tempFileName;
         InputData.filepath = char(tempFolder);
+        InputData.setname  = char(conditionName);
         pop_saveset(InputData, 'filename', tempFileName, 'filepath', char(tempFolder), 'savemode', 'onefile');
         InputFiles = {tempFile};
     end
@@ -400,7 +401,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
                 'channelreplace', 1, ...
                 'channelalign',   1);
 
-            % *** FIX: rename BST condition to universe name after import.
+            % Rename BST condition to universe name after import.
             % process_import_data_event creates conditions named after event
             % types (e.g., 'stim', 'response'). Rename to conditionName so
             % each universe has its own isolated condition. ***
