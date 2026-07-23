@@ -241,17 +241,8 @@ end
 function [pairMap, storageMode] = local_detect_storage(tf)
 % Detect how BST stored NxN pairs in tf.TF dim 1 and return the pair index map.
 %
-% Supported formats (all assumed row-major — ref index changes slowest):
-%   sym_upper_incl_diag    N*(N+1)/2   symmetric, upper triangle + diagonal
-%   sym_upper_excl_diag    N*(N-1)/2   symmetric, upper triangle only
-%   full_NxN               N^2         directed, all pairs (GC, PTE, ...)
-%   full_NxN_excl_diag     N*(N-1)     directed, off-diagonal only
-%   cross_NrefxNrow        nRef*nRow   RefRowNames ≠ RowNames (seed-based)
-%
-% Returns pairMap = [] if the format is not recognised.
-%
-% ASSUMPTION: BST uses row-major ordering within each format.
-%   Verify TF(1,:,:) by checking: disp(tf.RefRowNames{1}), disp(tf.RowNames{1}).
+% BST packs pairs COLUMN-MAJOR (first matrix index fastest, = M(:)).
+%         "Verified against process_compress_sym / conn_mat export.
 
 nRef = numel(tf.RefRowNames);
 nRow = numel(tf.RowNames);
@@ -265,23 +256,23 @@ if nRef == nRow
     if nTF == N*(N+1)/2
         storageMode = 'sym_upper_incl_diag';
         pairMap = zeros(nTF, 2); p = 0;
-        for r = 1:N;   for c = r:N;   p=p+1; pairMap(p,:) = [r,c]; end; end
+        for c = 1:N;   for r = 1:c;   p=p+1; pairMap(p,:) = [r,c]; end; end
 
     elseif nTF == N*(N-1)/2
         storageMode = 'sym_upper_excl_diag';
         pairMap = zeros(nTF, 2); p = 0;
-        for r = 1:N;   for c = r+1:N; p=p+1; pairMap(p,:) = [r,c]; end; end
+        for c = 1:N;   for r = 1:c-1; p=p+1; pairMap(p,:) = [r,c]; end; end
 
     elseif nTF == N^2
         storageMode = 'full_NxN';
         pairMap = zeros(nTF, 2); p = 0;
-        for r = 1:N;   for c = 1:N;   p=p+1; pairMap(p,:) = [r,c]; end; end
+        for c = 1:N;   for r = 1:N;   p=p+1; pairMap(p,:) = [r,c]; end; end
 
     elseif nTF == N*(N-1)
         storageMode = 'full_NxN_excl_diag';
         pairMap = zeros(nTF, 2); p = 0;
-        for r = 1:N
-            for c = 1:N
+        for c = 1:N
+            for r = 1:N
                 if r ~= c; p=p+1; pairMap(p,:) = [r,c]; end
             end
         end
@@ -295,6 +286,12 @@ else
         pairMap = zeros(nTF, 2); p = 0;
         for r = 1:nRef; for c = 1:nRow; p=p+1; pairMap(p,:) = [r,c]; end; end
     end
+end
+
+if ~isempty(pairMap)
+    assert(p == nTF && all(pairMap(:) > 0), ...
+        'HRB:collectFC:pairMapFill', ...
+        'pairMap incompleto per %s: p=%d, nTF=%d', storageMode, p, nTF);
 end
 
 end
