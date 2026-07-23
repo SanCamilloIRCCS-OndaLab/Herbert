@@ -20,34 +20,23 @@
 %
 % Last update: 29.05.2024
 
-%% Add internal functions to path
-%%% Uncomment this if you run the whole file
-% folder = fileparts(which(mfilename));
+%% 1 - Add internal functions and external dependencies to path
 
-% functions_folder = fullfile(folder, "functions");
-%%% uncomment this if you run the code line by line
 functions_folder = "functions";
 
 addpath(genpath(functions_folder));
-
-%% Add external dependencies to path
 HRB_loadDependencies();
 
-
-
-%% Variables
-data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/';
-file_name = 'MMCI_01_RESTING.vhdr'
-pipeline = "pipeline.json";
-EEG = pop_loadbv(data_path, file_name);
-data = HRB_runPipeline(EEG, pipeline)
-% pipeline = "pipeline_test.json";
-
-%% multi subject
+%% 2 - Set up variables
 data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/prova_singleSub/';
 pipeline = 'pipeline_extended.json';
-HRB_generateSubjectMap(data_path, "fileExtension",'*.set');
+
+%% Validate and Run pipeline
+HRB_generateSubjectMap(data_path, "fileExtension",'*.set'); % check file extension
 csv_file = fullfile(data_path, "subject_map.csv");
+
+V = HRB_validatePipelineParams('pipeline_extended.json');
+
 [results , allNames]= HRB_runDataset(csv_file, pipeline); 
 
 %% OUTPUT
@@ -56,8 +45,8 @@ csv = readtable(csv_file, TextType='string', VariableNamingRule='preserve', Deli
 subjects = csv{:, 2};
 subjects = string(subjects)';
 
+reportShort = HRB_pipelineReport(results, allNames, Format = "summary");
 reportLong = HRB_pipelineReport(results, allNames, Format = "long");
-reportShort = HRB_pipelineReport(results, allNames, Format = "summary")
 
 QC = HRB_collectQC('output/20260625_080006', subjects)
 
@@ -75,6 +64,8 @@ T = HRB_collectFC('HRB_Test_Extended', results);
 T1 = join(T, manifest, 'Keys', 'universe_label');
 
 writetable(T1, 'T_FCResults.csv')
+
+
 
 %% Import
 EEG = pop_loadbv(data_path, file_name);
