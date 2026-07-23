@@ -190,9 +190,9 @@ switch config.ScoutTime
     case "before", scoutTimeStr = 'before'; case "after", scoutTimeStr = 'after';
 end
 switch config.SaveMode
-    case "separately", outputMode = 'input';
-    case "average",    outputMode = 'avg';
-    case "concatenate",outputMode = 'concat';
+    case "separately", outputMode = 1;
+    case "concatenate",outputMode = 2;
+    case "average",outputMode = 3;
 end
 
 try
@@ -249,12 +249,12 @@ try
                 'flatten',double(config.FlattenPCA),'scouttime',scoutTimeStr, ...
                 'scoutfunc',scoutFuncStr,'removeevoked',0, ...
                 'grangermethod',char(config.GCMethod),'grangerorder',config.GCOrder, ...
-                'outputmode',1,'source_abs',-1);
+                'outputmode',outputMode,'source_abs',-1);
         else
             sFilesConn = bst_process('CallProcess','process_granger1n',sFilesInput,[], ...
                 'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
                 'removeevoked',0,'grangermethod',char(config.GCMethod), ...
-                'grangerorder',config.GCOrder,'outputmode',1,'source_abs',-1);
+                'grangerorder',config.GCOrder,'outputmode',outputMode,'source_abs',-1);
         end
     else
         if useScouts
@@ -263,12 +263,12 @@ try
                 'flatten',double(config.FlattenPCA),'scouttime',scoutTimeStr, ...
                 'scoutfunc',scoutFuncStr,'removeevoked',0, ...
                 'grangermethod',char(config.GCMethod),'direction',dirVal, ...
-                'grangerorder',config.GCOrder,'outputmode',1,'source_abs',-1);
+                'grangerorder',config.GCOrder,'outputmode',outputMode,'source_abs',-1);
         else
             sFilesConn = bst_process('CallProcess','process_granger1',sFilesInput,[], ...
                 'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
                 'removeevoked',0,'grangermethod',char(config.GCMethod),'direction',dirVal, ...
-                'grangerorder',config.GCOrder,'outputmode',1,'source_abs',-1);
+                'grangerorder',config.GCOrder,'outputmode',outputMode,'source_abs',-1);
         end
     end
     if isempty(sFilesConn)

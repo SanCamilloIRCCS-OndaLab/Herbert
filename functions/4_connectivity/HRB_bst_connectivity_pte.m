@@ -190,9 +190,9 @@ switch config.ScoutTime
     case "before", scoutTimeStr = 'before'; case "after", scoutTimeStr = 'after';
 end
 switch config.SaveMode
-    case "separately", outputMode = 'input';
-    case "average",    outputMode = 'avg';
-    case "concatenate",outputMode = 'concat';
+    case "separately", outputMode = 1;
+    case "concatenate",outputMode = 2;
+    case "average",outputMode = 3;
 end
 
 try
@@ -246,12 +246,12 @@ try
             'timewindow',config.TimeWindow,'scouts',scoutsCellConn, ...
             'flatten',double(config.FlattenPCA),'scouttime',scoutTimeStr, ...
             'scoutfunc',scoutFuncStr,'freqbands',freqBands, ...
-            'normalized',double(config.PTENormalized),'outputmode',1,'source_abs',-1);
+            'normalized',double(config.PTENormalized),'outputmode',outputMode,'source_abs',-1);
     else
         sFilesConn = bst_process('CallProcess','process_pte1n',sFilesInput,[], ...
             'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
             'freqbands',freqBands,'normalized',double(config.PTENormalized), ...
-            'outputmode',1,'source_abs',-1);
+            'outputmode',outputMode,'source_abs',-1);
     end
     if isempty(sFilesConn)
         error("HRB:ConnectivityFailed","Connectivity failed for subject '%s'.", subjName);
