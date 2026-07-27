@@ -19,7 +19,7 @@ function T = HRB_collectFC(protocolName, subjectList, options)
 %                   false = keep 1000 time points per row; slow, ~2M rows for
 %                   4 subjects × 16 universes × 6 pairs × 5 bands × 1000 t.
 %   IncludeDiag   - (default false) exclude diagonal (self-connectivity).
-%                   wPLI self-connectivity is trivially 0; MSC is trivially 1.
+%                   wPLI self-connectivity is trivially NaN; MSC is trivially 1.
 %   OutputFile    - (default "")    if non-empty, write table to this CSV path.
 %
 % Output table columns (AverageTime=true):
@@ -45,6 +45,7 @@ arguments
     options.AverageTime  (1,1) logical = true
     options.IncludeDiag  (1,1) logical = false
     options.OutputFile   (1,1) string  = ""
+    options.UniverseFilter (1,1) string = ""
 end
 
 subjectList = subjectList(:);  % enforce column vector 
@@ -137,6 +138,11 @@ for iSubj = 1:nSubj
                 universeLabel = comment;
             end
 
+            % Filter by universe, if present
+            if strlength(options.UniverseFilter) > 0 && ~contains(universeLabel, options.UniverseFilter)
+                continue;
+            end
+
             % Load BST timefreq file (path is relative to protocol folder)
             tf = in_bst_timefreq(sStudy.Timefreq(iTF).FileName);
             fprintf('  iTF=%d/%d\n', iTF, numel(sStudy.Timefreq));
@@ -153,7 +159,8 @@ for iSubj = 1:nSubj
 
             % Select pairs based on IncludeDiag
             % (cross-connectivity and excl-diag formats have no diagonal rows)
-            hasDiag = any(pairMap(:,1) == pairMap(:,2));
+            isSquare = (numel(tf.RefRowNames) == numel(tf.RowNames));
+            hasDiag  = isSquare && any(pairMap(:,1) == pairMap(:,2));
             if hasDiag && ~options.IncludeDiag
                 selMask = pairMap(:,1) ~= pairMap(:,2);
             else
@@ -241,9 +248,8 @@ end
 function [pairMap, storageMode] = local_detect_storage(tf)
 % Detect how BST stored NxN pairs in tf.TF dim 1 and return the pair index map.
 %
-% BST packs pairs COLUMN-MAJOR (first matrix index fastest, = M(:)).
-%         "Verified against process_compress_sym / conn_mat export.
-
+% BST packs pairs COLUMN-MAJOR within each format (first matrix index fastest,
+% i.e. M(:) order). 
 nRef = numel(tf.RefRowNames);
 nRow = numel(tf.RowNames);
 nTF  = size(tf.TF, 1);
@@ -284,7 +290,7 @@ else
     if nTF == nRef * nRow
         storageMode = 'cross_NrefxNrow';
         pairMap = zeros(nTF, 2); p = 0;
-        for r = 1:nRef; for c = 1:nRow; p=p+1; pairMap(p,:) = [r,c]; end; end
+        for c = 1:nRow; for r = 1:nRef; p=p+1; pairMap(p,:) = [r,c]; end; end
     end
 end
 
