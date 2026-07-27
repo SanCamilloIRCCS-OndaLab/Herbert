@@ -153,13 +153,6 @@ if isempty(sFiles)
 end
 log.info(sprintf("Found %d source file(s).", length(sFiles)));
 
-if isempty(config.FreqBands)
-    freqBands = {'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
-        'beta','13, 30','mean'; 'gamma','31, 80','mean'};
-else
-    freqBands = config.FreqBands;
-end
-
 % Use Atlas/Scouts from config when provided; only fall back to the
 % interactive listdlg picker when SelectScouts=true AND no explicit
 % Atlas/Scouts were given (e.g. ad-hoc single-universe runs).
@@ -237,10 +230,6 @@ else
     scoutsCellConn = scoutsCell;
 end
 useScouts = ~isempty(scoutsCellConn);
-
-pcaEdit = struct('Method','pca','Baseline',[-0.1,0],'DataTimeWindow',[0,1],'RemoveDcOffset','file');
-tfEdit  = struct('Comment','Complex','TimeBands',[],'Freqs',{freqBands}, ...
-    'ClusterFuncTime','none','Measure','none','Output','all','SaveKernel',0);
 
 try
     switch config.GCDirection

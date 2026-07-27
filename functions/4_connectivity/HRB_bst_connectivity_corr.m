@@ -164,15 +164,8 @@ if isempty(sFiles)
 end
 log.info(sprintf("Found %d source file(s).", length(sFiles)));
 
-%% 9. Frequency bands
-if isempty(config.FreqBands)
-    freqBands = {'delta','2, 4','mean'; 'theta','5, 7','mean'; 'alpha','8, 12','mean'; ...
-                 'beta','13, 30','mean'; 'gamma','31, 80','mean'};
-else
-    freqBands = config.FreqBands;
-end
 
-%% 10. Scout selection
+%% 9. Scout selection
 % Use Atlas/Scouts from config when provided; only fall back to the
 % interactive listdlg picker when SelectScouts=true AND no explicit
 % Atlas/Scouts were given (e.g. ad-hoc single-universe runs).
@@ -211,7 +204,7 @@ switch config.SaveMode
     case "concatenate",outputMode = 'concat';
 end
 
-%% 11. Kernel-shared detection
+%% 10. Kernel-shared detection
 try
     ResultsMat = in_bst_results(sFiles(1).FileName, 0);
     isKernelShared = isfield(ResultsMat,'ImagingKernel') && ~isempty(ResultsMat.ImagingKernel);
@@ -252,7 +245,7 @@ else
 end
 useScouts = ~isempty(scoutsCellConn);
 
-%% 12. Compute correlation
+%% 11. Compute correlation
 pcaEdit = struct('Method','pca','Baseline',[-0.1,0],'DataTimeWindow',[0,1],'RemoveDcOffset','file');
 
 switch config.TimeRes
@@ -308,7 +301,7 @@ for iF = 1:length(sFilesConn)
 end
 db_save();
 
-%% 13. Build output EEG struct
+%% 12. Build output EEG struct
 if isSubjName
     EEG = struct(); EEG.etc.brainstorm = struct();
 else
@@ -323,7 +316,7 @@ EEG.etc.brainstorm.protocol                   = protocolName;
 EEG.etc.brainstorm.subject                    = subjName;
 EEG.etc.brainstorm.db_path                    = dbDir;
 
-%% 14. Save
+%% 13. Save
 if config.Save
     logParams = unpackStruct(logConfig);
     HRB_saveData(EEG,"Name",config.SaveName,"Folder",module, ...

@@ -235,10 +235,6 @@ else
 end
 useScouts = ~isempty(scoutsCellConn);
 
-pcaEdit = struct('Method','pca','Baseline',[-0.1,0],'DataTimeWindow',[0,1],'RemoveDcOffset','file');
-tfEdit  = struct('Comment','Complex','TimeBands',[],'Freqs',{freqBands}, ...
-    'ClusterFuncTime','none','Measure','none','Output','all','SaveKernel',0);
-
 try
     % PTE only supports NxN in Brainstorm
     if useScouts
