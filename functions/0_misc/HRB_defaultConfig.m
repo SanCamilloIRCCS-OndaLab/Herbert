@@ -248,6 +248,7 @@ headmodel.bst_headmodel.OutputFolder         = "";
 % bst_noisecov
 headmodel.bst_noisecov.NoiseCovBaseline    = [];       % [] = full window | [t1,t2] seconds
 headmodel.bst_noisecov.NoiseCovSensorTypes = "EEG";
+headmodel.bst_noisecov.NoiseCovIdentity    = false;    % false = C from data (default) | true = identity noise cov
 headmodel.bst_noisecov.Target              = "noise";  % "noise" (all methods) | "data" (LCMV only)
 headmodel.bst_noisecov.ProtocolName        = "HRB_Protocol";
 headmodel.bst_noisecov.BrainstormDbDir     = "";
