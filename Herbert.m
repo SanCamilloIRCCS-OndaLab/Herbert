@@ -28,19 +28,24 @@ addpath(genpath(functions_folder));
 HRB_loadDependencies();
 
 %% 2 - Set up variables
-data_path = '/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/data/prova_singleSub/';
-pipeline = 'pipeline_extended.json';
+data_path = "/mnt/raid/RU1/Raw_data/Ettore/Entropy/TesiMarco/Resting_Young/";
+pipeline = 'PipelineMarco.json';
+R = HRB_validatePipelineParams(pipeline)
 
 %% Validate and Run pipeline
-HRB_generateSubjectMap(data_path, "fileExtension",'*.set'); % check file extension
+HRB_generateSubjectMap(data_path, "fileExtension",'*.vhdr'); % check file extension
 csv_file = fullfile(data_path, "subject_map.csv");
 
-V = HRB_validatePipelineParams('pipeline_extended.json');
+outDir = "/mnt/raid/RU1/Raw_data/Ettore/Entropy/TesiMarco/Output/PreprocYoung"
 
-[results , allNames]= HRB_runDataset(csv_file, pipeline); 
+if ~isfolder(outDir)
+    mkdir(outDir);
+end
+
+[results , allNames]= HRB_runDataset(csv_file, pipeline, "RunFolder",outDir); 
 
 %% OUTPUT
-manifest = HRB_universeManifest('output/20260625_080006') % check correct timestamp for output folder
+manifest = HRB_universeManifest(outDir) % check correct timestamp for output folder
 csv = readtable(csv_file, TextType='string', VariableNamingRule='preserve', Delimiter=',');
 subjects = csv{:, 2};
 subjects = string(subjects)';
@@ -48,22 +53,40 @@ subjects = string(subjects)';
 reportShort = HRB_pipelineReport(results, allNames, Format = "summary");
 reportLong = HRB_pipelineReport(results, allNames, Format = "long");
 
-QC = HRB_collectQC('output/20260625_080006', subjects)
+runRoot = outDir;%'/mnt/raid/Ettore/SuperPipelineMultiverseAnalysis/output/20260924_065723';
+P = HRB_universePaths(runRoot, manifest, reportLong, OutputFile=fullfile(runRoot,"universe_paths.csv"));
 
-parts = split(QC.filter_branch, '/');
-QC.filter    = parts(:,1);
-QC.cleanData = parts(:,2);
+QC = HRB_collectQC_new(outDir, P, manifest, OutputFile="qc.csv")
 
-QC_full = outerjoin(QC, manifest, ...
-    'LeftKeys',  {'filter', 'cleanData'}, ...
-    'RightKeys', {'filter', 'cleanData'}, ...
-    'MergeKeys', true, ...
-    'Type', 'left');
+%% FROM DISK
+runRoot  = "/mnt/raid/RU1/Raw_data/Ettore/Entropy/TesiMarco/Output/PreprocOld";
+manifest = HRB_universeManifest(runRoot);
+reportDisk = HRB_pipelineReportFromDisk(runRoot, manifest)
+P        = HRB_universePathsFromDisk(runRoot, manifest, Report=reportDisk);
+Q        = HRB_collectQCFromDisk(runRoot, P, OutputFile=fullfile(runRoot,"qc.csv"));
 
-T = HRB_collectFC('HRB_Test_Extended', results);
-T1 = join(T, manifest, 'Keys', 'universe_label');
+% Reorganize datasets by universe
+HRB_reorgByUniverse(runRoot, P)
 
-writetable(T1, 'T_FCResults.csv')
+% Write QC per universe (into each universe folder)
+HRB_writeQCPerUniverse(Q, 'IntoReorg',"/mnt/raid/RU1/Raw_data/Ettore/Entropy/TesiMarco/Output/PreprocYoung_by-universe")
+
+% Write QC per universe (into a single folder)
+HRB_writeQCPerUniverse(Q, "OutputDir","/mnt/raid/RU1/Raw_data/Ettore/Entropy/TesiMarco/Output/QC_byUniv/Old")
+%% parts = split(QC.filter_branch, '/');
+% QC.filter    = parts(:,1);
+% QC.cleanData = parts(:,2);
+% 
+% QC_full = outerjoin(QC, manifest, ...
+%     'LeftKeys',  {'filter', 'cleanData'}, ...
+%     'RightKeys', {'filter', 'cleanData'}, ...
+%     'MergeKeys', true, ...
+%     'Type', 'left');
+% 
+% T = HRB_collectFC('HRB_Test_Extended', results);
+% T1 = join(T, manifest, 'Keys', 'universe_label');
+% 
+% writetable(T1, 'T_FCResults.csv')
 
 
 
