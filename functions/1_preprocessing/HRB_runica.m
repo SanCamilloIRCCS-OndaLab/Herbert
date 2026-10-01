@@ -65,6 +65,26 @@ function [EEG] = HRB_runica(EEG, opt)
     %% Run ICA
     log.info(sprintf("Starting ICA with runICA algorithm, with Extended value %d", config.Extended))
 
+    % Log effective ICA rank (mirrors pop_runica/getrank; does NOT alter behavior)
+    % pop_runica reduces internally to this rank (CAR -1 dof + variable channel
+    % rejection) but reports it via disp() to stdout, so it never reaches the
+    % per-universe log. Recompute the SAME quantity and log it. We do NOT pass
+    % 'pca': pop_runica recomputes and injects it identically.
+    icadata = reshape(EEG.data, EEG.nbchan, []);
+    icadata = double(icadata(:, 1:min(3000, size(icadata, 2))));   % same subset as getrank
+    r_data  = rank(icadata);
+    [~, D]  = eig(cov(icadata', 1));
+    r_cov   = sum(diag(D) > 1e-7);                                  % same tolerance as getrank
+    icaRank = r_data;
+    if r_data ~= r_cov, icaRank = min(r_data, r_cov); end
+    if icaRank < EEG.nbchan
+        log.info(sprintf("ICA rank: %d of %d channels (reduced by %d) -> fitting %d components.", ...
+            icaRank, EEG.nbchan, EEG.nbchan - icaRank, icaRank));
+    else
+        log.info(sprintf("ICA rank: %d = nbchan (full rank) -> no reduction.", icaRank));
+    end
+
+
     if ~isempty(config.Seed)
         rng('default');
         rng(config.Seed, 'twister');
@@ -83,6 +103,8 @@ function [EEG] = HRB_runica(EEG, opt)
             'extended', config.Extended, ...
             'interrupt', bool2onoff(config.Interrupt), ...
             config.EEGLAB{:});
+    end
+
 
     %% Save
     if config.Save
