@@ -3,8 +3,8 @@ function [EEG] = HRB_cleanData(EEG, opt)
 %
 % Examples:
 %     >>> [EEG] = HRB_cleanData(EEG)
-%     >>> [EEG] = HRB_cleanData(EEG, 'key', val) 
-%     >>> [EEG] = HRB_cleanData(EEG, key=val) 
+%     >>> [EEG] = HRB_cleanData(EEG, 'key', val)
+%     >>> [EEG] = HRB_cleanData(EEG, key=val)
 %
 % Parameters:
 %    EEG (struct): EEG struct using EEGLAB structure system
@@ -17,104 +17,112 @@ function [EEG] = HRB_cleanData(EEG, opt)
 %
 % Returns:
 %    EEG (struct): EEG struct using EEGLAB structure system
-% 
-% See also: 
+%
+% See also:
 %    EEGLAB, POP_SELECT
 
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 
 
-    arguments (Input)
-        EEG struct
-        % Optional
-        opt.Severity string {mustBeMember(opt.Severity, ["loose", "strict"])}
-        opt.SaveExcludedChannels logical
-        opt.EEGLAB (1,:) cell
-        % Save options
-        opt.Save logical
-        opt.SaveName string
-        opt.OutputFolder string
-        % Log options
-        opt.LogEnabled logical
-        opt.LogLevel double {mustBeInteger,mustBeInRange(opt.LogLevel,0,6)}
-        opt.LogToFile logical
-        opt.LogFileDir string
-        opt.LogFileName string
-    end
+arguments (Input)
+    EEG struct
+    % Optional
+    opt.Severity string {mustBeMember(opt.Severity, ["loose", "strict"])}
+    opt.SaveExcludedChannels logical
+    opt.ChannelRejection logical
+    opt.EEGLAB (1,:) cell
+    % Save options
+    opt.Save logical
+    opt.SaveName string
+    opt.OutputFolder string
+    % Log options
+    opt.LogEnabled logical
+    opt.LogLevel double {mustBeInteger,mustBeInRange(opt.LogLevel,0,6)}
+    opt.LogToFile logical
+    opt.LogFileDir string
+    opt.LogFileName string
+end
 
-    %% Constants
-    module = "preprocessing";
-    
-    %% Parsing arguments
-    config = HRB_loadConfig(module, "cleanData", opt);
+%% Constants
+module = "preprocessing";
 
-    %% Logger
-    logConfig = HRB_loadConfig(module, "logging", opt);
-    log = HRB_loggerSetUp(module, logConfig);
-    
-    %% Cleaning data
-    log.info(sprintf("Cleaning data with %s parameters", config.Severity))
+%% Parsing arguments
+config = HRB_loadConfig(module, "cleanData", opt);
 
-    switch config.Severity
-        case "loose"
-            flatlineCrit = 5;
-            channelCrit = 0.8;
-            lineNoiseCrit = 4;
-            highpass = 'off';
-            burstCrit = 'off';
-            windowCrit = 0.25;
-            burstRejection = 'off';
-            distance = 'Euclidian';
-            windowCritTol = [-Inf 50]; 
-            
-        case "strict"
-            flatlineCrit = 5;
-            channelCrit = 0.8;
-            lineNoiseCrit = 4;
-            highpass = 'off';
-            burstCrit = 20;
-            windowCrit = 0.25;
-            burstRejection = 'on';
-            distance = 'Euclidian';
-            windowCritTol = [-Inf 7]; 
+%% Logger
+logConfig = HRB_loadConfig(module, "logging", opt);
+log = HRB_loggerSetUp(module, logConfig);
 
-        otherwise
-            error("Available types are only 'loose' and 'strict'. %s not available.", config.Severity)
-    end
+%% Cleaning data
+log.info(sprintf("Cleaning data with %s parameters", config.Severity))
 
-    chans_before = {EEG.chanlocs.labels};
+switch config.Severity
+    case "loose"
+        flatlineCrit = 5;
+        channelCrit = 0.8;
+        lineNoiseCrit = 4;
+        highpass = 'off';
+        burstCrit = 'off';
+        windowCrit = 0.25;
+        burstRejection = 'off';
+        distance = 'Euclidian';
+        windowCritTol = [-Inf 50];
 
-    EEG = pop_clean_rawdata(EEG, ...
-        'FlatlineCriterion',flatlineCrit,...
-        'ChannelCriterion',channelCrit, ...
-        'LineNoiseCriterion',lineNoiseCrit, ...
-        'Highpass',highpass, ...
-        'BurstCriterion',burstCrit, ...
-        'WindowCriterion',windowCrit, ...
-        'BurstRejection',burstRejection, ...
-        'Distance',distance, ...
-        'WindowCriterionTolerances',windowCritTol, ...
-        config.EEGLAB{:});
-    
-    chans_after = {EEG.chanlocs.labels};
-    chans_excluded = setdiff(chans_before, chans_after);
+    case "strict"
+        flatlineCrit = 5;
+        channelCrit = 0.8;
+        lineNoiseCrit = 4;
+        highpass = 'off';
+        burstCrit = 20;
+        windowCrit = 0.25;
+        burstRejection = 'on';
+        distance = 'Euclidian';
+        windowCritTol = [-Inf 7];
 
-    log.info("Excluded channels: " + strjoin(chans_excluded))
-    if config.SaveExcludedChannels
-        nameChansExcluded = sprintf("%s_%s",config.SaveName, "ExcludedChannels");
-        log.info(sprintf("Saving excluded channels in %s", nameChansExcluded));
+    otherwise
+        error("Available types are only 'loose' and 'strict'. %s not available.", config.Severity)
+end
 
-        logParams = unpackStruct(logConfig);
+% Bad-channel detection owned by HRB_badChannels: run ASR/burst only
+if ~config.ChannelRejection
+    flatlineCrit  = 'off';
+    channelCrit   = 'off';
+    lineNoiseCrit = 'off';
+end
 
-        HRB_saveData(chans_excluded, "Name",nameChansExcluded, "Folder", module, "OutputFolder",config.OutputFolder, logParams{:});
-    end
+chans_before = {EEG.chanlocs.labels};
+
+EEG = pop_clean_rawdata(EEG, ...
+    'FlatlineCriterion',flatlineCrit,...
+    'ChannelCriterion',channelCrit, ...
+    'LineNoiseCriterion',lineNoiseCrit, ...
+    'Highpass',highpass, ...
+    'BurstCriterion',burstCrit, ...
+    'WindowCriterion',windowCrit, ...
+    'BurstRejection',burstRejection, ...
+    'Distance',distance, ...
+    'WindowCriterionTolerances',windowCritTol, ...
+    config.EEGLAB{:});
+
+chans_after = {EEG.chanlocs.labels};
+chans_excluded = setdiff(chans_before, chans_after);
+
+log.info("Excluded channels: " + strjoin(chans_excluded))
+if config.SaveExcludedChannels
+    nameChansExcluded = sprintf("%s_%s",config.SaveName, "ExcludedChannels");
+    log.info(sprintf("Saving excluded channels in %s", nameChansExcluded));
+
+    logParams = unpackStruct(logConfig);
+
+    HRB_saveData(chans_excluded, "Name",nameChansExcluded, "Folder", module, "OutputFolder",config.OutputFolder, logParams{:});
+end
 
 
-    %% Save
-    if config.Save
-        logParams = unpackStruct(logConfig);
-        HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
-    end
+%% Save
+if config.Save
+    logParams = unpackStruct(logConfig);
+    HRB_saveData(EEG, "Name", config.SaveName, "Folder", module, "OutputFolder", config.OutputFolder, logParams{:});
+end
 
 end
 
