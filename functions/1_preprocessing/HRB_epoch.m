@@ -75,7 +75,12 @@ function [EEG] = HRB_epoch(EEG, opt)
     % Task-based option
     if config.Mode == "Event"
         log.info(sprintf("Epoching mode: EVENT LOCKED. Limits: [%.2f %.2f].", config.Limits(1), config.Limits(2)));
-
+        EEG.comments = char(string(EEG.comments));   % stessa normalizzazione
+        
+        if ~isempty(EEG.setname)
+            EEG.setname = char(EEG.setname)
+        end
+        
         if isempty(EEG.event)
             error("HRB:NoEvents, Dataset has no events. Cannot run Event-Mode epoching.");
         end
@@ -103,7 +108,12 @@ function [EEG] = HRB_epoch(EEG, opt)
     % Resting state option
     elseif config.Mode == "Time"
         log.info(sprintf("Epoching Mode: REGULAR TIME INTERVALS. Recurrence: %.2fs, Limits: [%.2f %.2f]s", config.Recurrence, config.Limits(1), config.Limits(2)));
-
+        EEG.comments = char(string(EEG.comments));
+        if isempty(EEG.setname)
+            EEG.setname = '';
+        else
+            EEG.setname = char(EEG.setname)
+        end
         % Run eeg_regepochs
         try
             EEG = eeg_regepochs(EEG,'recurrence', config.Recurrence, ...
