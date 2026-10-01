@@ -65,6 +65,11 @@ preproc.chanedit.Method = "template";
 preproc.chanedit.Template = "";
 preproc.File = "";
 
+% Import data
+preproc.import.Save = true;
+preproc.import.SaveName = "import";
+preproc.import.OutputFolder = "";
+
 % Channel locations
 preproc.chanlocs.Template     = "auto";
 preproc.chanlocs.MinMatchRate = 0.90;
@@ -72,12 +77,14 @@ preproc.chanlocs.Save         = false;
 preproc.chanlocs.SaveName     = "chanlocs";
 preproc.chanlocs.OutputFolder = "";
 
+% Resample
 preproc.resample.Frequency = 250;     % [Hz] Sample frequency for resampling
 preproc.resample.EEGLAB = {};
 preproc.resample.Save = false;        % 
 preproc.resample.SaveName = "resample";        % 
 preproc.resample.OutputFolder = "";
 
+% Filter
 preproc.filter.Type = "bandpass";     % Type of the filter
 preproc.filter.LowCutoff = 0.5;       % [Hz] Low cutoff frequency for the filter
 preproc.filter.HighCutoff = 48;       % [Hz] High cutoff frequency for the filter
@@ -86,12 +93,36 @@ preproc.filter.Save = false;
 preproc.filter.SaveName = "filter";
 preproc.filter.OutputFolder = "";
 
+% Line-noise rejection
+preproc.linenoise.Method               = "zapline";  % "zapline" | "notch"
+% Zapline-plus
+preproc.linenoise.ZapNoiseFreqs        = "line";     % "line" | "auto" | numeric (50 o [50 100])
+preproc.linenoise.ZapDetectorThreshold = 4;          % coarseFreqDetectPowerDiff
+preproc.linenoise.ZapChunkLength       = 0;          % 0 = adaptive
+preproc.linenoise.ZapAdaptiveNRemove   = true;
+preproc.linenoise.ZapFixedNRemove      = 1;
+preproc.linenoise.ZapAdaptiveSigma     = true;
+preproc.linenoise.ZapSigmaThresh       = 3;          % noiseCompDetectSigma
+preproc.linenoise.ZapPlot              = false;      
+% Notch (pop_eegfiltnew, revfilt=1)
+preproc.linenoise.NotchFreq            = 50;
+preproc.linenoise.NotchWidth           = 2;
+preproc.linenoise.NotchHarmonics       = 1;          % es. [1 2 3] → 50,100,150 Hz
+preproc.linenoise.NotchFiltOrder       = [];         % [] = auto
+preproc.linenoise.NotchPlot            = false;
+% Save
+preproc.linenoise.Save                 = false;
+preproc.linenoise.SaveName             = "";
+preproc.linenoise.OutputFolder         = "";
+
+% Chan Rej
 preproc.removeChannels.Channels = {};
 preproc.removeChannels.EEGLAB = {};
 preproc.removeChannels.Save = false;
 preproc.removeChannels.SaveName = "removeChannels";
 preproc.removeChannels.OutputFolder = "";
 
+% Chan edit
 preproc.selectChannels.Channels = {};
 preproc.selectChannels.EEGLAB = {};
 preproc.selectChannels.Save = false;
@@ -111,7 +142,39 @@ preproc.cleanData.EEGLAB = {};
 preproc.cleanData.Save = false;
 preproc.cleanData.SaveName = "cleanData";
 preproc.cleanData.OutputFolder = "";
+preproc.cleanData.ChannelRejection = true;   % false -> ASR/burst only
 
+% Bad-channel detection (single source of channel rejection)
+preproc.badChannels.Method               = "kurt";   % "corr" | "kurt" | "spec"
+preproc.badChannels.Threshold            = 5;        % SD if Norm=true
+preproc.badChannels.Norm                 = true;     % true -> 'on'
+preproc.badChannels.FreqRange            = [1 40];   % [Hz] spec only
+preproc.badChannels.CorrChannelCrit      = 0.8;      % clean_rawdata, corr only
+preproc.badChannels.CorrLineNoiseCrit    = 4;        % corr only
+preproc.badChannels.CorrFlatlineCrit     = 5;        % corr only
+preproc.badChannels.SaveExcludedChannels = true;
+preproc.badChannels.EEGLAB               = {};
+preproc.badChannels.Save                 = false;
+preproc.badChannels.SaveName             = "badChannels";
+preproc.badChannels.OutputFolder         = "";
+
+% Channel interpolation (restore common montage post-badchan)
+preproc.interpChannels.Method       = "spherical";  % "spherical" | "invdist" | "spacetime"
+preproc.interpChannels.RefFile      = "";           % optional .set with reference chanlocs
+preproc.interpChannels.Save         = false;
+preproc.interpChannels.SaveName     = "interpChannels";
+preproc.interpChannels.OutputFolder = "";
+
+% Re-reference (common average or explicit channels)
+preproc.reref.RefType     = "average";            % "average" | "channel"
+preproc.reref.RefChannels = string.empty(1,0);    % labels; used only for "channel"
+preproc.reref.Exclude     = string.empty(1,0);    % labels excluded from the reference
+preproc.reref.KeepRef     = false;                % keep reference channel after reref
+preproc.reref.Save        = false;
+preproc.reref.SaveName    = "reref";
+preproc.reref.OutputFolder = "";
+
+% ICA
 preproc.runica.Extended = 1;
 preproc.runica.Interrupt = true;
 preproc.runica.EEGLAB = {};
@@ -185,6 +248,8 @@ preproc.rejepochs.Threshold = 100;
 preproc.rejepochs.Channels = [];
 preproc.rejepochs.TimeLimits = [];
 preproc.rejepochs.ConfirmRej = false;
+preproc.rejepochs.Method = "threshold";   % "threshold" | "jointprob"
+preproc.rejepochs.SD     = 3;             % [SD] jointprob only (scalar o [local global])
 preproc.rejepochs.Save = true;
 preproc.rejepochs.SaveName = "epoch_rej";
 preproc.rejepochs.OutputFolder = "";
