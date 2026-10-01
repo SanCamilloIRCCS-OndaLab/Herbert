@@ -284,6 +284,7 @@ prevNameFlat = strrep(current_name, filesep, '_');
 try
     out_data = run_step(current_data, universe, universeFolder, prevNameFlat);
 catch ME
+    fprintf(2, '%s\n', getReport(ME, 'extended'));   % TEMP: stack completo (file+riga)
     warning("HRB:UniverseFailed", ...
         "Step %d Universe %d failed: %s", n_steps, n_universe, ME.message);
     out_data = struct('HRB_failed', true, 'HRB_error', ME.message, ...
