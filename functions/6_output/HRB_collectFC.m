@@ -1,4 +1,4 @@
-function T = HRB_collectFC(protocolName, subjectList, options)
+function T = HRB_collectFC(protocolName, subjectList, opt)
 % HRB_collectFC  Collect FC matrices from Brainstorm into a long-format table.
 %
 % For each (subject, universe), loads the BST timefreq file, optionally
@@ -41,14 +41,14 @@ function T = HRB_collectFC(protocolName, subjectList, options)
 
 arguments
     protocolName  (1,1) string
-    subjectList         
-    options.AverageTime  (1,1) logical = true
-    options.IncludeDiag  (1,1) logical = false
-    options.OutputFile   (1,1) string  = ""
-    options.UniverseFilter (1,1) string = ""
+    subjectList
+    opt.AverageTime  (1,1) logical = true
+    opt.IncludeDiag  (1,1) logical = false
+    opt.OutputFile   (1,1) string  = ""
+    opt.UniverseFilter (1,1) string = ""
 end
 
-subjectList = subjectList(:);  % enforce column vector 
+subjectList = subjectList(:);  % enforce column vector
 
 % If results cell array passed instead of subject list, extract BST subject
 % names from EEG.etc.brainstorm.subject (set by HRB_bst_import after
@@ -62,7 +62,7 @@ if iscell(subjectList)
         for jR = 1:numel(entry)
             u = entry{jR};
             if isstruct(u) && isfield(u,'etc') && isfield(u.etc,'brainstorm') && ...
-               isfield(u.etc.brainstorm,'subject') && ~isempty(u.etc.brainstorm.subject)
+                    isfield(u.etc.brainstorm,'subject') && ~isempty(u.etc.brainstorm.subject)
                 bstNames{end+1} = char(u.etc.brainstorm.subject); %#ok<AGROW>
                 break  % one valid EEG per subject is enough
             end
@@ -73,7 +73,7 @@ end
 
 
 % Column structure depends on AverageTime
-if options.AverageTime
+if opt.AverageTime
     nCols    = 6;
     varNames = {'subj_id','universe_label','roi_from','roi_to','freq_band','fc_value'};
 else
@@ -93,7 +93,7 @@ if isempty(iProtocol)
 end
 bst_set('iProtocol', iProtocol);
 
-% Process each subject 
+% Process each subject
 nSubj = numel(subjectList);
 for iSubj = 1:nSubj
     subjId      = subjectList(iSubj);
@@ -139,7 +139,7 @@ for iSubj = 1:nSubj
             end
 
             % Filter by universe, if present
-            if strlength(options.UniverseFilter) > 0 && ~contains(universeLabel, options.UniverseFilter)
+            if strlength(opt.UniverseFilter) > 0 && ~contains(universeLabel, opt.UniverseFilter)
                 continue;
             end
 
@@ -161,7 +161,7 @@ for iSubj = 1:nSubj
             % (cross-connectivity and excl-diag formats have no diagonal rows)
             isSquare = (numel(tf.RefRowNames) == numel(tf.RowNames));
             hasDiag  = isSquare && any(pairMap(:,1) == pairMap(:,2));
-            if hasDiag && ~options.IncludeDiag
+            if hasDiag && ~opt.IncludeDiag
                 selMask = pairMap(:,1) ~= pairMap(:,2);
             else
                 selMask = true(nPairsAll, 1);
@@ -176,11 +176,14 @@ for iSubj = 1:nSubj
 
             % Average over time (dim 2):
             %   [nPairsAll × nTime × nFreq] → [nPairsAll × nFreq]
-            if options.AverageTime
+            if opt.AverageTime
                 TF_proc = reshape(mean(tf.TF, 2), nPairsAll, nFreq);
             else
                 TF_proc = tf.TF;  % keep full [nPairsAll × nTime × nFreq]
+                nTimePts = size(TF_proc, 2);
+                timeVec  = local_time_vector(tf, nTimePts);
             end
+
 
             % Unpack into table rows
             for p = 1:nSel
@@ -191,17 +194,15 @@ for iSubj = 1:nSubj
                 roiTo   = string(tf.RowNames{c});
 
                 for f = 1:nFreq
-                    if options.AverageTime
+                    if opt.AverageTime
                         fc_val = TF_proc(iTFrow, f);
                         C(end+1, :) = {subjId, universeLabel, roiFrom, roiTo, freqNames(f), fc_val}; %#ok<AGROW>
                     else
-                        % Vectorize over time to avoid a third nested loop
-                        fcVec = squeeze(TF_proc(iTFrow, :, f))';   % [nTime × 1] double
-                        nTime = numel(fcVec);
-                        chunk = [repmat({subjId, universeLabel, roiFrom, roiTo, freqNames(f)}, nTime, 1), ...
-                                 num2cell(tf.Time(:)), ...
-                                 num2cell(fcVec)];
-                        C = [C; chunk]; %#ok<AGROW>
+                        fcVec = squeeze(TF_proc(iTFrow, :, f))';   % [nTimePts × 1] column
+                        chunk = [repmat({subjId, universeLabel, roiFrom, roiTo, freqNames(f)}, nTimePts, 1), ...
+                            num2cell(timeVec), ...
+                            num2cell(fcVec)];
+                        C = [C; chunk];
                     end
                 end
             end
@@ -210,7 +211,7 @@ for iSubj = 1:nSubj
     end  % iSt
 end  % iSubj
 
-% Assemble output table 
+% Assemble output table
 if isempty(C)
     warning('HRB:NoData', 'No FC data collected. Check protocol name, subject IDs, and BST study structure.');
     T = table();
@@ -229,16 +230,16 @@ end
 if iscell(T.fc_value)
     T.fc_value = cell2mat(T.fc_value);
 end
-if ~options.AverageTime && ismember('time_s', T.Properties.VariableNames)
+if ~opt.AverageTime && ismember('time_s', T.Properties.VariableNames)
     if iscell(T.time_s)
         T.time_s = cell2mat(T.time_s);
     end
 end
 
 %  Optional CSV export
-if strlength(options.OutputFile) > 0
-    writetable(T, options.OutputFile);
-    fprintf('HRB_collectFC: table saved → %s\n', options.OutputFile);
+if strlength(opt.OutputFile) > 0
+    writetable(T, opt.OutputFile);
+    fprintf('HRB_collectFC: table saved → %s\n', opt.OutputFile);
 end
 
 end
@@ -249,7 +250,7 @@ function [pairMap, storageMode] = local_detect_storage(tf)
 % Detect how BST stored NxN pairs in tf.TF dim 1 and return the pair index map.
 %
 % BST packs pairs COLUMN-MAJOR within each format (first matrix index fastest,
-% i.e. M(:) order). 
+% i.e. M(:) order).
 nRef = numel(tf.RefRowNames);
 nRow = numel(tf.RowNames);
 nTF  = size(tf.TF, 1);
@@ -302,6 +303,7 @@ end
 
 end
 
+%% Helpers
 
 function names = local_get_freqnames(tf)
 % Extract frequency band names from BST tf.Freqs field.
@@ -316,5 +318,24 @@ elseif isnumeric(tf.Freqs) && ~isempty(tf.Freqs)
 else
     nFreq = size(tf.TF, 3);
     names = "band" + string((1:nFreq)');       % fallback: "band1", "band2", etc.
+end
+end
+
+function tv = local_time_vector(tf, nTimePts)
+% Return a [nTimePts × 1] time vector aligned to size(tf.TF,2).
+% BST band/window-collapsed connectivity stores size(TF,2)=1 while tf.Time is
+% a [start end] 2-vector (cf. bst_connectivity Finalize: Time = sInputB.Time([1,end])).
+% Time-resolved results have numel(tf.Time)==size(TF,2). Never assume they match.
+t = tf.Time(:);
+if isempty(t)
+    tv = (1:nTimePts).';
+elseif numel(t) == nTimePts
+    tv = t;                                 % time-resolved: match esatto
+elseif nTimePts == 1
+    tv = mean(t);                           % collapsed: midpoint della finestra
+elseif numel(t) == 2
+    tv = linspace(t(1), t(2), nTimePts).';  % [start end] -> campioni
+else
+    tv = (1:nTimePts).';                    % fallback: indice campione
 end
 end
