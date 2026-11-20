@@ -1,5 +1,5 @@
 function [EEG] = HRB_iclabel(EEG, opt)
-% HRB_iclabel labels independnt components using ICLabel
+% HRB_iclabel labels independent components using ICLabel
 %
 % Examples:
 %   >>> EEG = HRB_iclabel(EEG)
