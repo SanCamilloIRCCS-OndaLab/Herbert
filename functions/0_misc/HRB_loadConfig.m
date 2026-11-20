@@ -52,9 +52,15 @@ function config = HRB_loadConfig(module, func, customConfig)
             config = config.network;
     end
 
-    if isfield(config, func)
-        config = config.(func);
-        % else ignore
+    if strlength(func) > 0
+        if isfield(config, func)
+            config = config.(func);
+        else
+            % Silent fallback would hand the whole module to the caller
+            warning("HRB:UnknownSubModule", ...
+                "HRB_loadConfig: no '%s' block in module '%s' of HRB_defaultConfig: returning the whole module.", ...
+                func, module);
+        end
     end
 
     config = mergeStruct(config, customConfig);
