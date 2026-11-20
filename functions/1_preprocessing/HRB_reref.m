@@ -52,8 +52,6 @@ function [EEG] = HRB_reref(EEG, opt)
 
     %% Parsing Arguments
     config = HRB_loadConfig(module, "reref", opt);
-    config = HRB_loadConfig(module, "reref", opt);
-    disp("=== reref config fields ==="); disp(fieldnames(config))   % TEMP
 
     %% Logger
     logConfig = HRB_loadConfig(module, "logging", opt);
@@ -125,7 +123,7 @@ function [EEG] = HRB_reref(EEG, opt)
     %% Rank note (not a fix): average reference removes 1 degree of freedom
     if config.RefType == "average" && ~config.KeepRef
         expEffRank = EEG.nbchan - 1;
-        log.info(sprintf("[WARNING] Average reference reduces rank by 1 (expected effective rank ~%d). Set HRB_runica 'pca' to the true rank to avoid a ghost component.", ...
+        log.info(sprintf("[WARNING] Average reference reduces rank by 1 (expected effective rank ~%d). HRB_runica logs the effective rank; pop_runica reduces to it automatically.", ...
             expEffRank));
     end
 
@@ -138,9 +136,9 @@ function [EEG] = HRB_reref(EEG, opt)
 
     %% Update setname
     if config.SaveName ~= ""
-        EEG.setname = config.SaveName;
+        EEG.setname = char(config.SaveName);
     else
-        EEG.setname = EEG.setname + "_reref";
+        EEG.setname = char(string(EEG.setname) + "_reref");
     end
 
     %% Save
