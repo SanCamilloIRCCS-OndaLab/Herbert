@@ -18,7 +18,7 @@ function T = HRB_collectFC(protocolName, subjectList, opt)
 %   AverageTime   - (default true)  average TF over the time axis.
 %                   false = keep 1000 time points per row; slow, ~2M rows for
 %                   4 subjects × 16 universes × 6 pairs × 5 bands × 1000 t.
-%   IncludeDiag   - (default false) exclude diagonal (self-connectivity).
+%   IncludeDiag   - (default false) false = drop the diagonal (self-connectivity); true = keep the diagonal
 %                   wPLI self-connectivity is trivially NaN; MSC is trivially 1.
 %   OutputFile    - (default "")    if non-empty, write table to this CSV path.
 %
@@ -298,7 +298,7 @@ end
 if ~isempty(pairMap)
     assert(p == nTF && all(pairMap(:) > 0), ...
         'HRB:collectFC:pairMapFill', ...
-        'pairMap incompleto per %s: p=%d, nTF=%d', storageMode, p, nTF);
+        'pairMap incomplete for %s: p=%d, nTF=%d', storageMode, p, nTF);
 end
 
 end
@@ -330,12 +330,12 @@ t = tf.Time(:);
 if isempty(t)
     tv = (1:nTimePts).';
 elseif numel(t) == nTimePts
-    tv = t;                                 % time-resolved: match esatto
+    tv = t;                                 % time-resolved: exact match
 elseif nTimePts == 1
-    tv = mean(t);                           % collapsed: midpoint della finestra
+    tv = mean(t);                           % collapsed: window midpoint
 elseif numel(t) == 2
-    tv = linspace(t(1), t(2), nTimePts).';  % [start end] -> campioni
+    tv = linspace(t(1), t(2), nTimePts).';  % [start end] -> samples
 else
-    tv = (1:nTimePts).';                    % fallback: indice campione
+    tv = (1:nTimePts).';                    % fallback: sample index
 end
 end
