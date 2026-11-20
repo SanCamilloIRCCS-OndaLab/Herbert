@@ -19,6 +19,10 @@ function [results, allNames] = HRB_runDataset(csvPath, pipeline, opts)
 %                        Override when the CSV lives elsewhere (e.g. project root).
 %    RunFolder  string   shared output root for all subjects.
 %                        Default: auto-generated timestamp under pwd/output/.
+%    KeepData   logical  false (default): drop EEG.data/icaact from the returned
+%                        results to save RAM; metadata (subject, etc) are kept.
+%    Resume     logical  reuse saved outputs of non-BST steps with "save": true
+%                        (see HRB_runPipeline). Default: false.
 %
 %  CSV FORMAT  (columns: filename, subject_id, exclude)
 %    filename    — EEG file to load; extension drives format auto-detection
@@ -32,6 +36,8 @@ arguments
     pipeline   string
     opts.DataPath   string = ""
     opts.RunFolder  string = ""
+    opts.KeepData   logical = false   % false: drop EEG.data/icaact from returned results (RAM)
+    opts.Resume     logical = false   % see HRB_runPipeline Resume
 end
 
 % --- Read and validate the CSV ---
@@ -56,12 +62,20 @@ if any(emptyId)
         strjoin(T.filename(emptyId), ', '));
 end
 
-% Check for duplicate subject IDs — would cause BST collisions
-[~, ia] = unique(T.subject_id);
+% Subject IDs: only [A-Za-z0-9_]. This makes the three normalisations
+% (raw / cleanName '-' for folders / BST '_') unambiguous and lossless.
+badId = cellfun(@isempty, regexp(cellstr(T.subject_id), '^[A-Za-z0-9_]+$', 'once'));
+if any(badId)
+    error("HRB:InvalidSubjectId", ...
+        "subject_id may contain only letters, digits and '_': %s", strjoin(T.subject_id(badId), ', '));
+end
+
+% Duplicates (case-insensitive: folders collide on Windows/macOS)
+[~, ia] = unique(lower(T.subject_id));
 if length(ia) < height(T)
     dupes = T.subject_id(setdiff(1:height(T), ia));
     error("HRB:DuplicateSubjectId", ...
-        "Duplicate subject_id in CSV: %s", strjoin(dupes, ', '));
+        "Duplicate subject_id in CSV (case-insensitive): %s", strjoin(dupes, ', '));
 end
 
 % --- Resolve data folder ---
@@ -111,7 +125,11 @@ for i = 1:nTotal
         EEG.subject = subjId;  % CSV is authoritative — always overwrite
 
         fprintf('[HRB_runDataset] (%d/%d) Running pipeline\n', i, nTotal);
-        [results{i}, allNames{i}] = HRB_runPipeline(EEG, pipeline, OutputFolder=runFolder);
+        [results{i}, allNames{i}] = HRB_runPipeline(EEG, pipeline, ...
+            OutputFolder=runFolder, Resume=opts.Resume);
+        if ~opts.KeepData
+            results{i} = cellfun(@local_strip_data, results{i}, 'UniformOutput', false);
+        end
 
     catch ME
         warning('HRB:DatasetFailed', '[HRB_runDataset] FAILED %s: %s', fname, ME.message);
@@ -127,7 +145,7 @@ end
 fprintf('[HRB_runDataset] Done. Output: %s\n', runFolder);
 end
 
-
+ %% Helpers
 % =========================================================================
 function EEG = local_autoload(dataPath, fname)
 %local_autoload  Load EEG file based on file extension.
@@ -205,5 +223,15 @@ switch lower(ext)
         warning('HRB:UnknownFormat', ...
             'Extension "%s" not in built-in map — trying pop_fileio (requires the File-IO/Fieldtrip plugin).', ext);
         EEG = pop_fileio(fullfile(dataPath, fname));
+end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function u = local_strip_data(u)
+%local_strip_data  Keep metadata (subject, etc.brainstorm, HRB_* fields), drop
+%  the heavy arrays. pipelineReport and collectFC only need metadata.
+if isstruct(u)
+    if isfield(u, 'data'),   u.data   = []; end
+    if isfield(u, 'icaact'), u.icaact = []; end
 end
 end
