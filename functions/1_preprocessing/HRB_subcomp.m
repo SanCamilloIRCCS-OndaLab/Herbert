@@ -22,7 +22,7 @@ function [EEG] = HRB_subcomp(EEG, opt)
 %       data before and after removal. You must click "Accept" to proceed.
 %       Default: false.
 %
-%   Save (logical): Whether to save the pruned datase
+%   Save (logical): Whether to save the pruned dataset
 %
 % See also: EEGLAB, pop_subcomp
 %
@@ -58,7 +58,7 @@ function [EEG] = HRB_subcomp(EEG, opt)
 
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        error("HRB: No ICA", "No ICs weight found for the current EEG structure. Cannot remove components.");
+        error("HRB:NoICA", "No ICs weight found for the current EEG structure. Cannot remove components.");
     end
 
     %% Find components to be removed
@@ -104,7 +104,7 @@ function [EEG] = HRB_subcomp(EEG, opt)
             log.info(sprintf("Saved list of %d components to %s", length(comps_to_remove), txtFileName));
 
         catch ME
-            log.warn(sprintf("Could not save rejected components text file: %S", ME.message));
+            log.warning(sprintf("Could not save rejected components text file: %s", ME.message));
         end
     end
 
@@ -123,7 +123,7 @@ function [EEG] = HRB_subcomp(EEG, opt)
        log.info("Components removed successfully");
 
    catch ME
-       log.error(sprintf("Error during pop_subcomp execution: %S", ME.message));
+       log.error(sprintf("Error during pop_subcomp execution: %s", ME.message));
        rethrow(ME);
    end
 
