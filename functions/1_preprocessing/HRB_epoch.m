@@ -21,7 +21,7 @@ function [EEG] = HRB_epoch(EEG, opt)
 %       Recurrence (double): Interval in seconds between epochs (default 1)
 %
 % --- Common parameters ---
-%       Limits (1x2 double): Epoch lantecy limits [start end] in seconds
+%       Limits (1x2 double): Epoch latency limits [start end] in seconds
 %           - For "Event": relative to a marker (e.g. [-1 2])
 %           - For "Time": duration of the chunk (e.g. [0 2])
 %   
@@ -75,14 +75,14 @@ function [EEG] = HRB_epoch(EEG, opt)
     % Task-based option
     if config.Mode == "Event"
         log.info(sprintf("Epoching mode: EVENT LOCKED. Limits: [%.2f %.2f].", config.Limits(1), config.Limits(2)));
-        EEG.comments = char(string(EEG.comments));   % stessa normalizzazione
+        EEG.comments = char(string(EEG.comments));   % same normalization as in Time mode
         
         if ~isempty(EEG.setname)
-            EEG.setname = char(EEG.setname)
+            EEG.setname = char(EEG.setname);
         end
         
         if isempty(EEG.event)
-            error("HRB:NoEvents, Dataset has no events. Cannot run Event-Mode epoching.");
+            error("HRB:NoEvents", "Dataset has no events. Cannot run Event-Mode epoching.");
         end
 
         % Manage event format
@@ -112,7 +112,7 @@ function [EEG] = HRB_epoch(EEG, opt)
         if isempty(EEG.setname)
             EEG.setname = '';
         else
-            EEG.setname = char(EEG.setname)
+            EEG.setname = char(EEG.setname);
         end
         % Run eeg_regepochs
         try
@@ -131,14 +131,14 @@ function [EEG] = HRB_epoch(EEG, opt)
         log.info(sprintf("Applying baseline correction: [%.2f %.2f]", config.Baseline(1), config.Baseline(2)));
 
         % Run pop_rmbase
-        baseline_ms = config.Baseline *1000 % Convert in ms
+        baseline_ms = config.Baseline *1000; % Convert in ms
 
         actual_start_ms = EEG.xmin * 1000;
         actual_end_ms   = EEG.xmax * 1000;
         
         % Check Start
         if baseline_ms(1) < actual_start_ms
-            log.warn(sprintf("Baseline start (%.1f ms) is before data start (%.1f ms). Adjusting to data start.", baseline_ms(1), actual_start_ms));
+            log.warning(sprintf("Baseline start (%.1f ms) is before data start (%.1f ms). Adjusting to data start.", baseline_ms(1), actual_start_ms));
             baseline_ms(1) = actual_start_ms;
         end
         
@@ -146,7 +146,7 @@ function [EEG] = HRB_epoch(EEG, opt)
         if baseline_ms(2) > actual_end_ms
             % Allow a small tolerance (e.g. 20ms) for rounding errors, then clamp
             if (baseline_ms(2) - actual_end_ms) < 20 
-                 log.warning(sprintf("Baseline end (%.1f ms) is slighty beyond data end (%.1f ms). Adjusting to data end.", baseline_ms(2), actual_end_ms));
+                 log.warning(sprintf("Baseline end (%.1f ms) is slightly beyond data end (%.1f ms). Adjusting to data end.", baseline_ms(2), actual_end_ms));
                  baseline_ms(2) = actual_end_ms;
             else
                  % If the difference is huge, it's a logic error, let pop_rmbase fail or handle it
