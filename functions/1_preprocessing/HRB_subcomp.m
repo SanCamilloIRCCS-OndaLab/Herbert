@@ -118,7 +118,12 @@ function [EEG] = HRB_subcomp(EEG, opt)
            log.info("Visual comparison requested. Waiting for user input in GUI");
        end
 
-       EEG = pop_subcomp(EEG, config.Components, plot_flag, config.Keep );
+       if isempty(comps_to_remove)
+           log.info("No components to remove: dataset unchanged.");
+       else
+           % comps_to_remove already accounts for Keep
+           EEG = pop_subcomp(EEG, comps_to_remove, plot_flag, 0);
+       end
 
        log.info("Components removed successfully");
 
