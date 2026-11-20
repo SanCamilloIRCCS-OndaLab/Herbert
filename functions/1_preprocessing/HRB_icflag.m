@@ -25,13 +25,13 @@ function [EEG] = HRB_icflag(EEG, opt)
     arguments(Input)
         EEG struct
         % Optional
-        opt.Brain           (1, 2) double = [0 0]
-        opt.Muscle          (1, 2) double = [0 0]
-        opt.Eye             (1, 2) double = [0 0]
-        opt.Heart           (1, 2) double = [0 0]
-        opt.LineNoise       (1, 2) double = [0 0]
-        opt.ChannelNoise    (1, 2) double = [0 0]
-        opt.Other           (1, 2) double = [0 0]
+        opt.Brain           (1, 2) double  
+        opt.Muscle          (1, 2) double 
+        opt.Eye             (1, 2) double 
+        opt.Heart           (1, 2) double 
+        opt.LineNoise       (1, 2) double 
+        opt.ChannelNoise    (1, 2) double 
+        opt.Other           (1, 2) double 
         % Save Options
         opt.Save logical
         opt.SaveName string
@@ -56,11 +56,12 @@ function [EEG] = HRB_icflag(EEG, opt)
 
     %% Check prerequisites
     if isempty(EEG.icaweights)
-        error("HRB: No ICA" , "No ICs weights found for the current EEG structure.")
+        error("HRB:NoICA" , "No ICs weights found for the current EEG structure.")
     end
 
-    if isempty(EEG.etc.ic_classification.ICLabel)
-        error("HRB: No Classification", "No ICLabel classification found")
+    if ~isfield(EEG.etc, 'ic_classification') || ~isfield(EEG.etc.ic_classification, 'ICLabel') ...
+            || isempty(EEG.etc.ic_classification.ICLabel)
+        error("HRB:NoClassification", "No ICLabel classification found. Run HRB_iclabel first.");
     end
 
     %% Build Threshold Matrix
@@ -79,7 +80,7 @@ function [EEG] = HRB_icflag(EEG, opt)
         ];
 
     try
-        [EEG, ~] = pop_icflag(EEG, thresh_matrix)
+        [EEG, ~] = pop_icflag(EEG, thresh_matrix);
         
         % Log rejection count
         if isfield(EEG, 'reject') && isfield(EEG.reject, 'gcompreject')
@@ -90,6 +91,7 @@ function [EEG] = HRB_icflag(EEG, opt)
     catch ME
         % if something goes wrong log and rethrow error
         log.error(sprintf("Error during ICFlag execution: %s", ME.message));
+        rethrow(ME)
     end
 
     %% Save
