@@ -7,7 +7,7 @@ function HRB_generateSubjectMap(filePath, opt)
 %
 %  USAGE
 %    HRB_generateSubjectMap('/path/to/data/')
-%    HRB_generateSubjectMap('/path/to/data/', FilePattern="*.set")
+%    HRB_generateSubjectMap('/path/to/data/', FileExtension="*.set")
 %
 %  CSV COLUMNS
 %    filename    — file to load (relative to dataPath)
