@@ -17,20 +17,20 @@ function [EEG] = HRB_ica(EEG, opt)
         opt.Extended double = 1
         opt.Seed double 
         % Optional parameter for HRB_iclabel
-        opt.Version string {mustBeMember(opt.Version, ["default", "lite", "beta"])} = "default"
+        opt.Version string {mustBeMember(opt.Version, ["default", "lite", "beta"])} 
         % Optional parameters for HRB_icflag
-        opt.Brain           (1, 2) double = [0 0]
-        opt.Muscle          (1, 2) double = [0 0]
-        opt.Eye             (1, 2) double = [0 0]
-        opt.Heart           (1, 2) double = [0 0]
-        opt.LineNoise       (1, 2) double = [0 0]
-        opt.ChannelNoise    (1, 2) double = [0 0]
-        opt.Other           (1, 2) double = [0 0]
+        opt.Brain           (1, 2) double 
+        opt.Muscle          (1, 2) double 
+        opt.Eye             (1, 2) double 
+        opt.Heart           (1, 2) double 
+        opt.LineNoise       (1, 2) double 
+        opt.ChannelNoise    (1, 2) double 
+        opt.Other           (1, 2) double 
         % Optional intermediate save option
-        opt.SaveWeights logical = false      % Save dataset with ICA weights BEFORE removal
-        opt.SaveWeightsName string = ""      % Name for the intermediate file
+        opt.SaveWeights logical     % Save dataset with ICA weights BEFORE removal
+        opt.SaveWeightsName string      % Name for the intermediate file
         % Optional parameter for HRB_subcomp
-        opt.Visualize logical = false
+        opt.Visualize logical 
         % Save Options
         opt.Save logical
         opt.SaveName string
@@ -66,22 +66,28 @@ function [EEG] = HRB_ica(EEG, opt)
         mkdir(config.OutputFolder);
     end
 
+    logArgs = {'LogEnabled', logConfig.LogEnabled, 'LogLevel', logConfig.LogLevel, ...
+        'LogToFile', logConfig.LogToFile, 'LogFileDir', logConfig.LogFileDir, ...
+        'LogFileName', logConfig.LogFileName};
+
     %% 1. Run ICA
     log.info("Initiating ICA pipeline")
     log.info("Step 1/4: Running ICA decomposition");
     EEG = HRB_runica(EEG, ...
         'Extended', config.Extended, ...
         'Seed', config.Seed, ...
-        'Save', false, ... 
-        'LogEnabled', logConfig.LogEnabled, 'LogLevel', logConfig.LogLevel);
+        'SaveBefore', false, ...
+        'Save', false, ...
+        'OutputFolder', config.OutputFolder, ...
+        logArgs{:});
 
     %% 2. ICLabel
     log.info("Step 2/4: Labeling Components")
     EEG = HRB_iclabel(EEG, ...
         'Version', config.Version, ...
         'Save', false, ...
-        'LogEnabled', logConfig.LogEnabled, ...
-        'LogLevel', logConfig.LogLevel);
+        'OutputFolder', config.OutputFolder, ...
+        logArgs{:});
 
     %% 3. ICFlag
     log.info("Step 3/4: Flagging Components")
@@ -94,8 +100,8 @@ function [EEG] = HRB_ica(EEG, opt)
         'ChannelNoise',config.ChannelNoise, ...
         'Other', config.Other, ...
         'Save', false, ...
-        'LogEnabled',logConfig.LogEnabled, ...
-        'LogLevel', logConfig.LogLevel);
+        'OutputFolder', config.OutputFolder, ...
+        logArgs{:});
 
     %% Intermediate Save Point
     if config.SaveWeights
@@ -129,7 +135,7 @@ function [EEG] = HRB_ica(EEG, opt)
         'Save', config.Save, ... 
         'SaveName', final_name, ...
         'OutputFolder', config.OutputFolder, ...
-        'LogEnabled', logConfig.LogEnabled, 'LogLevel', logConfig.LogLevel);
+        logArgs{:});
 
     log.info("ICA pipeline completed");
 end

@@ -206,16 +206,16 @@ preproc.ica.Extended = 1;
 preproc.ica.Seed = 42;
 preproc.ica.Version = "default";
 % Thresholds
-preproc.ica.Brain = [0 0];
-preproc.ica.Muscle = [0 0];
-preproc.ica.Eye = [0 0];
-preproc.ica.Heart = [0 0];
-preproc.ica.LineNoise = [0 0];
-preproc.ica.ChannelNoise = [0 0];
-preproc.ica.Other = [0 0];
+preproc.ica.Brain = [NaN NaN];
+preproc.ica.Muscle = [NaN NaN];
+preproc.ica.Eye = [NaN NaN];
+preproc.ica.Heart = [NaN NaN];
+preproc.ica.LineNoise = [NaN NaN];
+preproc.ica.ChannelNoise = [NaN NaN];
+preproc.ica.Other = [NaN NaN];
 % Intermediate Save
-preproc.ica.SaveWeights = true;             
-preproc.ica.SaveWeightsName = "ICA_weights";
+preproc.ica.SaveWeights = false;             
+preproc.ica.SaveWeightsName = "";
 % Visualization & Final Save
 preproc.ica.Visualize = false;
 preproc.ica.Save = true;
