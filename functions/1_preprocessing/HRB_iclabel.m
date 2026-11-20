@@ -45,27 +45,21 @@ function [EEG] = HRB_iclabel(EEG, opt)
     logConfig = HRB_loadConfig(module, "logging", opt);
     log = HRB_loggerSetUp(module, logConfig);
     
-    %% Check prerequisites
+   %% Check prerequisites
     if isempty(EEG.icaweights)
-        error('HRB: No ICA', 'No ICs weights found for the current EEG structure.')
-    end
-    
-    %% Run ICLabel
-    log.info(sprintf("Starting ICLabel classification with versino %s", config.Version));
-
-    %% Check prerequisites
-    if isempty(EEG.icaweights)
-        msg = 'HRB Error: EEG structure does not contain ICA weights. Run HRB_runica first.';
+        msg = 'EEG structure does not contain ICA weights. Run HRB_runica first.';
         log.error(msg);
-        error('HRB:NoICA', msg);
+        error('HRB:NoICA', '%s', msg);
     end
-    
+
+    %% Run ICLabel
+    log.info(sprintf("Starting ICLabel classification with version %s", config.Version));
     try
         EEG = pop_iclabel(EEG, char(config.Version));
-    
     catch ME
         % If something goes wrong, log it and rethrow the error
-        log.error(sprintf("Error during IClabel classification: %s", ME.message));
+        log.error(sprintf("Error during ICLabel classification: %s", ME.message));
+        rethrow(ME);
     end
     
     %% Save
