@@ -248,7 +248,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
             'includecommon', 1);
 
         if ~isempty(existingRecordings)
-            log.info(sprintf("SkilExisting = true: condition '%s' already exists (%d files). Skipping import.", conditionName, length(existingRecordings)));
+            log.info(sprintf("SkipExisting = true: condition '%s' already exists (%d files). Skipping import.", conditionName, length(existingRecordings)));
             
             if isFilePath
                 EEG = pop_loadset('filename', filePath, 'loadmode', 'info');
@@ -267,7 +267,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
             if isfield(config, 'SaveName') && strlength(config.SaveName) > 0
                 EEG.setname = char(config.SaveName);
             else
-                EEG.setname = strcat(subjName, '_bst_imported');
+                EEG.setname = [char(subjName) '_bst_imported'];
             end
             return;
         end
@@ -301,8 +301,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
     %
     %   Case 1: RS   + continuous → raw link + fixed-length segmentation
     %                               (uses config.WindowLength)
-    %   Case 2: RS   + epoched    → raw link + segmentation matching epoch duration
-    %                               (uses epochDuration = pnts/srate)
+    %   Case 2: RS   + epoched    → direct import of the existing epochs
     %   Case 3: Task + continuous → raw link + epoch from triggers
     %   Case 4: Task + epoched    → direct import of event-locked epochs
     % =========================================================================
@@ -341,7 +340,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
             % -----------------------------------------------------------------
             %  Case 2: RS epoched - Import each separate epoch
             % -----------------------------------------------------------------
-            log.info(sprintf("Case 2 — RS epoched: %.1f s segmentation (epoch duration)", epochDuration));
+            log.info(sprintf("Case 2 — RS epoched: importing existing %.1f s epochs", epochDuration));
            
             sFilesEpoch = bst_process('CallProcess', 'process_import_data_epoch', [], [], ...
                 'subjectname',   subjName, ...
@@ -462,7 +461,7 @@ function [EEG] = HRB_bst_import(InputData, opt)
         if isfield(config, 'SaveName') && strlength(config.SaveName) > 0
             EEG.setname = char(config.SaveName);
         else
-            EEG.setname = strcat(subjName, "_bst_imported");
+            EEG.setname = [char(subjName) '_bst_imported'];
         end
 
         log.info(sprintf("Import completed. %d file(s) in Brainstorm DB.", length(sFilesEpoch)));
