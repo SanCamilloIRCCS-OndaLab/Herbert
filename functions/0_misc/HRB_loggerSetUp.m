@@ -40,7 +40,7 @@ function log = HRB_loggerSetUp(module, logOptions)
     log.show_ms = true;
     log.show_logging_filename = true;
     log.log_to_command_window = true;
-    log.log_to_file = true;
+    log.log_to_file = config.LogToFile;
     if module == "general"
         log.log_directory = config.LogFileDir;
     else

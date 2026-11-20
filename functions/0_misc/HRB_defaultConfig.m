@@ -40,7 +40,7 @@ general.image.ImageHeight = 0; %auto
 % Logging
 general.logging.LogEnabled = true;
 general.logging.LogLevel = 2;
-general.logging.LogToFile = false;
+general.logging.LogToFile = true;
 general.logging.LogFileDir = getCodeFolder();
 general.logging.LogFileName = "HRB.log";
 
@@ -246,7 +246,7 @@ preproc.rejepochs.OutputFolder = "";
 % Logging
 preproc.logging.LogEnabled = true;
 preproc.logging.LogLevel = 2;
-preproc.logging.LogToFile = false;
+preproc.logging.LogToFile = true;
 preproc.logging.LogFileDir = getCodeFolder();
 preproc.logging.LogFileName = "HRB_preprocessing.log";
 
@@ -274,7 +274,7 @@ headmodel.bst_import.SaveName        = "";
 % Logging specific for bst_import 
 headmodel.bst_import.LogEnabled  = true;
 headmodel.bst_import.LogLevel    = 2;
-headmodel.bst_import.LogToFile   = false;
+headmodel.bst_import.LogToFile   = true;
 headmodel.bst_import.LogFileDir  = getCodeFolder();
 headmodel.bst_import.LogFileName = "HRB_bst_import.log";
 
@@ -311,7 +311,7 @@ headmodel.bst_noisecov.OutputFolder        = "";
 % Logging
 headmodel.logging.LogEnabled = true;
 headmodel.logging.LogLevel = 2;
-headmodel.logging.LogToFile = false;
+headmodel.logging.LogToFile = true;
 headmodel.logging.LogFileDir = getCodeFolder();
 headmodel.logging.LogFileName = "HRB_headmodel.log";
 
@@ -354,7 +354,7 @@ source.bst_inverse.OutputFolder = "";
 % Logging
 source.logging.LogEnabled  = true;
 source.logging.LogLevel    = 2;
-source.logging.LogToFile   = false;
+source.logging.LogToFile   = true;
 source.logging.LogFileDir  = getCodeFolder();
 source.logging.LogFileName = "HRB_sourceEstimation.log";
 
@@ -422,7 +422,7 @@ connectivity.bst_connectivity.OutputFolder = "";
 % Logging
 connectivity.logging.LogEnabled  = true;
 connectivity.logging.LogLevel    = 2;
-connectivity.logging.LogToFile   = false;
+connectivity.logging.LogToFile   = true;
 connectivity.logging.LogFileDir  = getCodeFolder();
 connectivity.logging.LogFileName = "HRB_connectivity.log";
  
@@ -436,7 +436,7 @@ network = struct();
 % Logging
 network.logging.LogEnabled = true;
 network.logging.LogLevel = 2;
-network.logging.LogToFile = false;
+network.logging.LogToFile = true;
 network.logging.LogFileDir = getCodeFolder();
 network.logging.LogFileName = "HRB_network.log";
 
