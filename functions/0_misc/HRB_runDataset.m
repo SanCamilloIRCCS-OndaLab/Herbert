@@ -73,7 +73,7 @@ end
 
 % --- Shared output folder for all subjects ---
 if strlength(opts.RunFolder) == 0
-    runFolder = fullfile(pwd, "output", datestr(now, 'yyyymmdd_HHMMSS'));
+    runFolder = fullfile(pwd, "output", string(datetime("now", "Format","yyyyMMdd_HHmmss")));
 else
     runFolder = char(opts.RunFolder);
 end
@@ -114,7 +114,7 @@ for i = 1:nTotal
         [results{i}, allNames{i}] = HRB_runPipeline(EEG, pipeline, OutputFolder=runFolder);
 
     catch ME
-        warning('[HRB_runDataset] FAILED %s: %s', fname, ME.message);
+        warning('HRB:DatasetFailed', '[HRB_runDataset] FAILED %s: %s', fname, ME.message);
         results{i} = struct( ...
             'HRB_failed', true,       ...
             'subject',    subjId,     ...
@@ -142,7 +142,7 @@ function EEG = local_autoload(dataPath, fname)
 %    other          fallback             pop_fileio        (requires FieldTrip plugin)
 %
 %  NOTE: .eeg is also the BrainVision binary data file, but BV data is
-%  always loaded via .vhdr — never point FilePattern at .eeg for BV data.
+%  always loaded via .vhdr — never point FileExtension at .eeg for BV data.
 
 [~, ~, ext] = fileparts(fname);
 
@@ -203,8 +203,7 @@ switch lower(ext)
         % Unknown format — attempt pop_fileio as last resort.
         % Requires FieldTrip plugin in EEGLAB.
         warning('HRB:UnknownFormat', ...
-            'Extension "%s" not in built-in map — trying pop_fileio. ' ,...
-            'If it fails, pass a custom LoadFcn.', ext);
+            'Extension "%s" not in built-in map — trying pop_fileio (requires the File-IO/Fieldtrip plugin).', ext);
         EEG = pop_fileio(fullfile(dataPath, fname));
 end
 end
