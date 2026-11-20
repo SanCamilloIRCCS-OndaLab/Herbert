@@ -57,10 +57,12 @@ function [EEG] = HRB_selectTime(EEG, opt)
     % Check if the selected times are reasonable
     EEG_duration = EEG.xmax - EEG.xmin;
 
-    if EEG_duration < config.AfterStart 
-        log.error(sprintf("The recording is %.3fs, you cannot select %.3f seconds after the start.", EEG_duration, config.AfterStart))
-    elseif EEG_duration - config.AfterStart < config.BeforeEnd
-        log.error(sprintf("The recording is %.3fs, you requested %.3fs after start, you cannot select %.3f seconds before the end.", EEG_duration, config.AfterStart, config.BeforeEnd))
+    if EEG_duration < config.AfterStart
+        msg = sprintf("The recording is %.3fs, you cannot select %.3f seconds after the start.", EEG_duration, config.AfterStart);
+        log.error(msg); error("HRB:BadTimeSelection", "%s", msg);
+    elseif EEG_duration - config.AfterStart <= config.BeforeEnd
+        msg = sprintf("The recording is %.3fs, you requested %.3fs after start, you cannot select %.3f seconds before the end.", EEG_duration, config.AfterStart, config.BeforeEnd);
+        log.error(msg); error("HRB:BadTimeSelection", "%s", msg);
     end
 
     time_from = EEG.xmin + config.AfterStart;
