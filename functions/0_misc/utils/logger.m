@@ -947,7 +947,7 @@ classdef (ConstructOnLoad = false) logger < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         function [date_string] = get_date()
-            date_string = datestr(now, 'yyyy-dd-mm');
+            date_string = datestr(now, 'yyyy-mm-dd');
         end
         
         function [time_string] = get_time(show_ms)
