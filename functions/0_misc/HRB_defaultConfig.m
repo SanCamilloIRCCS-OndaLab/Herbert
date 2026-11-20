@@ -30,6 +30,7 @@ general.customConfig.FileName = "HRB_config.json"; % Name of the custom configur
 % Saving
 nowstr = string(datetime("now", "Format", "yyyyMMdd_HHmmss"));
 general.save.OutputFolder = fullfile(getCodeFolder(), "output", nowstr);
+general.save.Resume = false; 
 
 % Image
 general.image.SaveDotFile = true;

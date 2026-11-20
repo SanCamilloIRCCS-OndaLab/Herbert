@@ -1,20 +1,26 @@
-% HRB_RUNPIPELINE - Run a multiverse pipeline over a set of data.
+% HRB_RUNPIPELINE - Run a multiverse pipeline over one dataset.
 %
 % Usage:
-%     >> HRB_runPipeline(pipelineJSON, data)
-%     >> HRB_runPipeline(pipelineJSON, data, "OutputFolder", output)
+%     >> [data, names] = HRB_runPipeline(EEG, "pipeline.json")
+%     >> [data, names] = HRB_runPipeline(EEG, "p1.json", "p2.json", OutputFolder=out)
+%     >> [data, names] = HRB_runPipeline(EEG, "pipeline.json", OutputFolder=out, Resume=true)
 %
 % Inputs:
-%    data    = [struct] The name of the saved file (default: the name
-%           of the calling function)
-%    pipelineFile = [string] The pipeline file. Allowed formats are json and yaml
-%    saveFolder  = [string] The folder where to save the file (default: the
-%           name of the module of the calling function)
+%    data         = [struct] EEGLAB dataset (EEG.subject is the subject ID)
+%    pipelineFile = [string, Repeating] pipeline file(s), .json or .yaml (merged)
 %
+% Name-value:
+%    OutputFolder = [string] run root (default: general.save.OutputFolder)
+%    Resume       = [logical] reuse saved outputs of non-BST steps with
+%                   "save": true when the exact file already exists (default false)
+%
+% Outputs:
+%    data  = cell, one element per universe (EEG struct or HRB_failed struct)
+%    names = cell, branch name (hierarchical, filesep-separated) per universe
 %
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 %
-% See also: SAVE, POP_SAVESET
+% See also: HRB_RUNDATASET, HRB_VALIDATEPIPELINE
 
 function [data, names] = HRB_runPipeline(data, pipelineFile, opt)
 arguments (Input)
@@ -25,6 +31,7 @@ arguments (Repeating)
 end
 arguments (Input)
     opt.OutputFolder string
+    opt.Resume logical
 end
 
 %% Parsing arguments
@@ -70,6 +77,20 @@ fclose(fid);
 %% Starts the loop
 steps = fieldnames(pipeline);
 log.info(sprintf("There are %d steps", length(steps)))
+
+% Launch-time warnings (multiverse: warn, never block a valid choice)
+for iS = 1:numel(steps)
+    st = pipeline.(steps{iS});
+    if isstruct(st), us = num2cell(st); else, us = st; end
+    for iU = 1:numel(us)
+        u = us{iU};
+        if isfield(u, 'params') && isfield(u.params, 'ProcessOption') && ...
+                strcmpi(string(u.params.ProcessOption), "full")
+            log.warning(sprintf(['Step %s: ProcessOption="full" bypasses kernel-based scout ' ...
+                'reduction; connectivity on full source results can allocate ~100 GB and OOM.'], steps{iS}));
+        end
+    end
+end
 
 data = {data};
 names = {''};
@@ -134,7 +155,7 @@ log.info(">>> END MULTIVERSE ANALYSIS <<<")
 
 end
 
-function dataOut = run_step(dataIn, step, output, prevName)
+function dataOut = run_step(dataIn, step, output, prevName, resume)
 
 % Check if there are custom params
 if isfield(step, "params")
@@ -148,7 +169,6 @@ name = getStepName(step);
 
 % Make SaveName unique per subject.
 % This ensures BST condition names don't collide across subjects
-
 subjId = '';
 if isstruct(dataIn) && isfield(dataIn, 'subject') && ~isempty(dataIn.subject)
     subjId = cleanName(char(dataIn.subject));
@@ -167,7 +187,6 @@ else
         params.SaveName = sprintf("%s_%s_%s", subjId, prevName, name);
     end
 end
-
 
 % Check if must be saved
 if isfield(step, "save")
@@ -191,22 +210,56 @@ end
 % Update output folder
 params.OutputFolder = output;
 
-% Create function handle
-fun = str2func(step.function);
-
-% Convert params to a cell array
-cellParams = unpackStruct(params);
-
-% Execute the step
-dataOut = fun(dataIn, cellParams{:});
-%     dataOut = sprintf("%s_%s", dataIn, params.SaveName);
-
-% DEBUG TEMPORANEO
-if isstruct(dataOut) && isfield(dataOut, 'trials')
-    fprintf('>>> %s | IN: %d trials | OUT: %d trials\n', ...
-        step.function, dataIn.trials, dataOut.trials);
+% Resume: reuse this step's saved output if the exact file already exists.
+% Only non-BST steps with an explicit "save": true (BST state lives in the DB).
+dataOut = [];
+resumed = false;
+if resume && isfield(step, "save") && step.save && ~startsWith(string(step.function), "HRB_bst_")
+    saveDir  = fullfile(output, local_step_module(step.function));
+    saveFile = char(string(params.SaveName) + ".set");
+    if isfile(fullfile(saveDir, saveFile))
+        try
+            dataOut = pop_loadset('filename', saveFile, 'filepath', char(saveDir));
+            resumed = true;
+            fprintf('[HRB_runPipeline] RESUME %s: reused %s\n', step.function, fullfile(saveDir, saveFile));
+        catch MEload
+            fprintf(2, '[HRB_runPipeline] RESUME %s: %s unreadable (%s) -> recomputing\n', ...
+                step.function, saveFile, MEload.message);
+        end
+    end
 end
 
+if ~resumed
+    % Create function handle
+    fun = str2func(step.function);
+    % Convert params to a cell array
+    cellParams = unpackStruct(params);
+    % Execute the step
+    dataOut = fun(dataIn, cellParams{:});
+end
+
+% Uniform setname + provenance (EEG structs only)
+if isstruct(dataOut) && isfield(dataOut, 'setname')
+    dataOut.setname = char(params.SaveName);
+    logFields = {'LogEnabled','LogLevel','LogToFile','LogFileDir','LogFileName','OutputFolder'};
+    prov  = rmfield(params, intersect(fieldnames(params), logFields));
+    entry = struct('function', char(step.function), 'saveName', char(params.SaveName), ...
+                   'params', prov, 'resumed', resumed, ...
+                   'time', char(datetime("now", "Format", "yyyy-MM-dd HH:mm:ss")));
+    if ~isfield(dataOut, 'etc') || ~isstruct(dataOut.etc), dataOut.etc = struct(); end
+    if ~isfield(dataOut.etc, 'HRB') || ~isfield(dataOut.etc.HRB, 'history')
+        dataOut.etc.HRB.history = {entry};
+    else
+        dataOut.etc.HRB.history{end+1} = entry;
+    end
+end
+
+end
+
+function m = local_step_module(fn)
+% Module folder used by HRB_saveData: '1_preprocessing' -> 'preprocessing'
+[~, folder] = fileparts(fileparts(which(char(fn))));
+m = extractAfter(folder, "_");
 end
 
 function name = getStepName(step)
@@ -266,9 +319,9 @@ end
 
 % Build output folder
 if isempty(subjId) && isempty(branchName)
-    universeFolder = fullfile(config.OutputFolder, "shared");  % ← era config.OutputFolder
+    universeFolder = fullfile(config.OutputFolder, "shared");  % subject-less shared steps
 elseif isempty(branchName)
-    universeFolder = fullfile(config.OutputFolder, subjId, "shared");  % ← era senza "shared"
+    universeFolder = fullfile(config.OutputFolder, subjId, "shared");  % pre-multiverse steps of a subject
 elseif isempty(subjId)
     universeFolder = fullfile(config.OutputFolder, branchName);
 else
@@ -282,13 +335,20 @@ end
 prevNameFlat = strrep(current_name, filesep, '_');
 
 try
-    out_data = run_step(current_data, universe, universeFolder, prevNameFlat);
+    out_data = run_step(current_data, universe, universeFolder, prevNameFlat, config.Resume);
 catch ME
-    fprintf(2, '%s\n', getReport(ME, 'extended'));   % TEMP: stack completo (file+riga)
+    report = getReport(ME, 'extended', 'hyperlinks', 'off'); %full stack (file and line)
+    fprintf(2, '%s\n', report);
     warning("HRB:UniverseFailed", ...
         "Step %d Universe %d failed: %s", n_steps, n_universe, ME.message);
+    subjOut = '';
+    if isstruct(current_data) && isfield(current_data, 'subject')
+        subjOut = char(current_data.subject);
+    end
     out_data = struct('HRB_failed', true, 'HRB_error', ME.message, ...
-        'HRB_step', n_steps, 'HRB_universe', n_universe);
+        'HRB_errorId', ME.identifier, 'HRB_report', report, ...
+        'HRB_function', char(universe.function), ...
+        'HRB_step', n_steps, 'HRB_universe', n_universe, 'subject', subjOut);
 end
 
 if l_multiverse > 1
