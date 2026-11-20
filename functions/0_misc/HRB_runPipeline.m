@@ -64,7 +64,7 @@ pipelineSaveName = 'pipeline.json';
 pipelineSaveFullPath = fullfile(config.OutputFolder, pipelineSaveName);
 log.info(sprintf("Saving final pipeline in %s",pipelineSaveFullPath))
 fid = fopen(pipelineSaveFullPath, "w");
-fprintf(fid,jsonencode(pipeline, "PrettyPrint", true));
+fprintf(fid,'%s', jsonencode(pipeline, "PrettyPrint", true));
 fclose(fid);
 
 %% Starts the loop
@@ -98,7 +98,7 @@ for n_steps = 1:length(steps)
     isBstStep = false;
     for iCheck = 1:l_multiverse
         if isstruct(step)
-            u = step(iCheck)
+            u = step(iCheck);
         else
             u = step{iCheck};
         end
