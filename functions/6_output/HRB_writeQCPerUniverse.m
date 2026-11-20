@@ -1,14 +1,14 @@
 function files = HRB_writeQCPerUniverse(QC, opt)
 %HRB_writeQCPerUniverse  Split a long QC table into one CSV per universe.
 %
-%  Takes the long QC table from HRB_collectQCFromDisk (or HRB_collectQC_new)
+%  Takes the long QC table from HRB_collectQCFromDisk (or HRB_collectQC)
 %  — one row per universe x subject — and writes ONE summary CSV per universe,
 %  with all subjects as rows. Does NOT re-read disk: it only splits and writes
 %  what QC already holds, so the numbers match the full table exactly and it is
 %  fast (no /mnt/raid access, just the CSV writes).
 %
-%  The universe key column is auto-detected: "universe_id" (collectQCFromDisk)
-%  or "universe" (collectQC_new). The subject column ("subject" or "subj_id")
+%  The universe key column is auto-detected: "universe" (both QC functions; "unverse_id" accepted for old tables)
+%  The subject column ("subject" or "subj_id")
 %  is auto-detected for sorting. Every column is written through as-is.
 %
 %  USAGE
