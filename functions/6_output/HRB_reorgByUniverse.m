@@ -58,8 +58,8 @@ function R = HRB_reorgByUniverse(runRoot, universePaths, opt)
 %      pointer stays valid.
 %    - QC artifacts live in the terminal's ancestor directories (or a
 %      'preprocessing/' child there); nearest-to-leaf match wins per pattern.
-%      Naming taken from HRB_collectQC conventions; epoch file matched as both
-%      '*clean-epochs.set' and '*_epoch.set' pending confirmation.
+%      Naming taken from HRB_collectQC conventions. The epoch-file patterns
+%      depend on the step names in the pipeline JSON: override QCPatterns.
 %
 % Author: Ettore Napoli - University of Bologna, 2026
 
