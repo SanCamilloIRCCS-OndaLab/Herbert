@@ -6,7 +6,7 @@ function P = HRB_universePaths(runRoot, manifest, report, opt)
 %    - report   : HRB_pipelineReport(...,Format="long") — per subject×universe outcome
 %    - disk      : the actual terminal .set files under runRoot
 %
-%  STATUS (three values, distinct on purpose):
+%  STATUS (four values, distinct on purpose):
 %    "ok"          report=ok  AND terminal .set exists on disk
 %    "degenerate"  report=universe_failed with an empty-dataset error
 %                  (all epochs rejected / no epochs) — a RESULT, not a bug;
