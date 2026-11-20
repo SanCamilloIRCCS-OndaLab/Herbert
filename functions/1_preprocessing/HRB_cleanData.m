@@ -10,7 +10,7 @@ function [EEG] = HRB_cleanData(EEG, opt)
 %    EEG (struct): EEG struct using EEGLAB structure system
 %
 % Other Parameters:
-%    Severity (string): Severity of the paraemters to clean data.
+%    Severity (string): Severity of the parameters to clean data.
 %               Available values are "loose" or "strict".
 %    SaveExcludedChannels (logical): Whether to save or not the list of
 %               excluded channels.
