@@ -1,5 +1,5 @@
 function [EEG] = HRB_rejepochs(EEG, opt)
-% HRB_rejepochs reject epochs based on amplitudes threshold
+% HRB_rejepochs reject epochs based on amplitudes threshold or joint probability
 %
 % Usage:
 %   >>> EEG = HRB_rejepochs(EEG, 'Threshold', 100, 'Channels', [1:32]) %Rejects >+100 and <-100 uV
@@ -17,7 +17,8 @@ function [EEG] = HRB_rejepochs(EEG, opt)
 %   Channels (vector): List of channel indices to check. Default is [] = ALL
 %
 %   TimeLimits (1x2 double): Time window to check in seconds [min max].Default is [] = whole epoch
-%
+%   Method (string): "threshold" (default) or "jointprob"
+%   SD (double): [SD] jointprob only; scalar or [local global].
 %   Save (logical): Save the cleaned dataset
 %
 % See also: EEGLAB, pop_eegthresh, pop_rejepoch
@@ -58,7 +59,7 @@ log = HRB_loggerSetUp(module, logConfig);
 
 %% Check prerequisites
 if EEG.trials == 1
-    error("HRB:Continuous data.", "Dataset seems continous (1 trial). Run HRB_epoch first.");
+    error("HRB:ContinuousData", "Dataset seems continuous (1 trial). Run HRB_epoch first.");
 end
 
 %% Set up Parameters
@@ -128,7 +129,8 @@ if config.ConfirmRej
             start_pnt = (t_idx-1) * EEG.pnts;
             end_pnt   = t_idx * EEG.pnts;
 
-            % CORREZIONE CRITICA: Aggiunti zeros(1, EEG.nbchan) per matchare le dimensioni di eegplot
+            % eegplot winrej needs zeros(1, EEG.nbchan) channel flags after
+            % [start end R G B]
             rej_matrix = [rej_matrix; start_pnt end_pnt 1 0.8 0.8 zeros(1, EEG.nbchan)];
         end
     end
