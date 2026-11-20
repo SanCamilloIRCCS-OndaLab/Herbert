@@ -7,20 +7,9 @@
 % Outputs:
 %    config = [struct] Nested structure with the default configurations
 %
-% The current configuration structure is:
-% {
-%   "general": {},
-%   "preprocessing": {
-%     "resampleFreq": 250
-%     "filterType": 'bandpass'
-%     "filterLowCutoff": 0.5
-%     "filterHighCutoff": 48
-%   },
-%   "headModel": {},
-%   "sourceEstimation": {},
-%   "connectivity": {},
-%   "network": {}
-% }
+% Structure: confif.<module>.<function>.<Param>; modules: general,
+% preprocessing, headmodel, sourceEstimation, connectivitym, network. Every
+% pipeline-step parameter has its default HERE (not in argument blocks). 
 %
 % Authors: Alessandro Tonin, IRCCS San Camillo Hospital, 2024
 % 
@@ -112,7 +101,7 @@ preproc.linenoise.NotchFiltOrder       = [];         % [] = auto
 preproc.linenoise.NotchPlot            = false;
 % Save
 preproc.linenoise.Save                 = false;
-preproc.linenoise.SaveName             = "";
+preproc.linenoise.SaveName             = "linenoise";
 preproc.linenoise.OutputFolder         = "";
 
 % Chan Rej
@@ -302,9 +291,7 @@ headmodel.bst_headmodel.DUNeuroFemType      = "fitted";
 headmodel.bst_headmodel.DUNeuroSolverType   = "cg";
 headmodel.bst_headmodel.DUNeuroSrcModel     = "venant";
 headmodel.bst_headmodel.DUNeuroIsotropic    = true;
-headmodel.bst_headmodel.Save                = false;
-headmodel.bst_headmodel.SaveName            = "";
-headmodel.bst_headmodel.OutputFolder        = "";
+
 % Save
 headmodel.bst_headmodel.Save                 = false;
 headmodel.bst_headmodel.SaveName             = "";
@@ -436,7 +423,7 @@ connectivity.bst_connectivity.OutputFolder = "";
 connectivity.logging.LogEnabled  = true;
 connectivity.logging.LogLevel    = 2;
 connectivity.logging.LogToFile   = false;
-connectivity.logging.LogFileDir  = fullfile(pwd, "HRB_logs"); % *** FIX Q1 ***
+connectivity.logging.LogFileDir  = getCodeFolder();
 connectivity.logging.LogFileName = "HRB_connectivity.log";
  
 config.connectivity = connectivity;
