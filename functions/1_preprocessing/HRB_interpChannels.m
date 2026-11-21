@@ -42,11 +42,14 @@ end
     end
 
     nBefore = EEG.nbchan;
+    labelsBefore = {EEG.chanlocs.labels};
     log.info(sprintf("Interpolating to common montage: %d -> %d channels (method: %s)", ...
         nBefore, numel(refChanlocs), config.Method));
 
     EEG = pop_interp(EEG, refChanlocs, char(config.Method));
     EEG = eeg_checkset(EEG);
+    EEG.etc.HRB.interpChannels = struct('method', char(config.Method), ...
+        'interpolated', {setdiff({refChanlocs.labels}, labelsBefore, 'stable')});
 
     log.info(sprintf("Interpolated %d channel(s)", EEG.nbchan - nBefore));
 
