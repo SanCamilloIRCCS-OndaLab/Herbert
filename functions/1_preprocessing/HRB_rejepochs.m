@@ -183,6 +183,9 @@ end
 % Update n_bad after manual review
 n_bad = length(bad_trials);
 
+EEG.etc.HRB.rejepochs = struct('method', char(config.Method), 'nBefore', EEG.trials, ...
+    'rejected', bad_trials(:)');
+
 if n_bad >= EEG.trials
     % Degenerate universe: every epoch exceeds the criterion. Removing them all
     % would empty the dataset (pop_rejepoch -> pop_select errors "is empty").
