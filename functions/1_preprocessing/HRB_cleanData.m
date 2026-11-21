@@ -90,6 +90,9 @@ if ~config.ChannelRejection
     lineNoiseCrit = 'off';
 end
 
+if ~isfield(EEG.etc, "HRB") || ~isfield(EEG.etc.HRB, "refChanlocs")
+    EEG.etc.HRB.refChanlocs = EEG.chanlocs;
+end
 chans_before = {EEG.chanlocs.labels};
 
 EEG = pop_clean_rawdata(EEG, ...
