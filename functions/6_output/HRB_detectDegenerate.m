@@ -15,9 +15,11 @@ function result = HRB_detectDegenerate(T, opt)
 %   result = HRB_detectDegenerate(T, 'Manifest', HRB_universeManifest(outFolder));
 %
 % Input:
-%   T  - table from HRB_collectFC, columns in order:
-%        [subject, universe_label, roi_from, roi_to, band, value]
-%        (column ORDER is used, not names; override via opt.Cols)
+%     T  - table from HRB_collectFC (AverageTime=true):
+%        [subj_id, universe_label, roi_from, roi_to, freq_band, fc_value].
+%        Columns are taken BY NAME when present and Cols is the default,
+%        otherwise by position (opt.Cols). A time_s column (AverageTime=false)
+%        is rejected with HRB:TimeResolvedTable.
 %
 % Options:
 %   Tolerance (double>=0): same class if max abs diff over all values <=Tol.
@@ -26,8 +28,8 @@ function result = HRB_detectDegenerate(T, opt)
 %       transitive). Default 0.
 %   Manifest (table): HRB_universeManifest output. If given, each class with
 %       >1 member is annotated with which pipeline axis collapsed. Default [].
-%   Cols (1x6 double): column indices [subj,uni,from,to,band,val].
-%       Default [1 2 3 4 5 6].
+%   Cols (1x6 double): column indices [subj,uni,from,to,band,val], used when
+%       T lacks the collectFC names or Cols is not the default. Default [1 2 3 4 5 6].
 %
 % Output (scalar struct, or struct array if >1 subject):
 %   .subject .universeLabels .groups .representative
@@ -41,6 +43,19 @@ arguments
     opt.Tolerance (1,1) double {mustBeNonnegative} = 0
     opt.Manifest = []
     opt.Cols (1,6) double = [1 2 3 4 5 6]
+end
+% Time-resolved tables (collectFC AverageTime=false) are not comparable here:
+% the key ignores time, so col 6 would be time_s and every universe would
+% look degenerate.
+if istable(T) && ismember('time_s', T.Properties.VariableNames)
+    error('HRB:TimeResolvedTable', ...
+        ['T has a time_s column (HRB_collectFC AverageTime=false). ' ...
+         'Re-run HRB_collectFC with AverageTime=true.']);
+end
+% Prefer column NAMES when T is a collectFC table and Cols is the default
+fcNames = {'subj_id','universe_label','roi_from','roi_to','freq_band','fc_value'};
+if istable(T) && isequal(opt.Cols, 1:6) && all(ismember(fcNames, T.Properties.VariableNames))
+    T = T(:, fcNames);
 end
 
 if iscell(T), T = cell2table(T); end
