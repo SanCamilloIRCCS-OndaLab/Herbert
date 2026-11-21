@@ -159,7 +159,8 @@ if config.Method == "zapline"
                 'plotfreqz', config.NotchPlot, ...
                 filtOrderArg{:});
         end
-    end
+end
+EEG.etc.HRB.linenoise = struct('method', char(config.Method));
 
 %% Save
 if config.Save
