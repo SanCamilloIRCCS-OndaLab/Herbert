@@ -15,7 +15,7 @@ function HRB_saveData(data, opt)
 %           of the calling function)
 %    Folder (string): The folder where to save the file (default: the
 %           name of the module of the calling function)
-%    OutputFolder (string): The main folder for all output files. (default: 'output/date')
+%    OutputFolder (string): The main folder for all output files. (default: general.save.OutputFolder)
 %
 % See also: 
 %   SAVE, POP_SAVESET
@@ -56,8 +56,8 @@ function HRB_saveData(data, opt)
 
     %% Get the main output folder
     if opt.OutputFolder == ""
-        nowstr = string(datetime("now", "Format", "yyyyMMdd_HHmmss"));
-        opt.OutputFolder = fullfile("output", nowstr);
+        gcfg = HRB_loadConfig("general", "save");
+        opt.OutputFolder = gcfg.OutputFolder;
     end
 
     %% Save
@@ -72,8 +72,8 @@ function HRB_saveData(data, opt)
         end
     end
 
-    % clean save name removing extensions
-    [~, opt.Name, ~] = fileparts(opt.Name);
+    % clean save name removing known extension (names may contain '.')
+    opt.Name = regexprep(string(opt.Name), '\.(set|mat|csv)$', '', 'ignorecase');
 
     % Check data type
     dataType = HRB_checkDataType(data);
@@ -86,11 +86,7 @@ function HRB_saveData(data, opt)
             filename = sprintf("%s.%s", opt.Name, saveExt);
 
             % Inject setname and subj before saving
-            [~, nameNoExt, ~] = fileparts(opt.Name);
-            data.setname = nameNoExt;
-            if isfield(data, 'subject') && isempty(data.subject)
-                data.subject = nameNoExt;
-            end
+            data.setname = char(opt.Name);
 
             % Save with EEGLAB function
             log.info(sprintf("Save EEGLAB dataset: %s", fullfile(saveFolder,filename)))
@@ -99,7 +95,7 @@ function HRB_saveData(data, opt)
                     'filename', char(filename),...
                     'filepath', char(saveFolder),...
                     'savemode', 'onefile', ...
-                    'version', '7.3')
+                    'version', '7.3');
             catch ME
                 log.error("EEGLAB saveset not working.")
                 unknownType = true;
