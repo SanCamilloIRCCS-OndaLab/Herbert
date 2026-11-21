@@ -13,8 +13,10 @@ function manifest = HRB_universeManifest(outputFolder)
 %
 % Output:
 %   manifest  - table [nUniverses x (1 + nMultiverseSteps)]
-%               - universe_label  : full label matching BST Comment
-%                                   (after stripping the subjId prefix)
+%               - universe_label  : full label matching SaveName / BST Comment
+%                                   (after stripping the subjId prefix); names
+%                                   normalised like folders (' ', '_' -> '-');
+%                                   a final single-universe step appends its name
 %               - one column per multiverse step, named after the step key
 %                 with the 'step{N}_' prefix stripped
 %                 (e.g. 'step2_filter' → 'filter')
@@ -47,13 +49,13 @@ for k = 1:numel(stepKeys)
 
     if iscell(step)
         % Non-uniform JSON array
-        names = cellfun(@(s) string(s.name), step, 'UniformOutput', true);
+        names = local_clean(cellfun(@(s) string(s.name), step, 'UniformOutput', true));
         mvKeys{end+1}  = stepKeys{k};    
         mvNames{end+1} = names(:)';      
 
     elseif isstruct(step) && numel(step) > 1
         % Uniform JSON array
-        names = string({step.name});
+        names = local_clean(string({step.name}));
         mvKeys{end+1}  = stepKeys{k};    
         mvNames{end+1} = names(:)';     
     end
@@ -77,6 +79,18 @@ for i = 1:nU
     universeLabelCol(i) = strjoin(combinations(i, :), '_');
 end
 
+% SaveName alwaus appends the CURRENT step's name. branchName holds only
+% multiverse names. If the pipeline ends with a single-universe step, its
+% name is part of every terminal file / BST Comment -> append it here too.
+lastStep = pipeline.(stepKeys{end});
+if isstruct(lastStep) && isscalar(lastStep)
+    if isfield(lastStep, 'name')
+        sfx = lastStep.name;
+    else
+        sfx = lastStep.function;
+    end
+    universeLabelCol = universeLabelCol + "_" + local_clean(sfx);
+end
 % Strip 'step{N}_' or 'step{N}[a-z]_' prefix from column names
 % Examples: 'step2_filter' → 'filter', 'step12_headmodel' → 'headmodel'
 colNames = regexprep(mvKeys, '^step\d+[a-z]?_', '');
@@ -123,4 +137,10 @@ for k = 1:n
     repBlock = repBlock * numel(v);
 end
 
+end
+
+function s = local_clean(s)
+% Mirror of HRB_runPipeline cleanName: '' and '_' -> '-' (folder/SaveName
+% form). 
+s = replace(string(s), [" ", "_"], "-");
 end
