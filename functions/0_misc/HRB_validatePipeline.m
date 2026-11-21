@@ -14,7 +14,7 @@ function pipeline = HRB_validatePipeline(pipelineFile, opt)
 %    OutputFolder (string): The output folder where to save the logs
 %
 % Returns:
-%   pipeline (string): The validated pipeline converted to matlab string
+%   pipeline (struct): The validated pipeline (decoded JSON / YAML)
 %
 % See also: 
 %   JSONDECODE
@@ -53,7 +53,7 @@ function pipeline = HRB_validatePipeline(pipelineFile, opt)
     else
         errmsg = sprintf("Pipeline error - The pipeline file %s must be .json or .yaml", pipelineFile);
         log.error(errmsg);
-        error(errmsg);
+        error("HRB:InvalidPipeline", "%s", errmsg);
     end
 
     
@@ -82,9 +82,9 @@ function pipeline = HRB_validatePipeline(pipelineFile, opt)
             elseif iscell(step)
                 universe = step{n_universe};
             else
-                errmsg = sprintf("Pipeline error - The step %s must be a struct or a cellarray (a multiverse)", steps(s));
+                errmsg = sprintf("Pipeline error - The step %s must be a struct or a cellarray (a multiverse)", steps{s});
                 log.error(errmsg);
-                error(errmsg);
+                error("HRB:InvalidPipeline", "%s", errmsg);
             end
 
             universe_fields = fieldnames(universe);
@@ -94,34 +94,60 @@ function pipeline = HRB_validatePipeline(pipelineFile, opt)
         
             if ~isempty(wrongFields)
                 errmsg = sprintf("Pipeline error - In step %s the following fields are not allowed: %s. Only fields allowed: %s", ...
-                    strjoin(steps(s), ', '), strjoin(wrongFields, ', '), strjoin(STEPFIELDS, ', '));
+                     steps{s}, strjoin(wrongFields, ', '), strjoin(STEPFIELDS, ', '));
                 log.error(errmsg);
-                error(errmsg);
+                error("HRB:InvalidPipeline", "%s", errmsg);
             end
 
             % Each step must contain field "function"
             if ~ismember('function', universe_fields)
                 errmsg = sprintf("Pipeline error - All universes of step %s MUST contain the field 'function'!", ...
-                    steps(s));
+                    steps{s});
                 log.error(errmsg);
-                error(errmsg);
+                error("HRB:InvalidPipeline", "%s", errmsg);;
             end
             
             % Not mandatory for a valide pipeline, but let's check if the
             % function is in the path
-            if ~exist(universe.function)
-                warnmsg = sprintf("Pipeline contains function %s, but the function is not in the path", universe.function);
-                log.warning(warnmsg);
+            if ~exist(universe.function, 'file')
+                errmsg = sprintf("Pipeline error - Function %s (step %s) is not on the MATLAB path.", ...
+                    universe.function, steps{s});
+                log.error(errmsg);
+                error("HRB:FunctionNotFound", "%s", errmsg);
             end
 
             % If it is a multiverse also name is mandatory!
             if l_multiverse > 1 && ~ismember('name', universe_fields)
                 errmsg = sprintf("Pipeline error - All universes of multiverse step %s MUST contain the field 'name'!", ...
-                    steps(s));
+                    steps{s});
                 log.error(errmsg);
-                error(errmsg);
+                error("HRB:InvalidPipeline", "%s", errmsg);
             end
 
+        end
+
+
+        % Names become folder names, SaveName parts and BST Comments:
+        % they must be unique (after cleanName) and contain only [A-Za-z0-9-].
+        if isstruct(step), us = num2cell(step); else, us = step; end
+        hasName = cellfun(@(u) isfield(u,'name'), us);
+        nm = strings(1,0);
+        if any(hasName)
+            nm = string(cellfun(@(u) char(u.name), us(hasName), 'UniformOutput', false));
+        end
+        nmClean = replace(nm, [" ","_"], "-");
+        badName = nmClean(cellfun(@isempty, regexp(cellstr(nmClean), '^[A-Za-z0-9\-]+$', 'once')));
+        if ~isempty(badName)
+            errmsg = sprintf("Pipeline error - Step %s: names may contain only letters, digits, '-', '_' or ' ': %s", ...
+                steps{s}, strjoin(badName, ", "));
+            log.error(errmsg); error("HRB:InvalidUniverseName", "%s", errmsg);
+        end
+        if l_multiverse > 1 && numel(unique(nmClean)) < numel(nmClean)
+            [~, ia] = unique(nmClean, 'stable');
+            dup = unique(nmClean(setdiff(1:numel(nmClean), ia)));
+            errmsg = sprintf("Pipeline error - Step %s has duplicate universe names (after '_'/' ' -> '-'): %s", ...
+                steps{s}, strjoin(dup, ", "));
+            log.error(errmsg); error("HRB:DuplicateUniverseName", "%s", errmsg);
         end
 
     end
