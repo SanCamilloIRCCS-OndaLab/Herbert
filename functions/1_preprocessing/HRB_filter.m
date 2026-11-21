@@ -81,7 +81,10 @@ function [EEG] = HRB_filter(EEG, opt)
     end
     
     EEG = pop_eegfiltnew(EEG,'locutoff',locutoff,'hicutoff',hicutoff,'revfilt',revfilt, config.EEGLAB{:});
-
+    
+    % Provenance
+    EEG.etc.HRB.filter = struct('type', char(config.Type), 'locutoff', locutoff, 'hicutoff', hicutoff);
+    
     %% Save
     if config.Save
         logParams = unpackStruct(logConfig);
