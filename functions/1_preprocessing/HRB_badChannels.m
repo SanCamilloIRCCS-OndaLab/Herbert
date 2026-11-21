@@ -76,6 +76,7 @@ end
 
     chans_after = {EEG.chanlocs.labels};
     chans_excluded = setdiff(chans_before, chans_after);
+    EEG.etc.HRB.badChannels = struct('method', char(config.Method), 'removed', {chans_excluded});
     log.info("Excluded channels: " + strjoin(chans_excluded))
 
     if config.SaveExcludedChannels
