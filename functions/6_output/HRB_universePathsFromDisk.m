@@ -1,5 +1,7 @@
 function P = HRB_universePathsFromDisk(runRoot, manifest, opt)
 %HRB_universePathsFromDisk  Rebuild the universe x subject spina from DISK.
+%  LAYOUT-SPECIFIC: assumes the 4-axis line/badchan/flag/rejepochs tree (last
+%  axis = rejepochs; flag-level <...>_epoch.set marker for the topological status).
 %
 %  Drop-in alternative to HRB_universePaths for when the in-memory `results`
 %  (and therefore the long report) is incomplete — e.g. a run that crashed and
@@ -41,8 +43,11 @@ function P = HRB_universePathsFromDisk(runRoot, manifest, opt)
 %                          => discover every subject folder under runRoot.
 %    Report       table    optional long report to layer exact labels; needs
 %                          subj_id, status, error_msg and universe_id|label
-%    EmptyPattern string   substring in report error_msg flagging a degenerate
-%                          empty dataset (default "empty") — matches HRB_universePaths
+%    EmptyPattern string   fallback: substring in report error_msg flagging a
+%                          degenerate empty dataset (default "empty")
+%    DegenerateIds string  error ids of degenerate results, used when the report
+%                          has a non-empty error_id (default "HRB:AllEpochsRejected");
+%                          same rule as HRB_universePaths
 %    OutputFile   string   if non-empty, write P to this CSV
 %
 %  OUTPUT  long table, SAME schema as HRB_universePaths (drop-in downstream):
@@ -57,6 +62,7 @@ arguments (Input)
     opt.Subjects     (1,:) string  = strings(1,0)
     opt.Report       table         = table()
     opt.EmptyPattern (1,1) string   = "empty"
+    opt.DegenerateIds (1,:) string = "HRB:AllEpochsRejected"
     opt.OutputFile   (1,1) string   = ""
 end
 
@@ -153,7 +159,11 @@ for s = 1:numel(subjFolders)
                         status(r)    = "missing";
                         error_msg(r) = "report=ok but .set not found on disk";
                     case "universe_failed"
-                        if contains(emsg, opt.EmptyPattern, IgnoreCase=true)
+                        isDegen = contains(emsg, opt.EmptyPattern, IgnoreCase = true);
+                        if ismember("error_id", string(rep.Properties.VariableNames)) && strlength(string(row.error_id)) > 0
+                            isDegen = ismember(string(row.error_id), opt.DegenerateIds); %identifier
+                        end
+                        if isDegen
                             status(r) = "degenerate";
                         else
                             status(r) = "failed";
