@@ -44,7 +44,15 @@ rep.universe_id = replace(rep.universe_label, "/", "_");
 
 % --- Iterate expected universes × subjects present in the report ---
 subjects = unique(rep.subj_id, "stable");
-uids     = manifest.universe_label;                 % already underscore form
+uids     = manifest.universe_label;                 % full label = terminal file / BST Comment form
+% Report rows carry the branch name (multiverse names only); the manifest label
+% also carries the name of a final single-universe step (B3). Join the report on
+% the branch part, look up files with the full label.
+axisCols = setdiff(manifest.Properties.VariableNames, {'universe_label'}, 'stable');
+mfBranch = strings(numel(uids), 1);
+for u = 1:numel(uids)
+    mfBranch(u) = strjoin(string(manifest{u, axisCols}), "_");
+end
 
 nRows = numel(uids) * numel(subjects);
 universe_id = strings(nRows,1);
@@ -64,8 +72,7 @@ for u = 1:numel(uids)
         subject(r)     = sid;
 
         % report row for this (subject, universe)
-        mask = rep.subj_id == sid & rep.universe_id == uid;
-
+        mask = rep.subj_id == sid & rep.universe_id == mfBranch(u);   % report = branch name
         if ~any(mask)
             % universe not in report for this subject — shouldn't happen if
             % manifest and report come from the same run; flag it
