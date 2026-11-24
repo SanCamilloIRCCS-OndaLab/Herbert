@@ -8,10 +8,11 @@ function P = HRB_universePaths(runRoot, manifest, report, opt)
 %
 %  STATUS (four values, distinct on purpose):
 %    "ok"          report=ok  AND terminal .set exists on disk
-%    "degenerate"  report=universe_failed with an empty-dataset error
-%                  (all epochs rejected / no epochs) — a RESULT, not a bug;
-%                  an empty cell in the universe×subject matrix, expected
-%    "failed"      report=universe_failed with any other error — a real crash
+%    "degenerate"  report=universe_failed with an error id in DegenerateIds
+%                  (default HRB:AllEpochsRejected) or, when error_id is absent
+%                  or empty, a message containing EmptyPattern a RESULT, not
+%                  a bug; an empty cell in the universe×subject matrix, expected
+%    "failed"      report=universe_failed with any other error a real crash
 %    "missing"     report=ok but the .set is not on disk (should not happen;
 %                  flags a save/report inconsistency worth investigating)
 %
@@ -33,7 +34,8 @@ arguments
     manifest         table
     report           table
     opt.OutputFile   (1,1) string = ""
-    opt.EmptyPattern (1,1) string = "empty"   % substring flagging a degenerate empty-dataset error
+    opt.EmptyPattern (1,1) string = "empty"   % fallback: substring flagging a degenerate empty-dataset error
+    opt.DegenerateIds (1,:) string = "HRB:AllEpochsRejected" % error identifiers of degenerate results
 end
 
 % --- Normalize report labels: branchName "/" -> prevNameFlat "_" ---
@@ -52,6 +54,7 @@ relpath     = strings(nRows,1);
 error_msg   = strings(nRows,1);
 
 r = 0;
+setIndex = containers.Map('KeyType', 'char', 'ValueType', 'any'); % one recursive dir per subj
 for u = 1:numel(uids)
     uid = uids(u);
     for s = 1:numel(subjects)
@@ -76,25 +79,34 @@ for u = 1:numel(uids)
         emsg = string(row.error_msg);
 
         if row.status == "ok"
-            % locate the terminal .set on disk: <subj>_<uid>.set
+            % locate the terminal .set: <subj>_<uid>.set, indexed once per subject
             fname = sid + "_" + uid + ".set";
-            hit   = dir(fullfile(runRoot, "**", fname));
-            if isempty(hit)
-                status(r)    = "missing";
+            if ~isKey(setIndex, char(sid))
+                d = dir(fullfile(runRoot, sid, "**", "*.set"));
+                setIndex(char(sid)) = struct('name', {string({d.name})}, 'folder', {string({d.folder})});
+            end
+            idxS = setIndex(char(sid));
+            k = find(idxS.name == fname, 1);
+            if isempty(k)
+                status(r) = "missing";
                 error_msg(r) = "report=ok but .set not found";
-                relpath(r)   = "";
+                relpath(r) = "";
             else
-                status(r)  = "ok";
-                relpath(r) = erase(string(fullfile(hit(1).folder, hit(1).name)), ...
-                                   runRoot + filesep);
+                status(r) = "ok";
+                relpath(r) = erase(fullfile(idxS.folder(k), fname), runRoot + filesep);
             end
 
         elseif row.status == "universe_failed"
-            if contains(emsg, opt.EmptyPattern, IgnoreCase=true)
-                status(r) = "degenerate";       % empty dataset → legitimate result
-            else
-                status(r) = "failed";           % real crash
+            isDegen = contains(emsg, opt.EmptyPattern, IgnoreCase=true);
+            if ismember("error_id", string(rep.Properties.VariableNames)) && strlength(string(row.error_id))>0
+                isDegen = ismember(string(row.error_id), opt.DegenerateIds); %Identifier
             end
+            if isDegen
+                status(r) = "degenerate"; % empty dataset is a legitimate result
+            else
+                status(r) = "failed"; % real crash
+            end
+            
             error_msg(r) = emsg;
             relpath(r)   = "";
 
