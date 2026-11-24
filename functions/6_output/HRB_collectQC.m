@@ -39,7 +39,7 @@ function QC = HRB_collectQC(runRoot, universePaths, manifest, opt)
 %    n_channels_removed, removed_channels, n_ica_removed, removed_comps,
 %    n_epochs_before, n_epochs_retained, n_epochs_rejected,
 %    error_msg, notes, + one column per multiverse axis (for pivoting in R)
-%
+%    removed_channels / removed_comps are ';'-separated lists (one CSV field each)
 %  OPTIONAL NAME-VALUE
 %    OutputFile   string   if non-empty, write QC to this CSV path
 %
@@ -115,7 +115,7 @@ for i = 1:nR
             chanFile = local_find_up(leafNode, subjFolder, '*ExcludedChannels*');
             if ~isempty(chanFile)
                 [n_channels_removed(i), chNames] = local_count_csv_items(chanFile);
-                removed_channels(i) = strjoin(chNames, ',');
+                removed_channels(i) = strjoin(chNames, ';');
             else
                 n_channels_removed(i) = 0;
                 noteList{end+1} = 'ExcludedChannels not found'; %#ok<AGROW>
@@ -125,7 +125,7 @@ for i = 1:nR
             compFile = local_find_up(leafNode, subjFolder, '*rejectedComps*');
             if ~isempty(compFile)
                 [n_ica_removed(i), icIdx] = local_count_csv_items(compFile);
-                removed_comps(i) = strjoin(icIdx, ',');
+                removed_comps(i) = strjoin(icIdx, ';');
             else
                 n_ica_removed(i) = 0;
                 noteList{end+1} = 'rejectedComps not found'; %#ok<AGROW>
