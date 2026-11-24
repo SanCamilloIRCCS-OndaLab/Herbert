@@ -1,13 +1,13 @@
 function files = HRB_writeQCPerUniverse(QC, opt)
-%HRB_writeQCPerUniverse  Split a long QC table into one CSV per universe.
+%HRB_writeQCPerUniverse  Split a long QC table into one file per universe (CSV and/or xlsx).
 %
 %  Takes the long QC table from HRB_collectQCFromDisk (or HRB_collectQC)
-%  — one row per universe x subject — and writes ONE summary CSV per universe,
+%  — one row per universe x subject — and writes ONE summary file per universe,
 %  with all subjects as rows. Does NOT re-read disk: it only splits and writes
 %  what QC already holds, so the numbers match the full table exactly and it is
 %  fast (no /mnt/raid access, just the CSV writes).
 %
-%  The universe key column is auto-detected: "universe" (both QC functions; "unverse_id" accepted for old tables)
+%  The universe key column is auto-detected: "universe" (both QC functions; "uinverse_id" accepted for old tables)
 %  The subject column ("subject" or "subj_id")
 %  is auto-detected for sorting. Every column is written through as-is.
 %
@@ -27,8 +27,9 @@ function files = HRB_writeQCPerUniverse(QC, opt)
 %                         skipped with a warning
 %    UniverseCol string   force the universe key column (default: auto-detect)
 %    SortBy      string   row sort column (default: auto-detect subject col)
+%    Format      string   "csv" (default) | "xlsx" | "both"
 %
-%  OUTPUT  files  string array of CSV paths written
+%  OUTPUT  files  string array of file paths written (.csv and/or .xlsx)
 %
 % Author: Ettore Napoli - University of Bologna, 2026
 
@@ -38,6 +39,7 @@ arguments (Input)
     opt.IntoReorg   (1,1) string = ""
     opt.UniverseCol (1,1) string = ""
     opt.SortBy      (1,1) string = ""
+    opt.Format      (1,1) string {mustBeMember(opt.Format, ["csv", "xlsx", "both"])} = "csv"
 end
 
 if strlength(opt.OutputDir) == 0 && strlength(opt.IntoReorg) == 0
@@ -83,17 +85,13 @@ for u = 1:numel(uids)
     end
 
     if strlength(opt.OutputDir) > 0
-        f = fullfile(char(opt.OutputDir), char(uid) + ".csv");
-        writetable(sub, f);
-        files(end+1,1) = string(f); %#ok<AGROW>
+        files = [files; local_write(sub, fullfile(opt.OutputDir, uid), opt.Format)];
     end
 
     if strlength(opt.IntoReorg) > 0
         uniDir = fullfile(char(opt.IntoReorg), char(uid));
         if isfolder(uniDir)
-            f = fullfile(uniDir, "qc_" + uid + ".csv");
-            writetable(sub, char(f));
-            files(end+1,1) = string(f); %#ok<AGROW>
+            files = [files; local_write(sub, fullfile(uniDir, "qc_" + uid), opt.Format)];
         else
             warning("HRB:UniverseFolderMissing", ...
                 "no folder for %s under %s — skipped", uid, opt.IntoReorg);
@@ -103,4 +101,17 @@ end
 
 fprintf("[HRB_writeQCPerUniverse] %d universes -> %d files written\n", ...
     numel(uids), numel(files));
+end
+
+function f = local_write(T, basePath, fmt)
+% Write T as basePath.csv and/or basePath.xlsx
+f = strings(0, 1);
+if ismember(fmt, ["csv", "both"])
+    writetable(T, char(basePath + ".csv"));
+    f(end+1, 1) = basePath + ".csv";
+end
+if ismember(fmt, ["xlsx", "both"])
+    writetable(T, char(basePath + ".xlsx"));
+    f(end+1, 1) = basePath + ".xlsx";
+end
 end
