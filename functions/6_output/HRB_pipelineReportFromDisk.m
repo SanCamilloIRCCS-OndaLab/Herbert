@@ -1,6 +1,8 @@
 function R = HRB_pipelineReportFromDisk(runRoot, manifest, opt)
 %HRB_pipelineReportFromDisk  Reconstruct HRB_pipelineReport(Format="long") from DISK.
-%
+%  %  LAYOUT-SPECIFIC: reads only <axis folders>/preprocessing/HRB_preprocessing.log
+%  (BST-step failures are invisible: "incomplete upstream"); validated on the
+%  4-axis line/badchan/flag/rejepochs tree.
 %  For when the in-memory `results` was lost (e.g. a MATLAB segfault) but the
 %  run's output tree and per-node HRB_preprocessing.log files survive. Produces
 %  the SAME long schema as HRB_pipelineReport, so it feeds HRB_universePaths
@@ -49,9 +51,10 @@ function R = HRB_pipelineReportFromDisk(runRoot, manifest, opt)
 %    Subjects    string   subjects to account for (raw or clean); empty => discover
 %    OutputFile  string   if non-empty, write R to this CSV
 %
-%  OUTPUT  long table (HRB_pipelineReport schema + two extras):
+%  OUTPUT  long table (HRB_pipelineReport columns + two extras):
 %    subj_id, universe_label(slash), status, step(NaN), error_msg,
-%    universe_id(underscore)[extra], failed_step_fn[extra]
+%    universe_id(underscore)[extra], failed_step_fn[extra],
+%    error_id ("HRB:AllEpochsRejected" for the rejepochs degenerate, else "")
 %
 % Author: Ettore Napoli - University of Bologna, 2026
 
@@ -100,6 +103,7 @@ stepCol        = nan(nRows,1);
 error_msg      = strings(nRows,1);
 universe_id    = strings(nRows,1);
 failed_step_fn = strings(nRows,1);
+error_id = strings(nRows, 1);
 
 r = 0;
 for s = 1:numel(subjFolders)
@@ -129,13 +133,13 @@ for s = 1:numel(subjFolders)
         end
         logPaths{end} = fullfile(runRootC, char(subjF), 'shared', 'preprocessing', 'HRB_preprocessing.log');
 
-        [status(r), error_msg(r), failed_step_fn(r)] = local_classify(logPaths);
+        [status(r), error_msg(r), failed_step_fn(r), error_id(r)] = local_classify(logPaths);
     end
 end
 
-R = table(subj_id, universe_label, status, stepCol, error_msg, universe_id, failed_step_fn, ...
+R = table(subj_id, universe_label, status, stepCol, error_msg, universe_id, failed_step_fn, error_id, ...
     'VariableNames', {'subj_id','universe_label','status','step','error_msg', ...
-                      'universe_id','failed_step_fn'});
+                      'universe_id','failed_step_fn', 'error_id'});
 
 fprintf(['[HRB_pipelineReportFromDisk] %d subjects x %d universes = %d rows\n' ...
          '  ok %d | universe_failed %d  (of which degenerate ~%d)\n'], ...
@@ -151,9 +155,9 @@ end
 
 
 %% ------------------------------------------------------------------ helpers
-function [status, emsg, stepfn] = local_classify(logPaths)
+function [status, emsg, stepfn, errId] = local_classify(logPaths)
 % Walk candidate logs (deepest first); first with a signature wins.
-status = "universe_failed";  emsg = "";  stepfn = "";
+status = "universe_failed";  emsg = "";  stepfn = ""; errId = "";
 
 degPat = ['[^\n]*(degenerate universe|empty dataset|0 retained|' ...
           'no data retained|all\s+\d+\s+epochs rejected)[^\n]*'];
@@ -169,6 +173,7 @@ for i = 1:numel(logPaths)
         stepfn = local_fn_of(degLine);
         tok = regexp(txt, 'All\s+(\d+)\s+epochs rejected', 'tokens', 'once', 'ignorecase');
         if ~isempty(tok)   % rejepochs: reconstruct the exact thrown message
+            errId = "HRB:AllEpochsRejected";
             emsg = "All " + string(tok{1}) + ...
                    " epochs rejected: degenerate universe, empty dataset, no data retained.";
         else               % other step: keep logged text, ensure "empty" for downstream
