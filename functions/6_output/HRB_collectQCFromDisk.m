@@ -2,7 +2,8 @@ function Q = HRB_collectQCFromDisk(runRoot, P, opt)
 %HRB_collectQCFromDisk  Per-universe QC (excluded channels, rejected comps,
 %                       rejected epochs) read from DISK — current 4-fork layout.
 %
-%  Replaces the old-layout HRB_collectQC. Reads only lightweight text artifacts
+%  Disk-only recovery twin of HRB_collectQC (same output schema). LAYOUT-SPECIFIC:
+%  assumes the 4-axis line/badchan/flag/rejepochs tree. Reads only lightweight text artifacts
 %  (no .set loading, so it's cheap on network storage):
 %    excluded channels  <subj>/<line>/<badchan>/preprocessing/*_ExcludedChannels.csv  (row 1)
 %    rejected comps     <subj>/<line>/<badchan>/<flag>/preprocessing/*_rejectedComps.txt (row 1)
@@ -20,11 +21,12 @@ function Q = HRB_collectQCFromDisk(runRoot, P, opt)
 %    % worst channel loss / most epochs rejected:
 %    sortrows(Q, "pct_epochs_rejected", "descend")
 %
-%  OUTPUT  table, one row per universe x subject:
-%    subject, universe_id, status,
-%    n_channels_excluded, channels_excluded,
-%    n_comps_rejected,    comps_rejected,
-%    n_epochs_total, n_epochs_rejected, n_epochs_retained, pct_epochs_rejected
+% OUTPUT  table, one row per universe x subject (first 10 columns = HRB_collectQC):
+%    subj_id, universe, status,
+%    n_channels_removed, removed_channels (';'-separated),
+%    n_ica_removed,      removed_comps    (';'-separated),
+%    n_epochs_before, n_epochs_retained, n_epochs_rejected, pct_epochs_rejected [extra]
+%  NAME-VALUE: OutputFile; CompsSuffix (default "_ic-removal_rejectedComps.txt")
 %
 %  NOTE  assumes axis names contain no '_' (verified for this run: line/badchan/
 %  flag/rejepochs). A subject still being written shows NaN/missing for its
@@ -36,6 +38,7 @@ arguments (Input)
     runRoot        (1,1) string
     P              table
     opt.OutputFile (1,1) string = ""
+    opt.CompsSuffix (1, 1) string = "_ic-removal_rejectedComps.txt" % <flag>-level comps file suffix
 end
 
 runRootC = char(runRoot);
@@ -74,8 +77,7 @@ for i = 1:n
     [n_channels_excluded(i), channels_excluded(i)] = local_read_list(csvF);
 
     % --- rejected components (row 1 of the txt) ---
-    compF = fullfile(flDir, char(subjF + "_" + line + "_" + badchan + "_" + flag + ...
-                                 "_ic-removal_rejectedComps.txt"));
+    compF = fullfile(flDir, char(subjF + "_" + line + "_" + badchan + "_" + flag + opt.CompsSuffix));
     [n_comps_rejected(i), comps_rejected(i)] = local_read_list(compF);
 
     % --- rejected epochs (from the rejepochs leaf log) ---
@@ -97,15 +99,15 @@ end
 Q = table(subject, universe_id, statusCol, ...
     n_channels_excluded, channels_excluded, ...
     n_comps_rejected, comps_rejected, ...
-    n_epochs_total, n_epochs_rejected, n_epochs_retained, pct_epochs_rejected, ...
-    'VariableNames', {'subject','universe_id','status', ...
-        'n_channels_excluded','channels_excluded', ...
-        'n_comps_rejected','comps_rejected', ...
-        'n_epochs_total','n_epochs_rejected','n_epochs_retained','pct_epochs_rejected'});
+    n_epochs_total, n_epochs_retained, n_epochs_rejected, pct_epochs_rejected, ...
+    'VariableNames', {'subj_id','universe','status', ...
+        'n_channels_removed','removed_channels', ...
+        'n_ica_removed','removed_comps', ...
+        'n_epochs_before','n_epochs_retained','n_epochs_rejected','pct_epochs_rejected'});
 
 fprintf(['[HRB_collectQCFromDisk] %d rows | channels read %d | comps read %d | ' ...
-         'epochs read %d\n'], n, sum(~isnan(Q.n_channels_excluded)), ...
-    sum(~isnan(Q.n_comps_rejected)), sum(~isnan(Q.n_epochs_total)));
+         'epochs read %d\n'], n, sum(~isnan(Q.n_channels_removed)), ...
+    sum(~isnan(Q.n_ica_removed)), sum(~isnan(Q.n_epochs_before)));
 
 if strlength(opt.OutputFile) > 0
     writetable(Q, char(opt.OutputFile));
