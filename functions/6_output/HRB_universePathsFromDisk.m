@@ -69,6 +69,12 @@ end
 runRootC = char(runRoot);
 uids     = string(manifest.universe_label);
 
+axisCols = setdiff(manifest.Properties.VariableNames, {'universe_label'}, 'stable');
+mfBranch = strings(numel(uids), 1);   % branch part of each label (report join key)
+for u = 1:numel(uids)
+    mfBranch(u) = strjoin(string(manifest{u, axisCols}), "_");
+end
+
 % --- Subject folders: discover from disk, or clean the supplied list ---
 if isempty(opt.Subjects)
     d     = dir(runRootC);
@@ -88,8 +94,8 @@ haveRep = ~isempty(opt.Report);
 if haveRep
     rep     = opt.Report;
     rv      = string(rep.Properties.VariableNames);
-    if ~ismember("universe_id", rv) && ismember("universe_label", rv)
-        rep.universe_id = replace(string(rep.universe_label), "/", "_");
+    if ismember("universe_label", rv)
+        rep.universe_id = replace(string(rep.universe_label), "/", "_");   % branch form (no final-step suffix)
     end
     haveRep = all(ismember(["subj_id","status","error_msg","universe_id"], ...
                            string(rep.Properties.VariableNames)));
@@ -150,7 +156,7 @@ for s = 1:numel(subjFolders)
 
         % Layer exact report label where available (disk 'ok' always wins).
         if haveRep && status(r) ~= "ok"
-            m = rep.subj_clean == subjF & rep.universe_id == uid;
+            m = rep.subj_clean == subjF & (rep.universe_id == mfBranch(u) | rep.universe_id == uid);   % branch or full label
             if any(m)
                 row  = rep(find(m,1), :);
                 emsg = string(row.error_msg);
