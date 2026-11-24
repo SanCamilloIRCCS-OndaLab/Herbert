@@ -23,6 +23,7 @@ function R = HRB_pipelineReport(results, allNames, opt)
 %          status          string   'ok' | 'universe_failed' | 'dataset_failed' | 'skipped'
 %          step            double   HRB_step index at crash (NaN if not a failure)
 %          error_msg       string   error message ('' if ok/skipped)
+%          error_id        string   MException identifier of a universe failure ('' if ok/skipped/dataset_failed or no id)
 %
 %  OUTPUT — Format="summary"
 %    R   table, one row per subject:
@@ -59,7 +60,8 @@ rows = struct( ...
     'universe_label', {{}}, ...
     'status',         {{}}, ...
     'step',           {{}}, ...
-    'error_msg',      {{}});
+    'error_msg',      {{}}, ...
+    'error_id',       {{}});
 nRows = 0;
 
 for i = 1:nSubj
@@ -69,22 +71,24 @@ for i = 1:nSubj
     % Case 1: excluded subject 
     if isstruct(entry) && isfield(entry, 'HRB_skipped') && entry.HRB_skipped
         nRows = nRows + 1;
-        rows(nRows).subj_id        = char(entry.subject);
+        rows(nRows).subj_id        = replace(char(entry.subject), {'_',' '}, '-');
         rows(nRows).universe_label = '';
         rows(nRows).status         = 'skipped';
         rows(nRows).step           = NaN;
         rows(nRows).error_msg      = '';
+        rows(nRows).error_id       = '';
         continue
     end
 
     % Case 2: dataset-level failure (crash in HRB_runDataset try/catch)
     if isstruct(entry) && isfield(entry, 'HRB_failed') && entry.HRB_failed
         nRows = nRows + 1;
-        rows(nRows).subj_id        = char(entry.subject);
+        rows(nRows).subj_id        = replace(char(entry.subject), {'_', ' '}, '-');
         rows(nRows).universe_label = '';
         rows(nRows).status         = 'dataset_failed';
         rows(nRows).step           = NaN;
         rows(nRows).error_msg      = char(entry.error);
+        rows(nRows).error_id = '';
         continue
     end
 
@@ -96,6 +100,7 @@ for i = 1:nSubj
         rows(nRows).status         = 'dataset_failed';
         rows(nRows).step           = NaN;
         rows(nRows).error_msg      = sprintf('Unexpected results type: %s', class(entry));
+        rows(nRows).error_id = '';
         continue
     end
 
@@ -120,10 +125,12 @@ for i = 1:nSubj
             rows(nRows).status    = 'universe_failed';
             rows(nRows).step      = local_get_field(u, 'HRB_step', NaN);
             rows(nRows).error_msg = local_get_field(u, 'HRB_error', '');
+            rows(nRows).error_id = local_get_field(u, 'HRB_errorId', '');
         else
             rows(nRows).status    = 'ok';
             rows(nRows).step      = NaN;
             rows(nRows).error_msg = '';
+            rows(nRows).error_id = '';
         end
     end
 end
@@ -165,8 +172,9 @@ R = table( ...
     string({rows(1:nRows).universe_label})', ...
     string({rows(1:nRows).status})',         ...
     [rows(1:nRows).step]',                   ...
-    string({rows(1:nRows).error_msg})',      ...
-    'VariableNames', {'subj_id','universe_label','status','step','error_msg'});
+    string({rows(1:nRows).error_msg})', ...
+    string({rows(1:nRows).error_id})', ...
+    'VariableNames',{'subj_id', 'universe_label', 'status', 'step', 'error_msg', 'error_id'});
 end
 
 function R = local_build_summary(rows, nRows)
@@ -202,9 +210,9 @@ end
 
 function R = local_empty_table(fmt)
 if fmt == "long"
-    R = table('Size',[0 5], ...
-        'VariableTypes', {'string','string','string','double','string'}, ...
-        'VariableNames', {'subj_id','universe_label','status','step','error_msg'});
+    R = table('Size',[0 6], ...
+        'VariableTypes', {'string','string','string','double','string', 'string'}, ...
+        'VariableNames', {'subj_id','universe_label','status','step','error_msg', 'error_id'});
 else
     R = table('Size',[0 5], ...
         'VariableTypes', {'string','double','double','double','string'}, ...
