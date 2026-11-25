@@ -25,8 +25,8 @@ function [EEG] = HRB_bst_import(InputData, opt)
 %   ProtocolName (string): Name of Brainstorm protocol to create or reuse.
 %                          Default: "HRB_Protocol"
 %
-%   SubjectName (string): Subject name in Brainstorm. If empty, inferred
-%                         from EEG.subject, EEG.setname, or filename.
+%   SubjectName (string): Subject name in Brainstorm. If empty, taken from
+%                         EEG.subject (required: error HRB:NoSubject)
 %
 %   UseDefaultAnat (logical): Use ICBM152 template anatomy. Default: true.
 %
@@ -128,113 +128,36 @@ function [EEG] = HRB_bst_import(InputData, opt)
     %% 3. Output folder
     % =========================================================================
     if config.OutputFolder == ""
-        timestamp = string(datetime("now", "Format", "yyyyMMdd_HHmmss"));
-        config.OutputFolder = fullfile("output", timestamp);
+        gcfg = HRB_loadConfig("general", "save");
+        config.OutputFolder = gcfg.OutputFolder;
     end
     if ~exist(config.OutputFolder, 'dir')
         mkdir(config.OutputFolder);
     end
 
-    % =========================================================================
-    %% 4. Brainstorm database location
-    % =========================================================================
-    if strlength(config.BrainstormDbDir) > 0
-        dbDir = char(config.BrainstormDbDir);
-    else
-        dbDir = fullfile(pwd, 'brainstorm_db');
-    end
-    if ~exist(dbDir, 'dir')
-        mkdir(dbDir);
-    end
-    log.info(sprintf("Brainstorm DB: %s", dbDir));
-
-    % =========================================================================
-    %% 5. Start Brainstorm
-    % =========================================================================
-    if ~brainstorm('status')
-        log.info("Starting Brainstorm (nogui)...");
-        brainstorm server;
-        timeout = 120;
-        t = tic;
-        while toc(t) < timeout
-            try
-                bst_get('BrainstormDbDir');
-                break;
-            catch
-                pause(1);
-            end
-        end
-        if toc(t) >= timeout
-            error("HRB:BrainstormTimeout", "Brainstorm failed to initialize within %d seconds.", timeout);
-        end
-        log.info("Brainstorm initialized successfully.");
-    end
-
-    % Update DB path only if different
-    currentDbDir = bst_get('BrainstormDbDir');
-    if ~strcmpi(strip(currentDbDir, 'right', filesep), strip(dbDir, 'right', filesep))
-        log.info(sprintf("Switching BST DB: '%s' to '%s'", currentDbDir, dbDir));
-        bst_set('BrainstormDbDir', dbDir);
-        gui_brainstorm('UpdateProtocolsList');
-    else
-        log.info("Brainstorm DB path is already correct.");
-    end
-
-    % =========================================================================
-    %% 6. Manage Protocol
-    % =========================================================================
-    protocolName = char(config.ProtocolName)
-    iProtocol = bst_get('Protocol', protocolName);
-
-    if isempty(iProtocol)
-        
-        protocolDir = fullfile(dbDir, protocolName);
-        
-        if exist(protocolDir, 'dir')
-            log.info(sprintf("Protocol '%s' found on disk. Reloading DB", protocolName));
-            gui_brainstorm('UpdateProtocolsList');
-            iProtocol = bst_get('Protocol', protocolName);
-        end
-    end
-
-    if isempty(iProtocol)
-
-        log.info(sprintf("Creating new protocol: %s", protocolName));
-        gui_brainstorm('CreateProtocol', protocolName, double(config.UseDefaultAnat), 0);
-    else
-        log.info(sprintf("Using Existing Protocol: %s", protocolName));
-        gui_brainstorm('SetCurrentProtocol', iProtocol);
-    end
+    
+    %% 4. Brainstorm: start (server mode), DB, protocol (created if missing)
+    
+    dbDir = HRB_bst_connect(config.BrainstormDbDir, config.ProtocolName, log, ...
+        CreateIfMissing = true, UseDefaultAnat = config.UseDefaultAnat);
 
     
     %% 7. Subject name
     
-    if config.SubjectName == ""
-        if isFilePath
-            [~, fname, ~] = fileparts(filePath);
-            subjName = fname;
-        else
-            if isfield(InputData, 'subject') && ~isempty(InputData.subject)
-                subjName = InputData.subject;
-            elseif ~isempty(InputData.setname)
-                [~, subjName, ~] = fileparts(InputData.setname);
-            elseif isfield(InputData, 'filename') && ~isempty(InputData.filename)
-                [~, subjName, ~] = fileparts(InputData.filename);
-
-            else
-                subjName = sprintf("sub_%s", string(datetime("now", "Format", "yyyyMMddHHmmss")));
-                log.warning(sprintf("Could not infer subject name. Using: %s", subjName));
-            end
-
-            % Sanitize — Remove problematic characters
-            subjName = regexprep(subjName, '[-\s\.]+', '_');
-            subjName = regexprep(subjName, '[^a-zA-Z0-9_]', '');
-
-
-        end
-    else
+        % EEG.subject is the authoritative subject ID (set by HRB_runDataset).
+    % No fallback on setname/filename.
+    if isFilePath, srcInfo = EEG_info; else, srcInfo = InputData; end
+    if config.SubjectName ~= ""
         subjName = char(config.SubjectName);
+    elseif isfield(srcInfo, 'subject') && ~isempty(srcInfo.subject)
+        subjName = char(srcInfo.subject);
+    else
+        error("HRB:NoSubject", ...
+            "EEG.subject is empty. It is the authoritative subject ID (set by HRB_runDataset); no fallback on setname/filename.");
     end
+    % Sanitize uniformly (all input modes)  identity for IDs validated by runDataset
+    subjName = regexprep(subjName, '[-\s\.]+', '_');
+    subjName = regexprep(subjName, '[^a-zA-Z0-9_]', '');
     log.info(sprintf("Subject name: %s", subjName));
 
     %% 7b. Skip check
