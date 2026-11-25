@@ -58,45 +58,13 @@ end
 
 %% 2. Output folder
 if config.OutputFolder == ""
-    config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
+    gcfg = HRB_loadConfig("general", "save");
+    config.OutputFolder = gcfg.OutputFolder;
 end
 if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
 
-%% 3. Brainstorm database location
-if strlength(config.BrainstormDbDir) > 0
-    dbDir = char(config.BrainstormDbDir);
-else
-    dbDir = fullfile(pwd, "brainstorm_db");
-end
-if ~exist(dbDir,'dir'), mkdir(dbDir); end
-
-%% 4. Start Brainstorm
-if ~brainstorm('status')
-    brainstorm server;
-    t = tic;
-    while toc(t) < 60
-        try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
-    end
-end
-
-%% 5. Switch DB if needed
-currentDbDir = bst_get('BrainstormDbDir');
-if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
-    bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
-end
-
-%% 6. Activate protocol
-iProtocol = bst_get('Protocol', protocolName);
-if isempty(iProtocol)
-    % Protocol not found in memory — rescan DB to discover it
-    gui_brainstorm('UpdateProtocolsList');
-    iProtocol = bst_get('Protocol', protocolName);
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
-end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
+%% 3. Brainstorm: start (server mode), DB, protocol
+dbDir = HRB_bst_connect(config.BrainstormDbDir, protocolName, log);
 
 %% 7. Select recordings
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
@@ -154,13 +122,17 @@ try
         'https://neuroimage.usc.edu/resources/nst_data/fluence/', ...
         'smoothing_method','geodesic_dist','smoothing_fwhm',10);
 
+    % Headmodel identity = method + forward model parameters
+    hmComment = sprintf('3_Shell_%s', char(config.SourceSpace));
+    
     % Skip if headmodel already computed for this subject/method
-    if local_headmodelExists(subjName, '3_Shell')
-        log.info("*** SKIP: Headmodel '3_Shell' already exists. Skipping recomputation. ***");
+    if HRB_bst_headmodelExists(subjName, hmComment)
+        log.info(sprintf("Skip: headmodel '%s' already exists. Skipping recomputation.", hmComment));
+
     else
         log.info(sprintf("Computing head model (3-Shell Sphere, space: %s)...", config.SourceSpace));
         recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
-            'Comment','3_Shell','sourcespace',spaceValue, ...
+            'Comment',hmComment,'sourcespace',spaceValue, ...
             'meg',1,'eeg',2,'ecog',2,'seeg',2,'nirs',1, ...
             'openmeeg',openmeegStruct,'nirstorm',nirstormStruct,'channelfile','');
 
@@ -183,6 +155,7 @@ else
 end
 
 EEG.etc.brainstorm.headmodel_method = '3-ShellSphere';
+EEG.etc.brainstorm.headmodel_comment = hmComment;
 EEG.etc.brainstorm.headmodel_space  = char(config.SourceSpace);
 EEG.etc.brainstorm.protocol         = protocolName;
 EEG.etc.brainstorm.subject          = subjName;
@@ -195,28 +168,4 @@ if config.Save
         "OutputFolder",config.OutputFolder,logParams{:});
 end
 
-end
-
-%% Local helper — check if headmodel already computed
-function found = local_headmodelExists(subjName, comment)
-    found = false;
-    try
-        [sSubject, ~] = bst_get('Subject', char(subjName));
-        if isempty(sSubject), return; end
-        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
-        for i = 1:length(sStudies)
-            % *** FIX: skip studies that don't belong to this subject ***
-            if ~contains(sStudies(i).FileName, char(subjName))
-                continue;
-            end
-            if ~isempty(sStudies(i).HeadModel)
-                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
-                    found = true;
-                    return;
-                end
-            end
-        end
-    catch
-        found = false;
-    end
 end
