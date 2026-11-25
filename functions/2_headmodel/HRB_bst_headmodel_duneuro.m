@@ -61,49 +61,19 @@ end
 
 % Extract bst condition name from metadata
 if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
-    bstCondition = InputData.etc.brainstorm.condition
+    bstCondition = InputData.etc.brainstorm.condition;
 else
     bstCondition = '';
 end
 
 if config.OutputFolder == ""
-    config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
+    gcfg = HRB_loadConfig("general", "save");
+    config.OutputFolder = gcfg.OutputFolder;
 end
 if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
 
-if strlength(config.BrainstormDbDir) > 0
-    dbDir = char(config.BrainstormDbDir);
-else
-    dbDir = fullfile(pwd, "brainstorm_db");
-end
-if ~exist(dbDir,'dir'), mkdir(dbDir); end
-
-if ~brainstorm('status')
-    brainstorm nogui;
-    t = tic;
-    while toc(t) < 60
-        try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
-    end
-end
-
-currentDbDir = bst_get('BrainstormDbDir');
-if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
-    bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
-end
-
-% Rescan DB directory to discover protocols created by other BST instances.
-iProtocol = bst_get('Protocol', protocolName);
-if isempty(iProtocol)
-    % Protocol not found in memory — rescan DB to discover it
-    gui_brainstorm('UpdateProtocolsList');
-    iProtocol = bst_get('Protocol', protocolName);
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
-end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
-gui_brainstorm('SetCurrentProtocol', iProtocol);
+%% Brainstorm: start (server mode), DB, protocol
+dbDir = HRB_bst_connect(config.BrainstormDbDir, protocolName, log);
 
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
     'subjectname',subjName,'condition','','tag','', ...
@@ -178,23 +148,29 @@ try
         'BstMegTransferFile','meg_transfer.dat', ...
         'BstEegLfFile','eeg_lf.dat','BstMegLfFile','meg_lf.dat', ...
         'UseIntegrationPoint',1,'EnableCacheMemory',0,'MegPerBlockOfSensor',0);
+        
+    % Headmodel identity = method + forward-model parameters
+    hmComment = sprintf('FEM_%s_%s_%s_%s_iso%d', char(config.SourceSpace), ...
+        char(config.DUNeuroFemType), char(config.DUNeuroSolverType), ...
+        char(config.DUNeuroSrcModel), double(config.DUNeuroIsotropic));
 
-    if local_headmodelExists
-        log.info("Skip: headmodel 'FEM' already exists. Skipping recomputation");
+        if HRB_bst_headmodelExists(subjName, hmComment)
+        log.info(sprintf("Skip: headmodel '%s' already exists. Skipping recomputation.", hmComment));
     else
-    log.info(sprintf("Computing head model (DUNeuro FEM, type=%s, space: %s)...", ...
-        config.DUNeuroFemType, config.SourceSpace));
+        log.info(sprintf("Computing head model (DUNeuro FEM, type=%s, space: %s)...", ...
+            config.DUNeuroFemType, config.SourceSpace));
 
-    recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
-        'Comment','FEM','sourcespace',spaceValue, ...
-        'meg',1,'eeg',4,'ecog',2,'seeg',2,'nirs',1, ...
-        'openmeeg',openmeegStruct,'nirstorm',nirstormStruct, ...
-        'duneuro',duneuroStruct,'channelfile','');
+        recordings = bst_process('CallProcess','process_headmodel',recordings,[], ...
+            'Comment',hmComment,'sourcespace',spaceValue, ...
+            'meg',1,'eeg',4,'ecog',2,'seeg',2,'nirs',1, ...
+            'openmeeg',openmeegStruct,'nirstorm',nirstormStruct, ...
+            'duneuro',duneuroStruct,'channelfile','');
 
-    if isempty(recordings)
-        error("HRB:HeadModelFailed","DUNeuro head model failed for subject '%s'.", subjName);
-    end
-    log.info("Head model computed successfully (DUNeuro FEM).");
+        if isempty(recordings)
+            error("HRB:HeadModelFailed","DUNeuro head model failed for subject '%s'.", subjName);
+        end
+        log.info("Head model computed successfully (DUNeuro FEM).");
+    end   % end skip check
 
 catch ME
     log.error(sprintf("HRB_bst_headmodel_duneuro failed: %s", ME.message));
@@ -208,6 +184,7 @@ else
 end
 
 EEG.etc.brainstorm.headmodel_method = 'DUNeuro';
+EEG.etc.brainstorm.headmodel_comment = hmComment;
 EEG.etc.brainstorm.headmodel_space  = char(config.SourceSpace);
 EEG.etc.brainstorm.protocol         = protocolName;
 EEG.etc.brainstorm.subject          = subjName;
@@ -219,28 +196,4 @@ if config.Save
         "OutputFolder",config.OutputFolder,logParams{:});
 end
 
-end
-
-%% Helper - check if headmodel already exists
-    function found = local_headmodelExists(subjName, comment)
-    found = false;
-    try
-        [sSubject, ~] = bst_get('Subject', char(subjName));
-        if isempty(sSubject), return; end
-        [sStudies, ~] = bst_get('StudyWithSubject', sSubject.FileName);
-        for i = 1:length(sStudies)
-            % *** FIX: skip studies that don't belong to this subject ***
-            if ~contains(sStudies(i).FileName, char(subjName))
-                continue;
-            end
-            if ~isempty(sStudies(i).HeadModel)
-                if any(strcmpi({sStudies(i).HeadModel.Comment}, comment))
-                    found = true;
-                    return;
-                end
-            end
-        end
-    catch
-        found = false;
-    end
 end
