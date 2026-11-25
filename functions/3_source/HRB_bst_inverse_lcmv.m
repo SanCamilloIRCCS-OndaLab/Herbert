@@ -2,11 +2,6 @@ function EEG = HRB_bst_inverse_lcmv(InputData, opt)
 % HRB_BST_INVERSE_LCMV - Compute LCMV beamformer inverse solution.
 % Method-specific sub-function of HRB_bst_inverse.
 %
-% Fixes vs HRB_bst_inverse:
-%   B2: SourceOrient correctly passed from DipolOrientation.
-%   B5: DATA covariance computed HERE (not in headmodel), since it is
-%       only needed for LCMV. LCMV does NOT support "loose" orientation.
-%
 % Usage:
 %   >>> EEG = HRB_bst_inverse_lcmv(EEG);
 %   >>> EEG = HRB_bst_inverse_lcmv(EEG, 'DipolOrientation','unconstrained');
@@ -62,16 +57,16 @@ else
     log.info(sprintf("Input mode: EEG struct (subject: %s)", subjName));
 end
 
-    % =========================================================================
-    %% Resolve BST condition name
+    
+    % Resolve BST condition name
     % Each pipeline universe imports into a unique BST condition (named after
     % the universe, set by HRB_bst_import via SaveName). Reading it here
     % ensures we query only this universe's recordings — not recordings from
     % other filter branches or universes sharing the same subject/protocol.
     % If no condition is stored (subject-name input mode), bstCondition = ''
     % selects all recordings for the subject (safe for single-universe use).
-    % =========================================================================
-    % *** condition name (set by HRB_bst_import = universe SaveName) ***
+    
+    % condition name (set by HRB_bst_import = universe SaveName) 
     if ~isSubjName && isfield(InputData.etc.brainstorm, 'condition')
         bstCondition = InputData.etc.brainstorm.condition;
     else
@@ -79,43 +74,13 @@ end
     end
 
 if config.OutputFolder == ""
-    config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
+   gcfg = HRB_loadConfig("general", "save");
+   config.OutputFolder = gcfg.OutputFolder;
 end
 if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
 
-if strlength(config.BrainstormDbDir) > 0
-    dbDir = char(config.BrainstormDbDir);
-else
-    dbDir = fullfile(pwd, "brainstorm_db");
-end
-if ~exist(dbDir,'dir'), mkdir(dbDir); end
-
-if ~brainstorm('status')
-    % Use 'server' mode: fully headless, no Java/X11 required.
-    % 'nogui' mode still needs an X display on headless Linux servers.
-    brainstorm server;
-    t = tic;
-    while toc(t) < 60
-        try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
-    end
-end
-
-currentDbDir = bst_get('BrainstormDbDir');
-if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
-    bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
-end
-
-iProtocol = bst_get('Protocol', protocolName);
-if isempty(iProtocol)
-    % Protocol not found in memory — rescan DB to discover it
-    gui_brainstorm('UpdateProtocolsList');
-    iProtocol = bst_get('Protocol', protocolName);
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
-end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
+% Brainstorm: start (server mode), DB, protocol
+dbDir = HRB_bst_connect(config.BrainstormDbDir, protocolName, log);
 
 recordings = bst_process('CallProcess','process_select_files_data',[],[], ...
     'subjectname',subjName,'condition', bstCondition, ...  
@@ -124,7 +89,7 @@ if isempty(recordings)
     error("HRB:NoRecordings","No recordings for subject '%s'.", subjName);
 end
 
-%% Data covariance (FIX B5: only here, not in headmodel)
+%% Data covariance
 log.info(sprintf("Computing data covariance for LCMV (sensors: %s)...", config.DataCovSensorTypes));
 
 recordings = bst_process('CallProcess','process_noisecov', recordings, [], ...
@@ -164,7 +129,7 @@ log.info(sprintf("Computing LCMV beamformer (orient=%s)...", config.DipolOrienta
 
 % Set correct head model
 if ~isSubjName && isfield(InputData.etc.brainstorm, 'headmodel_method')
-    local_set_headmodel(subjName, InputData.etc.brainstorm.headmodel_method, log);
+    HRB_bst_selectHeadmodel(subjName, InputData.etc.brainstorm, log);
 end
 
 try
@@ -229,79 +194,4 @@ function v = mapCovReg(r)
         case "none",       v = 'none';
         case "auto",       v = 'shrink';
     end
-end
-
-function local_set_headmodel(subjName, headmodelMethod, log)
-% SELECT THE CORRECT HEADMODEL FOR INVERSE IN ALL SUBJECT STUDIES.
-%
-% FIX (M19): propagate iHeadModel to every study of the subject, not only
-% to the one that physically stores the headmodel file. Without this,
-% process_inverse_2018 running on a condition whose study has no local
-% headmodel falls back to an arbitrary BST default, ignoring the
-% iHeadModel we set in the headmodel-owning study. This caused openmeeg
-% and sphere branches of the same filter to produce identical inverse
-% kernels whenever their recordings were in a different study from the
-% one where the headmodel was computed.
-
-% Map HERBERT headmodel method name to BST Comment string
-switch char(headmodelMethod)
-    case '3-ShellSphere', bstComment = '3_Shell';
-    case 'OpenMEEG',      bstComment = 'BEM';
-    case 'DUNeuro',       bstComment = 'FEM';
-    otherwise,            bstComment = char(headmodelMethod);
-end
-
-[sSubject, ~] = bst_get('Subject', char(subjName));
-if isempty(sSubject)
-    log.warn(sprintf("local_set_headmodel: subject '%s' not found.", subjName));
-    return;
-end
-[sStudies, iStudies] = bst_get('StudyWithSubject', sSubject.FileName);
-
-% Step 1: find the HeadModel entry in whichever study currently owns it
-hmEntry = [];
-for iS = 1:numel(sStudies)
-    if ~contains(sStudies(iS).FileName, char(subjName)), continue; end
-    if isempty(sStudies(iS).HeadModel), continue; end
-    iHM = find(strcmpi({sStudies(iS).HeadModel.Comment}, bstComment), 1);
-    if ~isempty(iHM)
-        hmEntry = sStudies(iS).HeadModel(iHM);  % save struct entry (filename + comment)
-        break;
-    end
-end
-if isempty(hmEntry)
-    log.warn(sprintf("Headmodel '%s' not found for '%s'. Using BST default.", ...
-        bstComment, subjName));
-    return;
-end
-
-% Step 2: propagate iHeadModel to ALL studies of the subject.
-% Studies that already have the headmodel entry: just set the index.
-% Studies that do not: add the entry (pointing to the same file) and
-% set the index. This allows process_inverse_2018 to find the correct
-% headmodel regardless of which condition's study owns the recordings.
-nSet = 0;
-for iS = 1:numel(sStudies)
-    if ~contains(sStudies(iS).FileName, char(subjName)), continue; end
-    if isempty(sStudies(iS).HeadModel)
-        % No headmodel in this study: add a reference to the correct one
-        sStudies(iS).HeadModel  = hmEntry;
-        sStudies(iS).iHeadModel = 1;
-    else
-        iHM = find(strcmpi({sStudies(iS).HeadModel.Comment}, bstComment), 1);
-        if ~isempty(iHM)
-            % Entry already present: just update the selection index
-            sStudies(iS).iHeadModel = iHM;
-        else
-            % Entry missing: append it and point to the new slot
-            sStudies(iS).HeadModel(end+1) = hmEntry;
-            sStudies(iS).iHeadModel = numel(sStudies(iS).HeadModel);
-        end
-    end
-    bst_set('Study', iStudies(iS), sStudies(iS));
-    nSet = nSet + 1;
-end
-db_save();
-log.info(sprintf("Headmodel '%s' propagated to %d studies for '%s'.", ...
-    bstComment, nSet, subjName));
 end
