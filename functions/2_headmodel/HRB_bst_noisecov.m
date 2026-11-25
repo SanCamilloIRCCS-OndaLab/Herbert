@@ -118,68 +118,15 @@ end
 
 %% 2. Output folder
 if config.OutputFolder == ""
-    timestamp = string(datetime("now", "Format", "yyyyMMdd_HHmmss"));
-    config.OutputFolder = fullfile("output", timestamp);
+    gcfg = HRB_loadConfig("general", "save");
+    config.OutputFolder = gcfg.OutputFolder;
 end
 if ~exist(config.OutputFolder, 'dir')
     mkdir(config.OutputFolder);
 end
 
-%% 3. Brainstorm database location
-if strlength(config.BrainstormDbDir) > 0
-    dbDir = char(config.BrainstormDbDir);
-else
-    dbDir = fullfile(pwd, "brainstorm_db");
-end
-if ~exist(dbDir, 'dir')
-    mkdir(dbDir);
-end
-log.info(sprintf("Brainstorm DB: %s", dbDir));
-
-%% 4. Start Brainstorm
-if ~brainstorm('status')
-    log.info("Starting Brainstorm (nogui)...");
-    % Use 'server' mode: fully headless, no Java/X11 required.
-    % 'nogui' mode still needs an X display on headless Linux servers.
-    brainstorm server;
-    timeout = 60;
-    t = tic;
-    while toc(t) < timeout
-        try
-            bst_get('BrainstormDbDir');
-            break;
-        catch
-            pause(1);
-        end
-    end
-    if toc(t) >= timeout
-        error("HRB:BrainstormTimeout", ...
-            "Brainstorm failed to initialize within %d seconds.", timeout);
-    end
-    log.info("Brainstorm initialized successfully.");
-end
-
-%% 5. Switch DB if needed
-currentDbDir = bst_get('BrainstormDbDir');
-if ~strcmpi(strip(currentDbDir, 'right', filesep), strip(dbDir, 'right', filesep))
-    log.info(sprintf("Switching BST DB: '%s' to '%s'", currentDbDir, dbDir));
-    bst_set('BrainstormDbDir', dbDir);
-    gui_brainstorm('UpdateProtocolsList');
-end
-
-
-%% 6. Activate protocol
-iProtocol = bst_get('Protocol', protocolName);
-if isempty(iProtocol)
-    gui_brainstorm('UpdateProtocolsList');
-    iProtocol = bst_get('Protocol', protocolName);
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
-end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
-log.info(sprintf("Protocol '%s' set as current.", protocolName));
+%% 3. Brainstorm: start (server mode), DB, protocol
+dbDir = HRB_bst_connect(config.BrainstormDbDir, protocolName, log);
 
 %% 7. Select recordings
 recordings = bst_process('CallProcess', 'process_select_files_data', [], [], ...
@@ -254,6 +201,7 @@ end
 
 
 %% Helper
+% process_noisecov: 'target' is a 'radio' option (1=noise, 2=data)
 function v = mapTarget(t)
     switch t
         case "noise", v = 1;
