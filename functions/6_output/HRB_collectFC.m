@@ -36,7 +36,7 @@ function T = HRB_collectFC(protocolName, subjectList, opt)
 %   - Universe labels in BST Comments must follow the format produced by
 %     HRB_runPipeline: '{subjIdClean}_{filter}_{headmodel}_{inverse}_{connectivity}'
 %     where subjIdClean = strrep(subjId, '_', '-').
-%
+%     Comments without that prefix are skipped (warning HRB:NoSubjPrefix)
 % Authors: Ettore Napoli, University of Bologna, 2026
 
 arguments
@@ -101,22 +101,23 @@ for iSubj = 1:nSubj
 
     fprintf('[%d/%d] %s\n', iSubj, nSubj, subjId);
 
-    [sSubject, ~] = bst_get('Subject', char(subjId));
+    [sSubject, ~] = bst_get('Subject', char(subjId), 1); % isRaw=1: own file not default subj
     if isempty(sSubject)
         warning('HRB:SubjectNotFound', 'Subject ''%s'' not found in protocol. Skipping.', subjId);
         continue;
     end
 
-    % bst_get('StudyWithSubject') returns studies from ALL subjects sharing
-    % the same anatomy template (known cross-contamination issue with default
-    % anatomy). Filter by FileName below to keep only this subject's studies.
+    % sSubject is the subject's own file (isRaw=1): with the default
+    % anatomy file, StudyWithSubject would return the studies of ALL
+    % default-anatomy subjects. The folder guard below stays as a second
+    % safety net
     sStudies = bst_get('StudyWithSubject', sSubject.FileName);
 
     for iSt = 1:numel(sStudies)
         sStudy = sStudies(iSt);
 
-        % Cross-contamination guard
-        if ~contains(sStudy.FileName, char(subjId))
+        % Cross-contamination guard (folder match)
+        if ~HRB_bst_isSubjectStudy(sStudy.FileName, sSubject.FileName)
             continue;
         end
         if isempty(sStudy.Timefreq)
@@ -131,11 +132,10 @@ for iSubj = 1:nSubj
             if startsWith(comment, prefix)
                 universeLabel = extractAfter(comment, prefix);
             else
-                % Old run without subjId prefix — use full comment, emit warning
+                % not attributable to this run (old run or another subj): skip
                 warning('HRB:NoSubjPrefix', ...
-                    'Comment "%s" missing expected prefix "%s". Using full comment as universe_label.', ...
-                    comment, prefix);
-                universeLabel = comment;
+                    'Comment "%s" lacks the expected prefix "%s": skipped.', comment, prefix);
+                continue;
             end
 
             % Filter by universe, if present
