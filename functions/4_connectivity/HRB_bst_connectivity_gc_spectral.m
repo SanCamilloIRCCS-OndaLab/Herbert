@@ -74,53 +74,15 @@ else
 end
 
 if config.OutputFolder == ""
-    config.OutputFolder = fullfile("output", string(datetime("now","Format","yyyyMMdd_HHmmss")));
+   gcfg = HRB_loadConfig("general", "save");
+   config.OutputFolder = gcfg.OutputFolder;
 end
 if ~exist(config.OutputFolder,'dir'), mkdir(config.OutputFolder); end
 
-if strlength(config.BrainstormDbDir) > 0
-    dbDir = char(config.BrainstormDbDir);
-else
-    dbDir = fullfile(pwd, 'brainstorm_db');
-end
-if ~exist(dbDir,'dir'), mkdir(dbDir); end
-
-bst_working = false;
-if brainstorm('status')
-    try, bst_get('BrainstormDbDir'); bst_working = true; catch, end
-end
-if ~bst_working
-    % Use 'server' mode: fully headless, no Java/X11 required.
-    % 'nogui' mode still needs an X display on headless Linux servers.
-    brainstorm server;
-    timeout = 120; t = tic;
-    while toc(t) < timeout
-        try, bst_get('BrainstormDbDir'); break; catch, pause(1); end
-    end
-    if toc(t) >= timeout
-        error("HRB:BrainstormTimeout","Brainstorm failed to initialize within %d seconds.", timeout);
-    end
-end
-
-currentDbDir = bst_get('BrainstormDbDir');
-if ~strcmpi(strip(currentDbDir,'right',filesep), strip(dbDir,'right',filesep))
-    bst_set('BrainstormDbDir', dbDir); gui_brainstorm('UpdateProtocolsList');
-end
-
-% Rescan DB directory to discover protocols created by other BST instances.
-iProtocol = bst_get('Protocol', protocolName);
-if isempty(iProtocol)
-    % Protocol not found in memory — rescan DB to discover it
-    gui_brainstorm('UpdateProtocolsList');
-    iProtocol = bst_get('Protocol', protocolName);
-end
-if isempty(iProtocol)
-    error("HRB:ProtocolNotFound", ...
-        "Protocol '%s' not found. Run HRB_bst_import first.", protocolName);
-end
-gui_brainstorm('SetCurrentProtocol', iProtocol);
+%% Brainstorm: start (server mode), DB, protocol
+dbDir = HRB_bst_connect(config.BrainstormDbDir, protocolName, log);
 pause(2);
-t = tic; while toc(t) < 30; try, bst_get('BrainstormDbDir'); break; catch, pause(0.5); end; end
+t = tic; while toc(t) < 30; try bst_get('BrainstormDbDir'); break; catch, pause(0.5); end; end
 
 hasExplicitScouts = strlength(config.Atlas) > 0 && ~all(strlength(config.Scouts)==0);
 if config.SelectScouts && ~hasExplicitScouts
@@ -185,6 +147,9 @@ end
 switch config.ScoutTime
     case "before", scoutTimeStr = 'before'; case "after", scoutTimeStr = 'after';
 end
+
+% outputmode is a 'radio' (integer) option. In bst: 1=individual,
+% 2=concatenate, 3=average
 switch config.SaveMode
     case "separately", outputMode = 1;
     case "concatenate",outputMode = 2;
@@ -208,21 +173,8 @@ if isKernelShared
         error("HRB:ExtractScoutsFailed","Scout extraction failed for '%s'.", subjName);
     end
 
-    % Rename scouts in bst GUI
-    newComment = char(config.SaveName);
-    for iF = 1:length(sFilesInput)
-        [sStudy, iStudy] = bst_get('Study', sFilesInput(iF).iStudy);
-        iItem = sFilesInput(iF).iItem;
-
-        fullFilePath = file_fullpath(sStudy.Matrix(iItem).FileName);
-        matMat = load(fullFilePath, '-mat');
-        matMat.Comment = newComment;
-        bst_save(fullFilePath, matMat, 'v6');
-
-        sStudy.Matrix(iItem).Comment = newComment;
-        bst_set('Study', iStudy, sStudy);
-    end
-    db_save();
+    % Set comment
+    HRB_bst_setComment(sFilesInput, "Matrix", config.SaveName);
 
     scoutsCellConn = {};
 else
@@ -230,6 +182,11 @@ else
     scoutsCellConn = scoutsCell;
 end
 useScouts = ~isempty(scoutsCellConn);
+
+% Filter warning
+if ~isSubjName
+    HRB_checkBandsVsFilter(InputData, {}, config.MaxFreq, log);
+end
 
 try
     switch config.GCDirection
@@ -243,13 +200,13 @@ try
                 'scoutfunc',scoutFuncStr,'removeevoked',0, ...
                 'grangermethod',char(config.GCMethod),'grangerorder',config.GCOrder, ...
                 'maxfreqres',config.MaxFreqRes,'maxfreq',config.MaxFreq, ...
-                'outputmode',outputMode,'source_abs',-1);
+                'outputmode',outputMode);
         else
             sFilesConn = bst_process('CallProcess','process_spgranger1n',sFilesInput,[], ...
                 'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
                 'removeevoked',0,'grangermethod',char(config.GCMethod), ...
                 'grangerorder',config.GCOrder,'maxfreqres',config.MaxFreqRes, ...
-                'maxfreq',config.MaxFreq,'outputmode',outputMode,'source_abs',-1);
+                'maxfreq',config.MaxFreq,'outputmode',outputMode);
         end
     else
         if useScouts
@@ -259,13 +216,13 @@ try
                 'scoutfunc',scoutFuncStr,'removeevoked',0, ...
                 'grangermethod',char(config.GCMethod),'direction',dirVal, ...
                 'grangerorder',config.GCOrder,'maxfreqres',config.MaxFreqRes, ...
-                'maxfreq',config.MaxFreq,'outputmode',outputMode,'source_abs',-1);
+                'maxfreq',config.MaxFreq,'outputmode',outputMode);
         else
             sFilesConn = bst_process('CallProcess','process_spgranger1',sFilesInput,[], ...
                 'timewindow',config.TimeWindow,'flatten',double(config.FlattenPCA), ...
                 'removeevoked',0,'grangermethod',char(config.GCMethod),'direction',dirVal, ...
                 'grangerorder',config.GCOrder,'maxfreqres',config.MaxFreqRes, ...
-                'maxfreq',config.MaxFreq,'outputmode',outputMode,'source_abs',-1);
+                'maxfreq',config.MaxFreq,'outputmode',outputMode);
         end
     end
     if isempty(sFilesConn)
@@ -277,21 +234,8 @@ catch ME
     rethrow(ME);
 end
 
-% Rename connectivity files
-newComment = char(config.SaveName);
-for iF = 1:length(sFilesConn)
-    [sStudy, iStudy] = bst_get('Study', sFilesConn(iF).iStudy);
-    iItem = sFilesConn(iF).iItem;
-
-    fullFilePath = file_fullpath(sStudy.Timefreq(iItem).FileName);
-    tfMat = load(fullFilePath, '-mat');
-    tfMat.Comment = newComment;
-    bst_save(fullFilePath, tfMat, 'v6');
-
-    sStudy.Timefreq(iItem).Comment = newComment;
-    bst_set('Study', iStudy, sStudy);
-end
-db_save();
+% Set Comment
+HRB_bst_setComment(sFilesConn, "Timefreq", config.SaveName);
 
 if isSubjName
     EEG = struct(); EEG.etc.brainstorm = struct();
